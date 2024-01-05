@@ -1,0 +1,221 @@
+#include "FHfTWASolver.h"
+
+
+FHfTWASolver::FHfTWASolver(FHSystem* fhS)
+{
+    fhSystem = fhS;
+
+    unsigned int nSites = fhSystem->getnSites();
+    arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
+    arma::dmat haldDiagReal = arma::dmat(nSites, nSites, arma::fill::eye)/2;
+    halfDiag = arma::cx_dmat(haldDiagReal, zeroMat);
+
+    U = fhSystem->getUMatrixPointer();
+    J = fhSystem->getJMatrixPointer();
+}
+
+void FHfTWASolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
+{
+    this->tMax = t_max;
+    this->dt = d_t;
+    this->nStepsPerTimePoint = nSPTP;
+    this->nTimePoints = floor(tMax/dt +1);
+}
+
+void FHfTWASolver::setfTWAParameters(unsigned int nT)
+{
+    this->nTraj = nT;
+}
+
+void FHfTWASolver::initiateSolver(std::vector<unsigned int> pPartU, std::vector<unsigned int> pPartD )
+{
+
+    unsigned int nSites = fhSystem->getnSites(); 
+
+    diagNu0 = arma::dvec(nSites, arma::fill::zeros);
+    diagNd0 = arma::dvec(nSites,arma::fill::zeros);
+    for (std::vector<unsigned int>::iterator it_u = pPartU.begin(); it_u < pPartU.end(); it_u++)
+    {
+        diagNu0(*it_u) = 1.;
+    }
+    for (std::vector<unsigned int>::iterator it_d = pPartD.begin(); it_d < pPartD.end(); it_d++)
+    {
+        diagNd0(*it_d) = 1.;
+    }
+
+    arma::dmat emptyM = arma::dmat(nSites, nSites, arma::fill::zeros);
+    arma::dmat mu = arma::diagmat(diagNu0) - arma::dmat(nSites, nSites, arma::fill::eye)/2;
+    arma::dmat md = arma::diagmat(diagNd0) - arma::dmat(nSites, nSites, arma::fill::eye)/2;
+
+    rhou0_mean = arma::cx_dmat(mu, emptyM);
+    rhod0_mean = arma::cx_dmat(md, emptyM);
+
+    sqrtNoiseVarianceMatrixU = arma::dmat(nSites, nSites, arma::fill::zeros);
+    sqrtNoiseVarianceMatrixD = arma::dmat(nSites, nSites, arma::fill::zeros);
+    for (unsigned int i = 0; i < nSites; i++)
+    {
+        for (unsigned int j = i+1; j < nSites; j++)
+        {
+            sqrtNoiseVarianceMatrixU(i,j) = (diagNu0(i) + diagNu0(j) - 2 * diagNu0(i) * diagNu0(j))/2;
+            sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
+            sqrtNoiseVarianceMatrixD(i,j) = (diagNd0(i) + diagNd0(j) - 2 * diagNd0(i) * diagNd0(j))/2;
+            sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
+        }
+    }
+    
+    sqrtNoiseVarianceMatrixU = arma::sqrt(sqrtNoiseVarianceMatrixU);
+    sqrtNoiseVarianceMatrixD = arma::sqrt(sqrtNoiseVarianceMatrixD);
+    printf("Test 6 - Variance matrix : \n");
+    sqrtNoiseVarianceMatrixU.print();
+
+}
+
+void FHfTWASolver::step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt)
+{
+    arma::cx_dmat drhou_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    arma::cx_dmat drhod_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+    derivative(rhou, rhod, &drhou_dt, &drhod_dt);
+
+    arma::cx_dmat rhou_mid = *rhou + drhou_dt * dt/2 ;
+    arma::cx_dmat rhod_mid = *rhod + drhod_dt * dt/2 ;
+
+    derivative(&rhou_mid, &rhod_mid, &drhou_dt, &drhod_dt);
+
+    *rhou = *rhou + drhou_dt * dt ;
+    *rhod = *rhod + drhod_dt * dt ;
+}
+
+void FHfTWASolver::derivative(arma::cx_dmat* rhou, arma::cx_dmat* rhod, arma::cx_dmat* drhou_dt, arma::cx_dmat* drhod_dt)
+{
+
+    arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou->n_rows, arma::fill::ones); 
+
+    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * (rhod->diag() + half));
+    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * (rhou->diag() + half));
+
+    *drhou_dt = - jj * ( *rhou * DeltaUp - DeltaUp * *rhou) ;
+    *drhod_dt = - jj * ( *rhod * DeltaDo - DeltaDo * *rhod) ;
+}
+
+
+void FHfTWASolver::runSimulation( )
+{
+
+    printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
+    unsigned int nSites = fhSystem->getnSites();
+    std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
+    arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dcube rhod_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+
+    arma::cx_dmat rho2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat rho2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+
+   // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+
+
+
+// PARALLEL LOOP ON TRAJECTORIES
+#pragma omp parallel shared(rhou0_mean, rhod0_mean)
+{
+    arma::cx_dcube rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dcube rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+
+
+
+    arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+
+    #pragma omp for 
+    for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
+    {
+        // Noiseless initial rho matrices :
+        arma::cx_dmat rhou = rhou0_mean;
+        arma::cx_dmat rhod = rhod0_mean;
+
+        // We add up the white noises : 
+        arma::arma_rng::set_seed_random();
+        arma::cx_dmat wnM = arma::cx_dmat(nSites, nSites, arma::fill::randn);
+        for (unsigned int i = 0; i<nSites; i++)
+        {
+            for (unsigned int j = i+1; j<nSites; j++)
+            {
+                rhou(i,j) += wnM(i,j) * sqrtNoiseVarianceMatrixU(i,j);
+                rhou(j,i) += std::conj(wnM(i,j)) * sqrtNoiseVarianceMatrixU(j,i);
+                rhod(i,j) += wnM(j,i) * sqrtNoiseVarianceMatrixD(i,j);
+                rhod(j,i) += std::conj(wnM(j,i)) * sqrtNoiseVarianceMatrixD(j,i);
+            }
+        }
+
+        // We compute the trajectory dynamic and add up the diagnoal to the result
+        for (unsigned int t = 0;  t<nTimePoints; t++)
+        {
+            timeLine[t] = t*dt;          
+            rhou_t_loc.slice(t) = rhou_t_loc.slice(t) + rhou;
+            rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;
+            rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();
+            rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
+            for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
+            {
+                step(&rhou, &rhod, dt/nStepsPerTimePoint);
+            }
+        }
+
+
+        printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());       
+    }
+
+    #pragma omp critical
+    {
+        rhou_t +=rhou_t_loc;
+        rhod_t +=rhod_t_loc;
+        rho2iiu +=rho2iiu_loc;
+        rho2iid +=rho2iid_loc;
+    }
+
+
+}
+
+// of 
+
+    arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EU     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EJ     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    
+    for (unsigned int t = 0; t < nTimePoints; t++)
+    {
+        Nu.slice(t) = rhou_t.slice(t) / arma::cx_double(nTraj,0) + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+        Nd.slice(t) = rhod_t.slice(t) / arma::cx_double(nTraj,0) + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+        N2iiu.col(t) = rho2iiu.col(t) / arma::cx_double(nTraj,0) + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(arma::size(rho2iiu.col(t)), arma::fill::ones) / arma::cx_double(4,0);
+        N2iid.col(t) = rho2iid.col(t) / arma::cx_double(nTraj,0) + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(arma::size(rho2iid.col(t)), arma::fill::ones) / arma::cx_double(4,0);
+        EU(t)= (arma::cdot(Nu.slice(t).diag(), *U * Nd.slice(t).diag()) + arma::cdot(Nd.slice(t).diag(), *U * Nu.slice(t).diag())) / arma::cx_double(2,0);
+        EJ(t) = arma::accu((Nu.slice(t) + Nd.slice(t)) % *J);
+    }
+
+
+    arma::cx_drowvec E = EJ+ EU;
+
+
+    printf("n1u : \n");
+    arma::cx_dmat N1ut = Nu.col_as_mat(0);
+    arma::drowvec n1u = arma::real(N1ut.row(0));
+    (arma::real(n1u)).print();
+    printf("E : \n");
+    (arma::real(E)).print();
+        printf("EU : \n");
+    (arma::real(EU)).print();
+            printf("EJ : \n");
+    (arma::real(EJ)).print();
+
+                printf("Nu(0) : \n");
+    (arma::real(Nu.slice(0))).print();
+
+}
+
+FHfTWASolver::~FHfTWASolver()
+{
+}
