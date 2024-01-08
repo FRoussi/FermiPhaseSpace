@@ -27,6 +27,10 @@ public:
     arma::cx_dmat* getJMatrixPointer();
 
     std::string getName();
+    std::string getFolder();
+
+    std::vector<bool> getInitialCondition_upSpin();
+    std::vector<bool> getInitialCondition_downSpin();
 
     ~FHSystem();
 
@@ -45,7 +49,8 @@ private:
     std::vector<bool> initConditions_upSpin;
     std::vector<bool> initConditions_downSpin;
 
-    std::string name;
+    std::string systemName;
+    std::string systemFolder;
 
     void initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions );
     void computeMatrices();

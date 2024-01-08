@@ -18,19 +18,20 @@ void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
     this->nTimePoints = floor(tMax/dt +1);
 }
 
-void FHHFSolver::initiateSolver(std::vector<unsigned int> pPartU, std::vector<unsigned int> pPartD )
+void FHHFSolver::initiateSolver()
 {
 
     Nu0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     Nd0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
-    for (std::vector<unsigned int>::iterator it_u = pPartU.begin(); it_u < pPartU.end(); it_u++)
+    for (unsigned int it_u= 0; it_u < fhSystem->getnSites(); it_u ++)
     {
-        Nu0(*it_u, *it_u) = arma::cx_double(1,0);
+        if (fhSystem->getInitialCondition_upSpin()[it_u])
+            Nu0(it_u, it_u) = arma::cx_double(1,0);
     }
-
-    for (std::vector<unsigned int>::iterator it_d = pPartD.begin(); it_d < pPartD.end(); it_d++)
+    for (unsigned int it_d= 0; it_d < fhSystem->getnSites(); it_d ++)
     {
-        Nd0(*it_d, *it_d) = arma::cx_double(1,0);
+        if (fhSystem->getInitialCondition_downSpin()[it_d])
+            Nd0(it_d, it_d) = arma::cx_double(1,0);
     }
 
 
@@ -138,7 +139,7 @@ void FHHFSolver::runSimulation( )
 
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
-            step_RK2(dt/nStepsPerTimePoint);
+            step_RK4(dt/nStepsPerTimePoint);
         }
  
     }
@@ -172,9 +173,63 @@ void FHHFSolver::runSimulation( )
     printf("--- Mean field dynamic, E : \n");
     (arma::real(E)).print();
 
+       // Writing the results :
+    std::string folderName = fhSystem->getFolder();
+    std::string fileName = fhSystem->getName();
+    std::string fEDName = fileName.substr(0, fileName.size() - 4);
+    std::string fEDAdressName = fEDName + "_FH.txt";
+
+    if (fhSystem->getFolder()!="")
+    {
+        fEDAdressName = fhSystem->getFolder() + "/" + fEDAdressName;
+    }
+    std::ofstream systFile (fEDAdressName);
+    if (systFile.is_open())
+    {
+        systFile << "t ";
+        for (std::vector<double>::iterator itt = timeLine.begin(); itt != timeLine.end(); itt++)
+        {
+            systFile << std::to_string(*itt) << " ";
+        }
+        systFile << std::endl;
+
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            systFile << "N_" << iSite << "_" << iSite << "_u ";
+            for (arma::cx_dmat::row_iterator itnu = Niiu.begin_row(iSite); itnu != Niiu.end_row(iSite); ++itnu)
+            {
+                systFile << std::to_string(std::real(*itnu)) << " ";
+            }
+            systFile << std::endl;
+
+        }
+
+        systFile << "E_U ";
+        for (arma::cx_drowvec::iterator iteu = EU.begin(); iteu != EU.end(); iteu++)
+        {
+            systFile << std::to_string(std::real(*iteu)) << " ";
+        }
+        systFile << std::endl;
+        systFile << "E_J ";
+        for (arma::cx_drowvec::iterator itej = EJ.begin(); itej != EJ.end(); itej++)
+        {
+            systFile << std::to_string(std::real(*itej)) << " ";
+        }
+        systFile << std::endl;
+        systFile << "E ";
+        for (arma::cx_drowvec::iterator ite = E.begin(); ite != E.end(); ite++)
+        {
+            systFile << std::to_string(std::real(*ite)) << " ";
+        }
+        systFile << std::endl;
+
+        systFile.close();
+    }
+
 }
 
 FHHFSolver::~FHHFSolver()
 {
+
 }
  

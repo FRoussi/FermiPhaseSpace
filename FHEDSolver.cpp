@@ -12,12 +12,22 @@ void FHEDSolver::setTimeParameters(double t_max, double d_t)
     this->nTimePoints = floor(tMax / dt + 1);
 }
 
-void FHEDSolver::initiateSolver(std::vector<unsigned int> pPartU, std::vector<unsigned int> pPartD)
+void FHEDSolver::initiateSolver()
 {
-    this->posPartU = positionToBinary(pPartU, fhSystem->getnSites());
-    this->posPartD = positionToBinary(pPartU, fhSystem->getnSites());
-    this->nPartU = pPartU.size();
-    this->nPartD = pPartD.size();
+    this->posPartU = fhSystem->getInitialCondition_upSpin();
+    this->posPartD = fhSystem->getInitialCondition_upSpin();
+    this->nPartU = 0;
+    for (std::vector<bool>::iterator itpu = posPartU.begin(); itpu != posPartU.end(); itpu++)
+    {
+        if (*itpu)
+            nPartU +=1;
+    }
+    this->nPartD = 0;
+    for (std::vector<bool>::iterator itpd = posPartD.begin(); itpd != posPartD.end(); itpd++)
+    {
+        if (*itpd)
+            nPartD +=1;
+    }
     this->basisSizeSpinUp = nChoosep(fhSystem->getnSites(), nPartU);
     this->basisSizeSpinDown = nChoosep(fhSystem->getnSites(), nPartD);
     this->basisSize = basisSizeSpinUp * basisSizeSpinDown;
@@ -50,7 +60,7 @@ void FHEDSolver::initiateSolver(std::vector<unsigned int> pPartU, std::vector<un
 
     // Operators :
 
-    printf("Test 3 - Number operator :");
+    printf("Test 3 - Number operator :\n");
     NijuSet[0][0].print_dense();
 }
 
@@ -409,17 +419,20 @@ void FHEDSolver::runSimulation()
 {
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
-    arma::frowvec n11u = arma::frowvec(nTimePoints, arma::fill::zeros);
-    std::vector<double> EU = std::vector<double>(nTimePoints, 0);
-    std::vector<double> EJ = std::vector<double>(nTimePoints, 0);
-    std::vector<double> E = std::vector<double>(nTimePoints, 0);
+    arma::dmat niiu = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+    arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec EJ = arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
 
     this->psi = this->psi_0;
 
     for (unsigned int t = 0; t < nTimePoints; t++)
     {
         timeLine[t] = t * dt;
-        n11u[t] = static_cast<double>(std::real(arma::cdot(psi, NijuSet[0][0] * psi)));
+        for (unsigned int iSite = 0; iSite < fhSystem->getnSites(); iSite++)
+        {
+            niiu(iSite,t) = static_cast<double>(std::real(arma::cdot(psi, NijuSet[iSite][iSite] * psi)));
+        }     
         EU[t] = static_cast<double>(std::real(arma::cdot(psi, H_U * psi)));
         EJ[t] = static_cast<double>(std::real(arma::cdot(psi, H_J * psi)));
         E[t] = EU[t] + EJ[t];
@@ -428,7 +441,62 @@ void FHEDSolver::runSimulation()
     }
 
     printf("Test 3 - small system dynamic, n_1u : \n");
-    n11u.print();
+    niiu.row(0).print();
+    
+
+    // Writing the results :
+    std::string folderName = fhSystem->getFolder();
+    std::string fileName = fhSystem->getName();
+    std::string fEDName = fileName.substr(0, fileName.size() - 4);
+    std::string fEDAdressName = fEDName + "_ED.txt";
+
+    if (fhSystem->getFolder()!="")
+    {
+        fEDAdressName = fhSystem->getFolder() + "/" + fEDAdressName;
+    }
+    std::ofstream systFile (fEDAdressName);
+    if (systFile.is_open())
+    {
+        systFile << "t ";
+        for (std::vector<double>::iterator itt = timeLine.begin(); itt != timeLine.end(); itt++)
+        {
+            systFile << std::to_string(*itt) << " ";
+        }
+        systFile << std::endl;
+
+        for (unsigned int iSite; iSite<fhSystem->getnSites(); iSite++)
+        {
+            systFile << "N_" << iSite << "_" << iSite << "_u ";
+            for (arma::dmat::row_iterator itnu = niiu.begin_row(iSite); itnu != niiu.end_row(iSite); ++itnu)
+            {
+                systFile << std::to_string(*itnu) << " ";
+            }
+            systFile << std::endl;
+
+        }
+
+        systFile << "E_U ";
+        for (arma::drowvec::iterator iteu = EU.begin(); iteu != EU.end(); iteu++)
+        {
+            systFile << std::to_string(*iteu) << " ";
+        }
+        systFile << std::endl;
+        systFile << "E_J ";
+        for (arma::drowvec::iterator itej = EJ.begin(); itej != EJ.end(); itej++)
+        {
+            systFile << std::to_string(*itej) << " ";
+        }
+        systFile << std::endl;
+        systFile << "E ";
+        for (arma::drowvec::iterator ite = E.begin(); ite != E.end(); ite++)
+        {
+            systFile << std::to_string(*ite) << " ";
+        }
+        systFile << std::endl;
+
+        systFile.close();
+    }
+
 }
 
 FHEDSolver::~FHEDSolver()

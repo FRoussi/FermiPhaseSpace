@@ -16,7 +16,7 @@ public:
     FHHFSolver(FHSystem* fhs);
 
     void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
-    void initiateSolver(std::vector<unsigned int> posPartU, std::vector<unsigned int> posPartD );
+    void initiateSolver();
 
     void step_RK1(double dt);
     void step_RK2(double dt);

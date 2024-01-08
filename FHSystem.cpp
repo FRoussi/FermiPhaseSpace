@@ -84,8 +84,9 @@ FHSystem::FHSystem(int x, int y, int z)
 
 FHSystem::FHSystem(std::string fileName, std::string folderName)
 {
-    name = fileName;
-    std::string fileAdressName =  fileName; 
+    systemName = fileName;
+    systemFolder = folderName;
+    std::string fileAdressName = fileName; 
     if (folderName !="")
     {
         fileAdressName = folderName + "/" + fileName;
@@ -227,7 +228,7 @@ void FHSystem::setTunneling_BetweenNeighbours(double J)
             }
         }
     }
-
+    printf("J-Matrix : \n");
     JMatrix.print();
 }
 
@@ -280,8 +281,24 @@ arma::cx_dmat* FHSystem::getJMatrixPointer()
 
 std::string FHSystem::getName()
 {
-    return name;
+    return systemName;
 }
+
+std::string FHSystem::getFolder()
+{
+    return systemFolder;
+}
+
+std::vector<bool> FHSystem::getInitialCondition_upSpin()
+{
+    return initConditions_upSpin;
+}
+
+std::vector<bool> FHSystem::getInitialCondition_downSpin()
+{
+    return initConditions_downSpin;
+}
+
 
 void FHSystem::initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions )
 {

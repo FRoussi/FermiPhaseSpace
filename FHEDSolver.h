@@ -24,7 +24,7 @@ public:
 
     void setTimeParameters(double t_max, double dt);
 
-    void initiateSolver(std::vector<unsigned int> posPartU, std::vector<unsigned int> posPartD );
+    void initiateSolver();
 
     void buildHamiltonian();
     void numberOperator();

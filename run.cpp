@@ -36,14 +36,14 @@ int main()
 
    printf("-- ED dynamic \n");
    FHEDSolver edTry = FHEDSolver(&twoSites);
-   edTry.initiateSolver(pU, pD);
+   edTry.initiateSolver();
    edTry.setTimeParameters(1., 0.01);
    edTry.runSimulation();
 
 
    printf("-- HF dynamic \n");
    FHHFSolver fhTry = FHHFSolver(&twoSites);  
-   fhTry.initiateSolver(pU, pD);
+   fhTry.initiateSolver();
    fhTry.setTimeParameters(1., 0.01, 5);
    fhTry.runSimulation();
 
