@@ -157,6 +157,28 @@ arma::cx_dmat* FHSystem::getJMatrixPointer()
     return &JMatrix;
 }
 
+void FHSystem::initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions )
+{
+
+    nSites = positions.n_rows;
+    nDimentions = positions.n_cols;
+
+    sitePositions = positions;
+
+    initConditions_upSpin = std::vector<bool>(nSites);
+    initConditions_downSpin = std::vector<bool>(nSites);
+
+    for (unsigned int itSite = 0; itSite < initConditions[0].size(); itSite++)
+    {
+        initConditions_upSpin[itSite] = true;
+    }
+    for (unsigned int itSite = 0; itSite < initConditions[1].size(); itSite++)
+    {
+        initConditions_downSpin[itSite] = true;
+    }
+
+}
+
 void FHSystem::computeMatrices()
 {
 

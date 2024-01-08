@@ -40,7 +40,11 @@ private:
     arma::cx_dmat UMatrix;
     arma::cx_dmat JMatrix;
 
-   void computeMatrices();
+    std::vector<bool> initConditions_upSpin;
+    std::vector<bool> initConditions_downSpin;
+
+    void initiateSystem(std::vector<std::vector<double>> positions, std::vector<std::vector<unsigned int>> initConditions );
+    void computeMatrices();
 
 
 };
