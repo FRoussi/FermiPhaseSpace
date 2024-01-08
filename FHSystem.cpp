@@ -5,39 +5,50 @@
 
 FHSystem::FHSystem()
 {
-    nSites = 1;
-    nDimentions = 1;
-    sitePositions = arma::dmat(nDimentions,  nSites, arma::fill::zeros);
-    distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
-    neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
 
+    arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
+
+    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(0,0);
+    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(0,0);
+
+    std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+    initCond[0] = initCond_up;
+    initCond[1] = initCond_down;
+
+    initiateSystem(pos, initCond);
     computeMatrices();
 }
 
 FHSystem::FHSystem(int x)
 {
-    nSites = x;
-    nDimentions = 1;
-    sitePositions = arma::dmat(nDimentions,  nSites, arma::fill::zeros);
-    distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
-    neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
-    for (int d=0; d<2; d++)
+    arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
+    for (int d=0; d<x; d++)
     {
-        sitePositions[d] = (double)d;
+        pos[d] = (double)d;
     }
 
+    int nPart = std::floor(x/2);
+    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(nPart,0);
+    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(nPart,0);
+    for(int itPart = 0; itPart <nPart; itPart++)
+    {
+        initCond_up[itPart] = itPart * 2;
+        initCond_down[itPart] = itPart * 2 + 1;
+    }
+
+    std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+    initCond[0] = initCond_up;
+    initCond[1] = initCond_down;
+
+    initiateSystem(pos, initCond);
     computeMatrices();
+
 }
 
 FHSystem::FHSystem(int x, int y, int z)
 {
-    nDimentions = 3;
-    nSites = x * y * z;
 
-    sitePositions = arma::dmat(nDimentions,  nSites, arma::fill::zeros);
-    distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
-    neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
-
+    arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
     for (int i_z = 0; i_z < z; i_z++)
     {
@@ -45,42 +56,152 @@ FHSystem::FHSystem(int x, int y, int z)
         {
             for (int i_x = 0; i_x < x; i_x++)
             {   
-                sitePositions[tabIndex] = double(i_x);
-                sitePositions[tabIndex+1] = double(i_y);
-                sitePositions[tabIndex+2] = double(i_z); 
-                tabIndex +=3;
+                pos(0,tabIndex) = double(i_x);
+                pos(1,tabIndex) = double(i_y);
+                pos(2,tabIndex) = double(i_z); 
+                tabIndex +=1;
             }
         }       
     }
 
+    int nPart = std::floor( x * y * z/2);
+    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(nPart,0);
+    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(nPart,0);
+    for(int itPart = 0; itPart <nPart; itPart++)
+    {
+        initCond_up[itPart] = itPart * 2;
+        initCond_down[itPart] = itPart * 2 + 1;
+    }
+
+    std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+    initCond[0] = initCond_up;
+    initCond[1] = initCond_down;
+
+    initiateSystem(pos, initCond);
     computeMatrices();
+
 }
 
-FHSystem::FHSystem(std::string fileName)
+FHSystem::FHSystem(std::string fileName, std::string folderName)
 {
-    std::ifstream systFile (fileName);
+    name = fileName;
+    std::string fileAdressName =  fileName; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + fileName;
+    }
+
+    std::ifstream systFile (fileAdressName);
     if (systFile.is_open())
     {
-        printf("Reading %s", fileName);
+        printf("Reading %s \n", fileName.c_str());
+
+        bool readPosition = false;
+        bool readInitCond = false;
+        bool initCondUpSpinRead = false;
+        bool initCondDownSpinRead = false;
+        int nDim = -1;
+
+        std::vector<std::vector<double>> pos =   std::vector<std::vector<double>>();
+        std::vector<unsigned int> initCond_up =   std::vector<unsigned int>();
+        std::vector<unsigned int> initCond_down =   std::vector<unsigned int>();
 
         std::string line;
-        std::getline(systFile, line);
-        while ()
+        while (std::getline(systFile, line))
         {
-            systFile.getline(line);
+           if (line == "#POSITIONS")
+           {
+                readPosition = true;
+                readInitCond = false;
+           }
+           else if (line == "#INITIALCONDITIONS")
+           {
+                readPosition = false;
+                readInitCond = true;
+           }
+           else if(readPosition)
+           {
+                std::stringstream ss(line);
+                std::string coord;
+                std::vector<double> coordinates = std::vector<double>();
+
+                while (std::getline (ss, coord, ' ')) 
+                {
+                    double d = std::stod(coord);
+                    coordinates.push_back(d);
+                }
+                if (nDim == -1)
+                {
+                    nDim = coordinates.size();
+                    pos.push_back(coordinates);
+                }
+                else
+                {
+                    if (coordinates.size() == nDim)
+                    {
+                        pos.push_back(coordinates);
+                    }
+                    else
+                    {
+                        printf("Dimension problem with line \"%s\"", line.c_str());
+                        return;
+                    }
+                }
+           }
+           else if(readInitCond)
+           {
+                std::stringstream ss(line);
+                std::string siteN;
+                
+                if (!initCondUpSpinRead)
+                {
+                    while (std::getline (ss, siteN, ' ')) 
+                    {
+                        initCond_up.push_back(std::stoi(siteN)); 
+                    }
+                    initCondUpSpinRead = true;
+                }
+                else if (!initCondDownSpinRead)
+                {
+                    while (std::getline (ss, siteN, ' ')) 
+                    {
+                        initCond_down.push_back(std::stoi(siteN)); 
+                    }
+                    initCondDownSpinRead = true;
+                }
+                else
+                {
+                    printf("Too many initial conditions");
+                }
+
+
+           }
+        }
+
+        systFile.close();
+
+        arma::dmat sitePos = arma::dmat(nDim, pos.size());
+        for(unsigned int itPos = 0; itPos < pos.size(); itPos ++)
+        {
+            for (unsigned int itCoor = 0; itCoor<nDim; itCoor ++)
+            {
+                sitePos(itCoor, itPos) = pos[itPos][itCoor];
+            }
         }
 
 
+        std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+        initCond[0] = initCond_up;
+        initCond[1] = initCond_down;
 
+        initiateSystem(sitePos, initCond);
+        computeMatrices();
 
-        systFile.close();
     }
     else
     {
-        printf("Can't open %s", fileName);
+        printf("Can't open %s", fileName.c_str());
     }
-
-
 
 
     
@@ -117,7 +238,7 @@ unsigned int FHSystem::getnSites()
 
 double FHSystem::getCoordinate(int dim, int pos)
 { 
-    if ((dim < nDimentions) && (pos < nSites))
+    if ((dim < nDimensions) && (pos < nSites))
     {
         return sitePositions(dim, pos);
     } 
@@ -157,11 +278,16 @@ arma::cx_dmat* FHSystem::getJMatrixPointer()
     return &JMatrix;
 }
 
+std::string FHSystem::getName()
+{
+    return name;
+}
+
 void FHSystem::initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions )
 {
 
-    nSites = positions.n_rows;
-    nDimentions = positions.n_cols;
+    nDimensions = positions.n_rows;
+    nSites = positions.n_cols;
 
     sitePositions = positions;
 
@@ -181,14 +307,15 @@ void FHSystem::initiateSystem(arma::dmat positions, std::vector<std::vector<unsi
 
 void FHSystem::computeMatrices()
 {
-
+    distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
+    neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
     
     for (int i=0; i<nSites; i++)
     {
         for (int j=0; j<nSites; j++)
         {
             double dist = 0;
-            for (int d = 0; d<nDimentions; d++ )
+            for (int d = 0; d<nDimensions; d++ )
             {
                 dist = dist + pow(sitePositions(d, j) - sitePositions(d, i), 2);
             }
@@ -205,6 +332,8 @@ void FHSystem::computeMatrices()
         }
     }
 }
+
+
 
 FHSystem::~FHSystem()
 {

@@ -11,7 +11,7 @@ public:
     FHSystem();
     FHSystem(int x);
     FHSystem(int x, int y, int z);
-    FHSystem(std::string fileName);
+    FHSystem(std::string fileName, std::string folderName = "");
 
     void setInteraction_OnSite(double U);
     void setTunneling_BetweenNeighbours(double J);
@@ -19,17 +19,19 @@ public:
     unsigned int getnSites();
     double getCoordinate(int dim, int pos);
 
-   double getDistance(int i, int j);
+    double getDistance(int i, int j);
     bool areNeighbour(int i, int j);
     arma::cx_double getInteractionEnergy(int i, int j);
     arma::cx_double getTunnelingEnergy(int i, int j);
     arma::cx_dmat* getUMatrixPointer();
     arma::cx_dmat* getJMatrixPointer();
 
+    std::string getName();
+
     ~FHSystem();
 
 private:
-    unsigned int nDimentions;
+    unsigned int nDimensions;
     unsigned int nSites;
     
     arma::dmat sitePositions;
@@ -43,7 +45,9 @@ private:
     std::vector<bool> initConditions_upSpin;
     std::vector<bool> initConditions_downSpin;
 
-    void initiateSystem(std::vector<std::vector<double>> positions, std::vector<std::vector<unsigned int>> initConditions );
+    std::string name;
+
+    void initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions );
     void computeMatrices();
 
 

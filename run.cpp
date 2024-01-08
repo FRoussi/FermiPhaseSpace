@@ -24,7 +24,9 @@ int main()
 
 
 
-   FHSystem twoSites =  FHSystem(2,1,1);
+
+
+   FHSystem twoSites =  FHSystem("syst2Sites.txt", "systemsFolder");
    twoSites.setInteraction_OnSite(1.);
    twoSites.setTunneling_BetweenNeighbours(1.);
    unsigned int n = twoSites.getnSites();
