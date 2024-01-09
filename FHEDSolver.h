@@ -23,12 +23,12 @@ class FHEDSolver
 public:
     FHEDSolver(FHSystem* fhSystem);
 
-    void setTimeParameters(double t_max, double dt);
+    void setTimeParameters(double t_max, double dt, unsigned int nPerTS);
 
     void initiateSolver();
 
     void buildHamiltonian();
-    void numberOperator();
+    //void numberOperator();
 
     void step();
     void runSimulation();
@@ -42,6 +42,7 @@ private:
 // Time parameter
     double tMax;
     double dt;
+    unsigned int nStepsPerTimePoint;
     unsigned int nTimePoints;
 // Other parameters :
     unsigned int nPartU;

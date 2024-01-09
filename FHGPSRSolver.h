@@ -22,7 +22,8 @@ public:
     void setGPSRParameters(unsigned int nTraj);
     void initiateSolver();
 
-    void step_Drift(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift);
+    void step_Drift_RK2(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift);
+    void step_Drift_RK4_38(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift);
     void step_Diffusion(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff);
     void step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt);
     void runSimulation();
@@ -65,13 +66,13 @@ private:
 
 
 // Link to Energy matrices
-    arma::cx_dmat* U;
-    arma::cx_dmat* J;
+  arma::cx_dmat* U;
+  arma::cx_dmat* J;
 
 // Usefull things :
   arma::cx_dmat sqrtU;
 
-  void derivative(arma::cx_dmat* nut, arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
+  void derivative(const arma::cx_dmat* nut, const arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
 
 
 

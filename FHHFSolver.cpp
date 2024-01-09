@@ -76,23 +76,56 @@ void FHHFSolver::step_RK4(double dt)
     arma::cx_dmat dNu_dt_k4 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat dNd_dt_k4 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
-// k1 :
+// k1 : 
     derivative(&Nut, &Ndt, &dNu_dt_k1, &dNd_dt_k1);
-// k2 :
+// k2 : 0.5 | 0.5
     arma::cx_dmat Nu_k1 = Nut + dNu_dt_k1 * dt/2 ;
     arma::cx_dmat Nd_k1 = Ndt + dNd_dt_k1 * dt/2 ;
     derivative(&Nu_k1 , &Nd_k1 , &dNu_dt_k2, &dNd_dt_k2);
-// k3 :
+// k3 : 0.5 |  0   0.5
     arma::cx_dmat Nu_k2 = Nut + dNu_dt_k2 * dt/2 ;
     arma::cx_dmat Nd_k2 = Ndt + dNd_dt_k2 * dt/2 ;
     derivative(&Nu_k2 , &Nd_k2, &dNu_dt_k3, &dNd_dt_k3);
-// k3 :
-    arma::cx_dmat Nu_k3 = Nut + dNu_dt_k2 * dt ;
-    arma::cx_dmat Nd_k3 = Ndt + dNd_dt_k2 * dt ;
+// k3 : 1   |  0    0    1
+    arma::cx_dmat Nu_k3 = Nut + dNu_dt_k3 * dt ;
+    arma::cx_dmat Nd_k3 = Ndt + dNd_dt_k3 * dt ;
     derivative(&Nu_k3 , &Nd_k3, &dNu_dt_k4, &dNd_dt_k4);
-
+// k4 :     |  1/6  2/6  2/6  1/6  
     Nut = Nut + (dNu_dt_k1 + 2* dNu_dt_k2 + 2*dNu_dt_k3 + dNu_dt_k4) * dt/6;
     Ndt = Ndt + (dNd_dt_k1 + 2* dNd_dt_k2 + 2*dNd_dt_k3 + dNd_dt_k4) * dt/6;
+}
+
+void FHHFSolver::step_RK4_38(double dt)
+{
+    arma::cx_dmat dNu_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    arma::cx_dmat dNd_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+    arma::cx_dmat dNu_dt_k2 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    arma::cx_dmat dNd_dt_k2 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+    arma::cx_dmat dNu_dt_k3 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    arma::cx_dmat dNd_dt_k3 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+    arma::cx_dmat dNu_dt_k4 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    arma::cx_dmat dNd_dt_k4 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+// k1 :
+    derivative(&Nut, &Ndt, &dNu_dt_k1, &dNd_dt_k1);
+// k2 : 1/3  |  1/3
+    arma::cx_dmat Nu_k = Nut + dNu_dt_k1 * dt/3 ;
+    arma::cx_dmat Nd_k = Ndt + dNd_dt_k1 * dt/3 ;
+    derivative(&Nu_k , &Nd_k , &dNu_dt_k2, &dNd_dt_k2);
+// k3 : 2/3  |  -1/3  1
+    Nu_k = Nut + (- dNu_dt_k1/3 + dNu_dt_k2) * dt ;
+    Nd_k = Ndt + (- dNd_dt_k1/3 + dNd_dt_k2) * dt ;
+    derivative(&Nu_k , &Nd_k, &dNu_dt_k3, &dNd_dt_k3);
+// k3 :  1   |  1     -1    1
+    Nu_k = Nut + (dNu_dt_k1 - dNu_dt_k2 + dNu_dt_k3) * dt;
+    Nd_k = Ndt + (dNd_dt_k1 - dNd_dt_k2 + dNd_dt_k3) * dt;
+    derivative(&Nu_k , &Nd_k, &dNu_dt_k4, &dNd_dt_k4);
+//    :      | 1/8    3/8   3/8   1
+    Nut = Nut + (dNu_dt_k1 + dNu_dt_k2*3 + dNu_dt_k3*3 + dNu_dt_k4) * dt/8;
+    Ndt = Ndt + (dNd_dt_k1 + dNd_dt_k2*3 + dNd_dt_k3*3 + dNd_dt_k4) * dt/8;
 }
 
 void FHHFSolver::step_RK45(double dt)
@@ -131,7 +164,7 @@ void FHHFSolver::runSimulation( )
 
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
-            step_RK2(dt/nStepsPerTimePoint);
+            step_RK4_38(dt/nStepsPerTimePoint);
         }
  
     }

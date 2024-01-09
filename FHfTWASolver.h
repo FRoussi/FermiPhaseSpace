@@ -21,7 +21,8 @@ public:
     void setfTWAParameters(unsigned int nTraj);
     void initiateSolver();
 
-    void step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt);
+    void step_RK2(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt);
+    void step_RK4_38(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt);
     void runSimulation();
 
     const arma::cx_double jj = arma::cx_double(0,1);
@@ -67,7 +68,7 @@ private:
 // Usefull things :
     arma::cx_dmat halfDiag;
 
-    void derivative(arma::cx_dmat* nut, arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
+    void derivative(const arma::cx_dmat* nut, const arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
 
 
 };

@@ -22,6 +22,7 @@ public:
     void step_RK1(double dt);
     void step_RK2(double dt);
     void step_RK4(double dt);
+    void step_RK4_38(double dt);
     void step_RK45(double dt);
     void runSimulation();
 
@@ -30,8 +31,6 @@ public:
     ~FHHFSolver();
 
 private:
-
-
 
 // Fermi Hubbard System  :
     FHSystem* fhSystem;
@@ -60,6 +59,6 @@ private:
     arma::cx_dmat Ndt;
 
 
-void derivative(arma::cx_dmat* nut, arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
+    void derivative(arma::cx_dmat* nut, arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
 
 };

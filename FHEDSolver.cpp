@@ -5,10 +5,11 @@ FHEDSolver::FHEDSolver(FHSystem *fhS)
     fhSystem = fhS;
 }
 
-void FHEDSolver::setTimeParameters(double t_max, double d_t)
+void FHEDSolver::setTimeParameters(double t_max, double d_t, unsigned int nPerTS)
 {
     this->tMax = t_max;
     this->dt = d_t;
+    this->nStepsPerTimePoint = nPerTS;
     this->nTimePoints = floor(tMax / dt + 1);
 }
 
@@ -461,52 +462,7 @@ void FHEDSolver::runSimulation()
     results.writeLine("E_J", EJ);
     results.writeLine("E", E);
 
-    if (fhSystem->getFolder()!="")
-    {
-        fEDAdressName = fhSystem->getFolder() + "/" + fEDAdressName;
-    }
-    std::ofstream systFile (fEDAdressName);
-    if (systFile.is_open())
-    {
-        systFile << "t ";
-        for (std::vector<double>::iterator itt = timeLine.begin(); itt != timeLine.end(); itt++)
-        {
-            systFile << std::to_string(*itt) << " ";
-        }
-        systFile << std::endl;
-
-        for (unsigned int iSite; iSite<fhSystem->getnSites(); iSite++)
-        {
-            systFile << "N_" << iSite << "_" << iSite << "_u ";
-            for (arma::dmat::row_iterator itnu = niiu.begin_row(iSite); itnu != niiu.end_row(iSite); ++itnu)
-            {
-                systFile << std::to_string(*itnu) << " ";
-            }
-            systFile << std::endl;
-
-        }
-
-        systFile << "E_U ";
-        for (arma::drowvec::iterator iteu = EU.begin(); iteu != EU.end(); iteu++)
-        {
-            systFile << std::to_string(*iteu) << " ";
-        }
-        systFile << std::endl;
-        systFile << "E_J ";
-        for (arma::drowvec::iterator itej = EJ.begin(); itej != EJ.end(); itej++)
-        {
-            systFile << std::to_string(*itej) << " ";
-        }
-        systFile << std::endl;
-        systFile << "E ";
-        for (arma::drowvec::iterator ite = E.begin(); ite != E.end(); ite++)
-        {
-            systFile << std::to_string(*ite) << " ";
-        }
-        systFile << std::endl;
-
-        systFile.close();
-    }
+    
 
 }
 
