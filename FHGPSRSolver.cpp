@@ -25,30 +25,16 @@ void FHGPSRSolver::setGPSRParameters(unsigned int nT)
     this->nTraj = nT;
 }
 
-void FHGPSRSolver::initiateSolver(std::vector<unsigned int> pPartU, std::vector<unsigned int> pPartD )
+void FHGPSRSolver::initiateSolver()
 {
 
-    unsigned int nSites = fhSystem->getnSites(); 
-
-    diagNu0 = arma::dvec(nSites, arma::fill::zeros);
-    diagNd0 = arma::dvec(nSites,arma::fill::zeros);
-    for (std::vector<unsigned int>::iterator it_u = pPartU.begin(); it_u < pPartU.end(); it_u++)
+    rhou0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    rhod0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    for (unsigned int it= 0; it < fhSystem->getnSites(); it ++)
     {
-        diagNu0(*it_u) = 1.;
+           rhou0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0);
+           rhod0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0);
     }
-    for (std::vector<unsigned int>::iterator it_d = pPartD.begin(); it_d < pPartD.end(); it_d++)
-    {
-        diagNd0(*it_d) = 1.;
-    }
-
-    arma::dmat emptyM = arma::dmat(nSites, nSites, arma::fill::zeros);
-    arma::dmat mu = arma::diagmat(diagNu0);
-    arma::dmat md = arma::diagmat(diagNd0);
-
-    rhou0 = arma::cx_dmat(mu, emptyM);
-    rhod0 = arma::cx_dmat(md, emptyM);
-
-
 
 }
 
@@ -179,12 +165,25 @@ void FHGPSRSolver::runSimulation( )
 
     arma::cx_drowvec E     = EJ + EU;
 
-    printf("n1u : \n");
-    arma::cx_dmat N1ut = Nu.col_as_mat(0);
-    arma::drowvec n1u = arma::real(N1ut.row(0));
-    (arma::real(n1u)).print();
-    printf("E : \n");
-    (arma::real(E)).print();
+
+    // Writing the results :
+    std::string folderName = fhSystem->getFolder();
+    std::string fileName = fhSystem->getName();
+    std::string fHFName = fileName.substr(0, fileName.size() - 4);
+    std::string fHFAdressName = fHFName + "_GPSR";
+
+    ResultWriter results = ResultWriter(fHFAdressName, folderName);
+    results.newResults();
+    results.writeLine("t", timeLine);
+    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+    {
+        results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+    }
+    results.writeLineInReal("E_U", EU);
+    results.writeLineInReal("E_J", EJ);
+    results.writeLineInReal("E", E);
+
+
 }
 
 void FHGPSRSolver::derivative(arma::cx_dmat* rhou, arma::cx_dmat* rhod, arma::cx_dmat* drhou_dt, arma::cx_dmat* drhod_dt)

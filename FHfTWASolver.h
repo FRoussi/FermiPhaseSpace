@@ -8,6 +8,7 @@
 #include <omp.h>
 
 #include "FHSystem.h"
+#include "ResultWriter.h"
 
 
 
@@ -18,7 +19,7 @@ public:
 
     void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
     void setfTWAParameters(unsigned int nTraj);
-    void initiateSolver(std::vector<unsigned int> posPartU, std::vector<unsigned int> posPartD );
+    void initiateSolver();
 
     void step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt);
     void runSimulation();

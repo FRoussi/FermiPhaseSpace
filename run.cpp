@@ -50,15 +50,15 @@ int main()
    printf("-- fTWA dynamic \n");
    FHfTWASolver fTWATry = FHfTWASolver(&twoSites);  
    fTWATry.setTimeParameters(1., 0.01, 5);
-   fTWATry.setfTWAParameters(10);
-   fTWATry.initiateSolver(pU, pD);
+   fTWATry.setfTWAParameters(100);
+   fTWATry.initiateSolver();
    fTWATry.runSimulation();
 
    printf("-- GPSR dynamic \n");
    FHGPSRSolver GPSRTry = FHGPSRSolver(&twoSites);  
    GPSRTry.setTimeParameters(1., 0.01, 1);
    GPSRTry.setGPSRParameters(10);
-   GPSRTry.initiateSolver(pU, pD);
+   GPSRTry.initiateSolver();
    GPSRTry.runSimulation();
    
 

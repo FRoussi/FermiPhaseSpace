@@ -8,6 +8,7 @@
 #include <omp.h>
 
 #include "FHSystem.h"
+#include "ResultWriter.h"
 
 
 
@@ -19,7 +20,7 @@ public:
 
     void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
     void setGPSRParameters(unsigned int nTraj);
-    void initiateSolver(std::vector<unsigned int> posPartU, std::vector<unsigned int> posPartD );
+    void initiateSolver();
 
     void step_Drift(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift);
     void step_Diffusion(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff);

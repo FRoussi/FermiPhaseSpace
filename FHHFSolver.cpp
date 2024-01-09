@@ -23,19 +23,11 @@ void FHHFSolver::initiateSolver()
 
     Nu0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     Nd0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
-    for (unsigned int it_u= 0; it_u < fhSystem->getnSites(); it_u ++)
+    for (unsigned int it= 0; it < fhSystem->getnSites(); it ++)
     {
-        if (fhSystem->getInitialCondition_upSpin()[it_u])
-            Nu0(it_u, it_u) = arma::cx_double(1,0);
+        Nu0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0) ;
+        Nd0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0) ;
     }
-    for (unsigned int it_d= 0; it_d < fhSystem->getnSites(); it_d ++)
-    {
-        if (fhSystem->getInitialCondition_downSpin()[it_d])
-            Nd0(it_d, it_d) = arma::cx_double(1,0);
-    }
-
-
-
 
     printf("Test 4 - Initial Density matrix : \n");
     Nu0.print();
@@ -139,7 +131,7 @@ void FHHFSolver::runSimulation( )
 
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
-            step_RK4(dt/nStepsPerTimePoint);
+            step_RK2(dt/nStepsPerTimePoint);
         }
  
     }
@@ -173,58 +165,26 @@ void FHHFSolver::runSimulation( )
     printf("--- Mean field dynamic, E : \n");
     (arma::real(E)).print();
 
+
        // Writing the results :
     std::string folderName = fhSystem->getFolder();
     std::string fileName = fhSystem->getName();
-    std::string fEDName = fileName.substr(0, fileName.size() - 4);
-    std::string fEDAdressName = fEDName + "_FH.txt";
+    std::string fHFName = fileName.substr(0, fileName.size() - 4);
+    std::string fHFAdressName = fHFName + "_FH";
 
-    if (fhSystem->getFolder()!="")
+    ResultWriter results = ResultWriter(fHFAdressName, folderName);
+    results.newResults();
+    results.writeLine("t", timeLine);
+    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
     {
-        fEDAdressName = fhSystem->getFolder() + "/" + fEDAdressName;
+        results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
     }
-    std::ofstream systFile (fEDAdressName);
-    if (systFile.is_open())
-    {
-        systFile << "t ";
-        for (std::vector<double>::iterator itt = timeLine.begin(); itt != timeLine.end(); itt++)
-        {
-            systFile << std::to_string(*itt) << " ";
-        }
-        systFile << std::endl;
+    results.writeLineInReal("E_U", EU);
+    results.writeLineInReal("E_J", EJ);
+    results.writeLineInReal("E", E);
 
-        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-        {
-            systFile << "N_" << iSite << "_" << iSite << "_u ";
-            for (arma::cx_dmat::row_iterator itnu = Niiu.begin_row(iSite); itnu != Niiu.end_row(iSite); ++itnu)
-            {
-                systFile << std::to_string(std::real(*itnu)) << " ";
-            }
-            systFile << std::endl;
 
-        }
-
-        systFile << "E_U ";
-        for (arma::cx_drowvec::iterator iteu = EU.begin(); iteu != EU.end(); iteu++)
-        {
-            systFile << std::to_string(std::real(*iteu)) << " ";
-        }
-        systFile << std::endl;
-        systFile << "E_J ";
-        for (arma::cx_drowvec::iterator itej = EJ.begin(); itej != EJ.end(); itej++)
-        {
-            systFile << std::to_string(std::real(*itej)) << " ";
-        }
-        systFile << std::endl;
-        systFile << "E ";
-        for (arma::cx_drowvec::iterator ite = E.begin(); ite != E.end(); ite++)
-        {
-            systFile << std::to_string(std::real(*ite)) << " ";
-        }
-        systFile << std::endl;
-
-        systFile.close();
-    }
+    
 
 }
 

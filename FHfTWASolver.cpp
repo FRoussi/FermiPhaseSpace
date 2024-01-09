@@ -27,28 +27,24 @@ void FHfTWASolver::setfTWAParameters(unsigned int nT)
     this->nTraj = nT;
 }
 
-void FHfTWASolver::initiateSolver(std::vector<unsigned int> pPartU, std::vector<unsigned int> pPartD )
+void FHfTWASolver::initiateSolver()
 {
 
     unsigned int nSites = fhSystem->getnSites(); 
 
+    rhou0_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    rhod0_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     diagNu0 = arma::dvec(nSites, arma::fill::zeros);
-    diagNd0 = arma::dvec(nSites,arma::fill::zeros);
-    for (std::vector<unsigned int>::iterator it_u = pPartU.begin(); it_u < pPartU.end(); it_u++)
+    diagNd0 = arma::dvec(nSites, arma::fill::zeros);
+    for (unsigned int it= 0; it < nSites; it ++)
     {
-        diagNu0(*it_u) = 1.;
-    }
-    for (std::vector<unsigned int>::iterator it_d = pPartD.begin(); it_d < pPartD.end(); it_d++)
-    {
-        diagNd0(*it_d) = 1.;
+        diagNu0(it) = 1 * fhSystem->getInitialCondition_upSpin()[it];
+        diagNd0(it) = 1 * fhSystem->getInitialCondition_downSpin()[it];
+
+        rhou0_mean(it, it) = arma::cx_double(diagNu0(it) - 0.5, 0);
+        rhod0_mean(it, it) = arma::cx_double(diagNd0(it) - 0.5, 0);          
     }
 
-    arma::dmat emptyM = arma::dmat(nSites, nSites, arma::fill::zeros);
-    arma::dmat mu = arma::diagmat(diagNu0) - arma::dmat(nSites, nSites, arma::fill::eye)/2;
-    arma::dmat md = arma::diagmat(diagNd0) - arma::dmat(nSites, nSites, arma::fill::eye)/2;
-
-    rhou0_mean = arma::cx_dmat(mu, emptyM);
-    rhod0_mean = arma::cx_dmat(md, emptyM);
 
     sqrtNoiseVarianceMatrixU = arma::dmat(nSites, nSites, arma::fill::zeros);
     sqrtNoiseVarianceMatrixD = arma::dmat(nSites, nSites, arma::fill::zeros);
@@ -199,20 +195,24 @@ void FHfTWASolver::runSimulation( )
 
     arma::cx_drowvec E = EJ+ EU;
 
+printf("Writing fTWA results");
 
-    printf("n1u : \n");
-    arma::cx_dmat N1ut = Nu.col_as_mat(0);
-    arma::drowvec n1u = arma::real(N1ut.row(0));
-    (arma::real(n1u)).print();
-    printf("E : \n");
-    (arma::real(E)).print();
-        printf("EU : \n");
-    (arma::real(EU)).print();
-            printf("EJ : \n");
-    (arma::real(EJ)).print();
+    // Writing the results :
+    std::string folderName = fhSystem->getFolder();
+    std::string fileName = fhSystem->getName();
+    std::string fHFName = fileName.substr(0, fileName.size() - 4);
+    std::string fHFAdressName = fHFName + "_fTWA";
 
-                printf("Nu(0) : \n");
-    (arma::real(Nu.slice(0))).print();
+    ResultWriter results = ResultWriter(fHFAdressName, folderName);
+    results.newResults();
+    results.writeLine("t", timeLine);
+    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+    {
+        results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+    }
+    results.writeLineInReal("E_U", EU);
+    results.writeLineInReal("E_J", EJ);
+    results.writeLineInReal("E", E);
 
 }
 

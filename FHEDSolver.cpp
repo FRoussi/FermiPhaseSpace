@@ -448,7 +448,18 @@ void FHEDSolver::runSimulation()
     std::string folderName = fhSystem->getFolder();
     std::string fileName = fhSystem->getName();
     std::string fEDName = fileName.substr(0, fileName.size() - 4);
-    std::string fEDAdressName = fEDName + "_ED.txt";
+    std::string fEDAdressName = fEDName + "_ED";
+
+    ResultWriter results = ResultWriter(fEDAdressName, folderName);
+    results.newResults();
+    results.writeLine("t", timeLine);
+    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+    {
+        results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", niiu.row(iSite));
+    }
+    results.writeLine("E_U", EU);
+    results.writeLine("E_J", EJ);
+    results.writeLine("E", E);
 
     if (fhSystem->getFolder()!="")
     {

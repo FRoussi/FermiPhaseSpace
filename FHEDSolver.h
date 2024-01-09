@@ -7,6 +7,7 @@
 
 #include "FHSystem.h"
 #include "HermitianOperator.h"
+#include "ResultWriter.h"
 
 std::vector<std::vector<bool>> getCombinations(unsigned int n, unsigned int p, unsigned int max_n);
 unsigned int nChoosep(unsigned int n, unsigned int p);

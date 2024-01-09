@@ -6,6 +6,7 @@
 #include <armadillo>
 
 #include "FHSystem.h"
+#include "ResultWriter.h"
 
 
 
