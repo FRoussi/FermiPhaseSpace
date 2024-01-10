@@ -16,12 +16,13 @@ int main()
 {
 
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
+
    arma::arma_version ver;
    std::cout << "ARMA version: "<< ver.as_string() << std::endl;
 
-   std::cout << "OpenMP active, " << THREAD_NUM << " threads used on " << omp_get_max_threads() << " avalaible"<< std::endl;
-   omp_set_num_threads(THREAD_NUM);
+   std::cout << "OpenMP active, "  << THREAD_NUM << " threads used on " << omp_get_max_threads() << " avalaible"<< std::endl;
 
+   omp_set_num_threads(THREAD_NUM);
 
 
    std::string workFolder = "systemsFolder";

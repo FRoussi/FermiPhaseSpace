@@ -149,15 +149,14 @@ void FHfTWASolver::runSimulation( )
 // PARALLEL LOOP ON TRAJECTORIES
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
 {
+    // Local (in threads) versions of important variables :
     arma::cx_dcube rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dcube rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-
-
 
     arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
-    #pragma omp for 
+    #pragma omp loop 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
         // Noiseless initial rho matrices :

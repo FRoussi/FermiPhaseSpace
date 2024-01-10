@@ -38,7 +38,7 @@ void FHGPSRSolver::initiateSolver()
 
 }
 
-void FHGPSRSolver::step_Drift_RK2(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift)
+void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -55,7 +55,7 @@ void FHGPSRSolver::step_Drift_RK2(arma::cx_dmat * rhou, arma::cx_dmat* rhod, dou
     *drhod_Drift = drhod_dt * dt;
 }
 
-void FHGPSRSolver::step_Drift_RK4_38(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift)
+void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt_k1 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -90,7 +90,7 @@ void FHGPSRSolver::step_Drift_RK4_38(arma::cx_dmat * rhou, arma::cx_dmat* rhod, 
     *drhod_Drift = (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4)* dt/8;
 }
 
-void FHGPSRSolver::step_Diffusion(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff)
+void FHGPSRSolver::step_Diffusion(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff)
 {
     unsigned int nSites = fhSystem->getnSites();
 
@@ -105,6 +105,92 @@ void FHGPSRSolver::step_Diffusion(arma::cx_dmat * rhou, arma::cx_dmat* rhod, dou
 
     *drhou_Diff = sqrt_mjj * *rhou * sqrtU * W1 * rhou_H                + sqrt_pjj * rhou_H * W2 * *rhou ;
     *drhod_Diff = sqrt_mjj * *rhod * sqrtU * arma::conj(W1) * rhod_H    + sqrt_pjj * rhod_H * arma::conj(W2) * *rhod ;
+}
+
+void FHGPSRSolver::step_Diffusion_svn(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff)
+{
+    unsigned int nSites = fhSystem->getnSites();
+    unsigned int sizeMat = nSites * nSites ;
+
+    std::complex<double> ii(0,1); 
+    std::complex<double> cst =  std::sqrt(ii * std::complex<double>(1/2,0)) ;
+
+
+    arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - *rhou;
+    arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - *rhod;
+
+    arma::cx_dmat B11u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B12u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B21u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B22u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B11d = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B12d = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B21d = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B22d = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+
+    for (unsigned int l = 0 ; l < nSites ; l++)
+    {
+        for (unsigned int k = 0 ; k < nSites ; k++)
+        {
+            unsigned int lineIndex = l * nSites + k;
+            for (unsigned int p = 0 ; p < nSites ; p++)
+            {
+                B11u(lineIndex, p) =  (*rhou)(p,l)* rhou_H(k,p)  ;
+                B12u(lineIndex, p) = ii * (*rhou)(p,l)*rhou_H(k,p);
+                B21u(lineIndex, p) = ii * rhou_H(p,l)*(*rhou)(k,p) ;
+                B22u(lineIndex, p) = -  rhou_H(p,l)*(*rhou)(k,p)  ;
+                        
+                B11d(lineIndex, p) =  (*rhod)(p,l)*rhod_H(k,p)  ;
+                B12d(lineIndex, p) = - ii * (*rhod)(p,l)*rhod_H(k,p);
+                B21d(lineIndex, p) = ii * rhod_H(p,l)*(*rhod)(k,p) ;
+                B22d(lineIndex, p) =  rhod_H(p,l)*(*rhod)(k,p)  ;
+            }
+        }
+
+    }
+        
+    // B = | B11u  B12u  B21u  B22u  |
+    //     | B11d  B12d  B21d  B22d  | :
+    arma::cx_dmat B = arma::cx_dmat(2 * sizeMat, 4*nSites);
+    B.submat(0, 0, sizeMat, nSites) = B11u;
+    B.submat(0, nSites, sizeMat,  2*nSites) = B12u;
+    B.submat(0, 2*nSites, sizeMat,  3*nSites) = B21u;
+    B.submat(0, 3*nSites, sizeMat,  4*nSites) = B22u;
+    B.submat(sizeMat, 0, 2*sizeMat, nSites) = B11u;
+    B.submat(sizeMat, nSites, 2*sizeMat,  2*nSites) = B12u;
+    B.submat(sizeMat, 2*nSites, 2*sizeMat,  3*nSites) = B21u;
+    B.submat(sizeMat, 3*nSites, 2*sizeMat,  4*nSites) = B22u;
+
+    B = cst * B;
+
+    arma::cx_dmat D = B * B.st();
+    double D_norm = arma::norm(D);
+
+    arma::cx_dvec diagW1 = arma::cx_dvec(nSites, arma::fill::randn) * std::sqrt(dt);
+    arma::cx_dvec diagW2 = arma::cx_dvec(nSites, arma::fill::randn) * std::sqrt(dt);
+
+    arma::cx_dmat W1 = arma::diagmat(diagW1);
+    arma::cx_dmat W2 = arma::diagmat(diagW2);
+
+    *drhou_Diff = sqrt_mjj * *rhou * sqrtU * W1 * rhou_H                + sqrt_pjj * rhou_H * W2 * *rhou ;
+    *drhod_Diff = sqrt_mjj * *rhod * sqrtU * arma::conj(W1) * rhod_H    + sqrt_pjj * rhod_H * arma::conj(W2) * *rhod ;
+}
+
+arma::cx_dmat sqrtDecomposition(arma::cx_dmat D)
+{
+    unsigned int sizeD = D.n_rows;
+
+    arma::cx_dmat A = D.submat(0,sizeD/2, sizeD/2, sizeD);
+
+    arma::cx_dmat U;
+    arma::dvec s;
+    arma::cx_dmat V;
+
+    arma::svd(U, s, V, A);
+
+    arma::dvec sqrtS = arma::sqrt(s); 
+
+
 }
 
 void FHGPSRSolver::step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt)
