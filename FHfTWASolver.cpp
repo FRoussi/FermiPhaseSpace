@@ -156,7 +156,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
-    #pragma omp loop 
+    #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
         // Noiseless initial rho matrices :

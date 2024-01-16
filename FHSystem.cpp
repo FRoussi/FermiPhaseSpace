@@ -259,12 +259,12 @@ bool FHSystem::areNeighbour(int i, int j)
     return neighbourMatrix[i][j];
 }
 
-arma::cx_double FHSystem::getInteractionEnergy(int i, int j)
+std::complex<double> FHSystem::getInteractionEnergy(int i, int j)
 {
     return UMatrix(i,j);
 }
 
-arma::cx_double FHSystem::getTunnelingEnergy(int i, int j)
+std::complex<double> FHSystem::getTunnelingEnergy(int i, int j)
 {
     return JMatrix(i,j);
 }

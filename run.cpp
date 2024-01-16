@@ -22,6 +22,8 @@ int main()
 
    std::cout << "OpenMP active, "  << THREAD_NUM << " threads used on " << omp_get_max_threads() << " avalaible"<< std::endl;
 
+   std::cout << "Double precision = " << std::numeric_limits<double>::digits10 << std::endl;
+
    omp_set_num_threads(THREAD_NUM);
 
 

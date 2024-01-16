@@ -21,8 +21,8 @@ public:
 
     double getDistance(int i, int j);
     bool areNeighbour(int i, int j);
-    arma::cx_double getInteractionEnergy(int i, int j);
-    arma::cx_double getTunnelingEnergy(int i, int j);
+    std::complex<double> getInteractionEnergy(int i, int j);
+    std::complex<double> getTunnelingEnergy(int i, int j);
     arma::cx_dmat* getUMatrixPointer();
     arma::cx_dmat* getJMatrixPointer();
 
