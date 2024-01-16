@@ -409,13 +409,13 @@ std::complex<double> FHEDSolver::U_os_psil(unsigned int phi_l)
 
 void FHEDSolver::step()
 {
-    std::complex<double> alpha = std::complex<double>(0, -1);
-    // this->psi =  this->psi + alpha *  this->psi;
+    //std::complex<double> alpha = std::complex<double>(0, -1);
 
-    // arma::cx_dmat a = arma::expmat(this->Hdense);
-    //this->psi = arma::expmat(alpha * Hdense) * this->psi;
+    //this->psi = expmv(this->dt, alpha * H, this->psi);
 
-    this->psi = expmv(this->dt, alpha * H, this->psi);
+    std::complex<double> alpha = std::complex<double>(0, -this->dt); // <- alpha = -i dt / h
+
+    this->psi = expmv(alpha, H, this->psi);
 }
 
 void FHEDSolver::runSimulation()
@@ -618,7 +618,7 @@ unsigned int getParticleNumberBetween(std::vector<bool> posP, unsigned int from,
 }
 
 
-arma::cx_dvec expmv(double t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, unsigned int m1 )
+arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, unsigned int m1 )
 {
     unsigned int n = A.n_rows;
     unsigned int m = std::min(n, m1);
@@ -648,7 +648,7 @@ arma::cx_dvec expmv(double t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, u
     double beta = normv;
     double fact = std::pow((m+1)/std::exp(1), m+1) * std::sqrt(2*M_PI*(m+1));
     t_new = (1/anorm) * pow((fact * tol) / 4*beta*anorm, xm);     
-    double sgn = t/std::abs(t);
+    std::complex<double> sgn = t/std::abs(t);
     nstep = 0;
 
     arma::cx_dvec w = v;
@@ -662,7 +662,7 @@ arma::cx_dvec expmv(double t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, u
         arma::cx_dmat H = arma::cx_dmat(m+2, m+2);
         arma::cx_dmat F;
 
-        V.col(1) = (1/beta) * w;
+        V.col(0) = (1/beta) * w;
         for (unsigned int j = 0; j<m; j++)
         {
             arma::cx_dvec p = A * V.col(j);
@@ -685,14 +685,14 @@ arma::cx_dvec expmv(double t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, u
 
         if (k1 != 0)
         {
-            H(m+2, m+1) = 1;
-            avnorm = arma::norm(A*V.col(m+1), 2);
+            H(m+1, m) = 1;
+            avnorm = arma::norm(A*V.col(m), 2);
         }
         unsigned int ireject = 0;
         while(ireject < mxrej)
         {
             mx = mb + k1;
-            F = arma::expmat(sgn * t_step * H.submat(0, mx-1, 0, mx-1));
+            F = arma::expmat(sgn * t_step * H.submat(0, 0, mx-1, mx-1));
             if (k1 ==0)
             {
                 err_loc = btol;
@@ -700,8 +700,8 @@ arma::cx_dvec expmv(double t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, u
             }
             else
             {
-                phi1 = std::abs(beta * F(m+1, 1));
-                phi2 = std::abs(beta * F(m+2,1) * avnorm);
+                phi1 = std::abs(beta * F(m, 0));
+                phi2 = std::abs(beta * F(m+1,0) * avnorm);
                 if (phi1 > 10*phi2)
                 {
                     err_loc = phi2;

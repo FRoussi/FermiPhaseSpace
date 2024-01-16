@@ -203,7 +203,7 @@ void FHHFSolver::runSimulation( )
     std::string folderName = fhSystem->getFolder();
     std::string fileName = fhSystem->getName();
     std::string fHFName = fileName.substr(0, fileName.size() - 4);
-    std::string fHFAdressName = fHFName + "_FH";
+    std::string fHFAdressName = fHFName + "_HF";
 
     ResultWriter results = ResultWriter(fHFAdressName, folderName);
     results.newResults();
