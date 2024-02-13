@@ -52,7 +52,7 @@ private:
     std::string systemName;
     std::string systemFolder;
 
-    void initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions );
+    void initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
     void computeMatrices();
 
 

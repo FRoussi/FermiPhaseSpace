@@ -66,23 +66,23 @@ void FHfTWASolver::initiateSolver()
 
 }
 
-void FHfTWASolver::step_RK2(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt)
+void FHfTWASolver::step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
     arma::cx_dmat drhou_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat drhod_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
-    derivative(rhou, rhod, &drhou_dt, &drhod_dt);
+    derivative(rhou, rhod, drhou_dt, drhod_dt);
 
-    arma::cx_dmat rhou_mid = *rhou + drhou_dt * dt/2 ;
-    arma::cx_dmat rhod_mid = *rhod + drhod_dt * dt/2 ;
+    arma::cx_dmat rhou_mid = rhou + drhou_dt * dt/2 ;
+    arma::cx_dmat rhod_mid = rhod + drhod_dt * dt/2 ;
 
-    derivative(&rhou_mid, &rhod_mid, &drhou_dt, &drhod_dt);
+    derivative(rhou_mid, rhod_mid, drhou_dt, drhod_dt);
 
-    *rhou = *rhou + drhou_dt * dt ;
-    *rhod = *rhod + drhod_dt * dt ;
+    rhou = rhou + drhou_dt * dt ;
+    rhod = rhod + drhod_dt * dt ;
 }
 
-void FHfTWASolver::step_RK4_38(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt)
+void FHfTWASolver::step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
    unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt_k1 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -98,34 +98,34 @@ void FHfTWASolver::step_RK4_38(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double
     arma::cx_dmat drhod_dt_k4 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 // k1 :
-    derivative(rhou, rhod, &drhou_dt_k1, &drhod_dt_k1);
+    derivative(rhou, rhod, drhou_dt_k1, drhod_dt_k1);
 // k2 : 1/3   |   1/3
-    arma::cx_dmat rhou_k = *rhou + drhou_dt_k1 * dt/3 ;
-    arma::cx_dmat rhod_k = *rhod + drhod_dt_k1 * dt/3 ;
-    derivative(&rhou_k, &rhod_k, &drhou_dt_k2, &drhod_dt_k2);
+    arma::cx_dmat rhou_k = rhou + drhou_dt_k1 * dt/3 ;
+    arma::cx_dmat rhod_k = rhod + drhod_dt_k1 * dt/3 ;
+    derivative(rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
 // k3 : 2/3   |   -1/3    1
-    rhou_k = *rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
-    rhod_k = *rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
-    derivative(&rhou_k, &rhod_k, &drhou_dt_k3, &drhod_dt_k3);
+    rhou_k = rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
+    rhod_k = rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
+    derivative(rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
 // k4 : 1     |    1      -1     1
-    rhou_k = *rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
-    rhod_k = *rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
-    derivative(&rhou_k, &rhod_k, &drhou_dt_k4, &drhod_dt_k4);
+    rhou_k = rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
+    rhod_k = rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
+    derivative(rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
 
-    *rhou = *rhou + (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4) * dt / 8;
-    *rhod = *rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * dt / 8;
+    rhou = rhou + (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4) * dt / 8;
+    rhod = rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * dt / 8;
 }
 
-void FHfTWASolver::derivative(const arma::cx_dmat* rhou, const arma::cx_dmat* rhod, arma::cx_dmat* drhou_dt, arma::cx_dmat* drhod_dt)
+void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
 
-    arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou->n_rows, arma::fill::ones); 
+    arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou.n_rows, arma::fill::ones); 
 
-    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * (rhod->diag() + half));
-    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * (rhou->diag() + half));
+    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * (rhod.diag() + half));
+    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * (rhou.diag() + half));
 
-    *drhou_dt = - jj * ( *rhou * DeltaUp - DeltaUp * *rhou) ;
-    *drhod_dt = - jj * ( *rhod * DeltaDo - DeltaDo * *rhod) ;
+    drhou_dt = - jj * ( rhou * DeltaUp - DeltaUp * rhou) ;
+    drhod_dt = - jj * ( rhod * DeltaDo - DeltaDo * rhod) ;
 }
 
 
@@ -187,7 +187,7 @@ void FHfTWASolver::runSimulation( )
             rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
             {
-                step_RK4_38(&rhou, &rhod, dt/nStepsPerTimePoint);
+                step_RK4_38(rhou, rhod, dt/nStepsPerTimePoint);
             }
         }
 

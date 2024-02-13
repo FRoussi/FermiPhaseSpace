@@ -38,24 +38,24 @@ void FHGPSRSolver::initiateSolver()
 
 }
 
-void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift)
+void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     arma::cx_dmat drhod_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
-    derivative(rhou, rhod, &drhou_dt, &drhod_dt);
+    derivative(rhou, rhod, drhou_dt, drhod_dt);
 
-    arma::cx_dmat rhou_mid = *rhou + drhou_dt * dt/2 ;
-    arma::cx_dmat rhod_mid = *rhod + drhod_dt * dt/2 ;
+    arma::cx_dmat rhou_mid = rhou + drhou_dt * dt/2 ;
+    arma::cx_dmat rhod_mid = rhod + drhod_dt * dt/2 ;
 
-    derivative(&rhou_mid, &rhod_mid, &drhou_dt, &drhou_dt);
+    derivative(rhou_mid, rhod_mid, drhou_dt, drhou_dt);
 
-    *drhou_Drift = drhou_dt * dt;
-    *drhod_Drift = drhod_dt * dt;
+    drhou_Drift = drhou_dt * dt;
+    drhod_Drift = drhod_dt * dt;
 }
 
-void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift)
+void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt_k1 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -71,31 +71,31 @@ void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat * rhou, const arma::cx_
     arma::cx_dmat drhod_dt_k4 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 // k1 :
-    derivative(rhou, rhod, &drhou_dt_k1, &drhod_dt_k1);
+    derivative(rhou, rhod, drhou_dt_k1, drhod_dt_k1);
 // k2 : 1/3   |   1/3
-    arma::cx_dmat rhou_k = *rhou + drhou_dt_k1 * dt/3 ;
-    arma::cx_dmat rhod_k = *rhod + drhod_dt_k1 * dt/3 ;
-    derivative(&rhou_k, &rhod_k, &drhou_dt_k2, &drhod_dt_k2);
+    arma::cx_dmat rhou_k = rhou + drhou_dt_k1 * dt/3 ;
+    arma::cx_dmat rhod_k = rhod + drhod_dt_k1 * dt/3 ;
+    derivative(rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
 // k3 : 2/3   |   -1/3    1
-    rhou_k = *rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
-    rhod_k = *rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
-    derivative(&rhou_k, &rhod_k, &drhou_dt_k3, &drhod_dt_k3);
+    rhou_k = rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
+    rhod_k = rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
+    derivative(rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
 // k4 : 1     |    1      -1     1
-    rhou_k = *rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
-    rhod_k = *rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
-    derivative(&rhou_k, &rhod_k, &drhou_dt_k4, &drhod_dt_k4);
+    rhou_k = rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
+    rhod_k = rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
+    derivative(rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
 
 
-    *drhou_Drift = (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4 )* dt/8;
-    *drhod_Drift = (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4)* dt/8;
+    drhou_Drift = (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4 )* dt/8;
+    drhod_Drift = (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4)* dt/8;
 }
 
-void FHGPSRSolver::step_Diffusion(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double U0, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff)
+void FHGPSRSolver::step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff)
 {
     unsigned int nSites = fhSystem->getnSites();
 
-    arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - *rhou;
-    arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - *rhod;
+    arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhou;
+    arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhod;
 
     arma::cx_dvec diagW1 = arma::cx_dvec(nSites, arma::fill::randn) * std::sqrt(dt);
     arma::cx_dvec diagW2 = arma::cx_dvec(nSites, arma::fill::randn) * std::sqrt(dt);
@@ -103,14 +103,14 @@ void FHGPSRSolver::step_Diffusion(const arma::cx_dmat * rhou, const arma::cx_dma
     arma::cx_dmat W1 = arma::diagmat(diagW1);
     arma::cx_dmat W2 = arma::diagmat(diagW2);
 
-    *drhou_Diff = sqrt_mjj * *rhou * sqrtU * W1 * rhou_H                + sqrt_pjj * rhou_H * W2 * *rhou ;
-    *drhod_Diff = sqrt_mjj * *rhod * sqrtU * arma::conj(W1) * rhod_H    + sqrt_pjj * rhod_H * arma::conj(W2) * *rhod ;
+    drhou_Diff = sqrt_mjj * rhou * sqrtU * W1 * rhou_H                + sqrt_pjj * rhou_H * W2 * rhou ;
+    drhod_Diff = sqrt_mjj * rhod * sqrtU * arma::conj(W1) * rhod_H    + sqrt_pjj * rhod_H * arma::conj(W2) * rhod ;
 }
 
-void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double U0, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff)
+void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff)
 {
 
-    unsigned int nSites = rhou->n_rows;
+    unsigned int nSites = rhou.n_rows;
 
     arma::cx_dmat D =diffusionMatrix(rhou, rhod, U0);
     double D_norm = arma::norm(D);
@@ -121,23 +121,23 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat * rhou, const arma::cx
     arma::cx_dvec BW = B*W_m;
     arma::cx_dmat BW_u =BW.subvec(0,nSites^2-1);
     arma::cx_dmat BW_d =BW.subvec(nSites^2, 2*nSites^2-1);
-    *drhou_Diff =  BW_u.reshape(nSites, nSites);
-    *drhod_Diff =  BW_d.reshape(nSites, nSites);
+    drhou_Diff =  BW_u.reshape(nSites, nSites);
+    drhod_Diff =  BW_d.reshape(nSites, nSites);
 
 }
 
 
-arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double U0)
+arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0)
 {
    
-    unsigned int nSites = rhou->n_rows;
+    unsigned int nSites = rhou.n_rows;
     unsigned int sizeMat = nSites * nSites ;
 
     std::complex<double> cst = std::sqrt(0.5 * jj * U0 ) ;
 
 
-    arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - *rhou;
-    arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - *rhod;
+    arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhou;
+    arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhod;
 
     arma::cx_dmat B11u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
     arma::cx_dmat B12u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
@@ -155,15 +155,15 @@ arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat * rhou, const ar
             unsigned int lineIndex = l * nSites + k;
             for (unsigned int p = 0 ; p < nSites ; p++)
             {
-                B11u(lineIndex, p) =  (*rhou)(p,l)* rhou_H(k,p)  ;
-                B12u(lineIndex, p) = jj * (*rhou)(p,l)*rhou_H(k,p);
-                B21u(lineIndex, p) = jj * rhou_H(p,l)*(*rhou)(k,p) ;
-                B22u(lineIndex, p) = -  rhou_H(p,l)*(*rhou)(k,p)  ;
+                B11u(lineIndex, p) =  (rhou)(p,l)* rhou_H(k,p)  ;
+                B12u(lineIndex, p) = jj * (rhou)(p,l)*rhou_H(k,p);
+                B21u(lineIndex, p) = jj * rhou_H(p,l)*(rhou)(k,p) ;
+                B22u(lineIndex, p) = -  rhou_H(p,l)*(rhou)(k,p)  ;
                         
-                B11d(lineIndex, p) =  (*rhod)(p,l)*rhod_H(k,p)  ;
-                B12d(lineIndex, p) = - jj * (*rhod)(p,l)*rhod_H(k,p);
-                B21d(lineIndex, p) = jj * rhod_H(p,l)*(*rhod)(k,p) ;
-                B22d(lineIndex, p) =  rhod_H(p,l)*(*rhod)(k,p)  ;
+                B11d(lineIndex, p) =  (rhod)(p,l)*rhod_H(k,p)  ;
+                B12d(lineIndex, p) = - jj * (rhod)(p,l)*rhod_H(k,p);
+                B21d(lineIndex, p) = jj * rhod_H(p,l)*(rhod)(k,p) ;
+                B22d(lineIndex, p) =  rhod_H(p,l)*(rhod)(k,p)  ;
             }
         }
 
@@ -187,7 +187,7 @@ arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat * rhou, const ar
 
 }
 
-arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat D)
+arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
 {
     unsigned int sizeD = D.n_rows;
 
@@ -217,7 +217,7 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat D)
 
 }
 
-void FHGPSRSolver::step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt)
+void FHGPSRSolver::step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
     arma::cx_dmat drhou_Drift = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat drhod_Drift = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -225,13 +225,13 @@ void FHGPSRSolver::step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt)
     arma::cx_dmat drhou_Diff = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat drhod_Diff = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
-    step_Drift_RK4_38(rhou, rhod, dt, &drhou_Drift, &drhod_Drift);
+    step_Drift_RK4_38(rhou, rhod, dt, drhou_Drift, drhod_Drift);
 
     double U0 = std::real( fhSystem->getInteractionEnergy(0,0));
-    step_Diffusion_svd(rhou, rhod, U0, dt, &drhou_Diff, &drhod_Diff);
+    step_Diffusion_svd(rhou, rhod, U0, dt, drhou_Diff, drhod_Diff);
 
-    *rhou = *rhou + drhou_Drift + drhou_Diff;
-    *rhod = *rhod + drhod_Drift + drhod_Diff;
+    rhou = rhou + drhou_Drift + drhou_Diff;
+    rhod = rhod + drhod_Drift + drhod_Diff;
 
 }
 
@@ -276,7 +276,7 @@ void FHGPSRSolver::runSimulation( )
             rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;
             rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();
             rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
-            step(&rhou, &rhod, dt);
+            step(rhou, rhod, dt);
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s++)
             {
                 
@@ -332,13 +332,13 @@ void FHGPSRSolver::runSimulation( )
 
 }
 
-void FHGPSRSolver::derivative(const arma::cx_dmat* rhou, const arma::cx_dmat* rhod, arma::cx_dmat* drhou_dt, arma::cx_dmat* drhod_dt)
+void FHGPSRSolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
-    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * rhod->diag());
-    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * rhou->diag());
+    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * rhod.diag());
+    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * rhou.diag());
 
-    *drhou_dt = - jj * ( *rhou * DeltaUp - DeltaUp * *rhou) ;
-    *drhod_dt = - jj * ( *rhod * DeltaDo - DeltaDo * *rhod) ;
+    drhou_dt = - jj * (rhou * DeltaUp - DeltaUp * rhou) ;
+    drhod_dt = - jj * (rhod * DeltaDo - DeltaDo * rhod) ;
 }
 
 

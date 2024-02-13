@@ -300,7 +300,7 @@ std::vector<bool> FHSystem::getInitialCondition_downSpin()
 }
 
 
-void FHSystem::initiateSystem(arma::dmat positions, std::vector<std::vector<unsigned int>> initConditions )
+void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions )
 {
 
     nDimensions = positions.n_rows;

@@ -2,7 +2,7 @@
 
 
 
-ResultWriter::ResultWriter(const std::string & fileName, const std::string & folderName)
+ResultWriter::ResultWriter(const std::string& fileName, const std::string& folderName)
 {
 
     resultFileName = fileName + ".txt";

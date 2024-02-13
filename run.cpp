@@ -17,6 +17,7 @@ int main()
 
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
 
+
    arma::arma_version ver;
    std::cout << "ARMA version: "<< ver.as_string() << std::endl;
 

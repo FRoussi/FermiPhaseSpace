@@ -22,13 +22,13 @@ public:
     void setGPSRParameters(unsigned int nTraj);
     void initiateSolver();
 
-    void step_Drift_RK2(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift);
-    void step_Drift_RK4_38(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double dt, arma::cx_dmat * drhou_Drift, arma::cx_dmat* drhod_Drift);
-    void step_Diffusion(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double U0, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff);
-    void step_Diffusion_svd(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double U0, double dt, arma::cx_dmat * drhou_Diff, arma::cx_dmat* drhod_Diff);
-    arma::cx_dmat diffusionMatrix(const arma::cx_dmat * rhou, const arma::cx_dmat* rhod, double U0);
-    arma::cx_dmat sqrtDecomposition(arma::cx_dmat D);
-    void step(arma::cx_dmat * rhou, arma::cx_dmat* rhod, double dt);
+    void step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
+    void step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
+    void step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
+    void step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
+    arma::cx_dmat diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
+    arma::cx_dmat sqrtDecomposition(arma::cx_dmat& D);
+    void step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
     void runSimulation();
 
     const std::complex<double> jj = arma::cx_double(0,1);
@@ -75,7 +75,7 @@ private:
 // Usefull things :
   arma::cx_dmat sqrtU;
 
-  void derivative(const arma::cx_dmat* nut, const arma::cx_dmat* ndt, arma::cx_dmat* dnut_dt, arma::cx_dmat* dndt_dt);
+  void derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
 
 
 

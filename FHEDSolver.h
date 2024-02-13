@@ -7,8 +7,10 @@
 //#include <cmath>
 
 #include "FHSystem.h"
-#include "HermitianOperator.h"
+
+
 #include "ResultWriter.h"
+
 
 #define M_PI 3.14159265358979323846
 
@@ -41,29 +43,29 @@ public:
 
 private:
 // Fermi Hubbard System  :
-    FHSystem* fhSystem;
+    FHSystem* fhSystem;                                             //<- Pointer to the Fermi-Hubbard model
 
 // Time parameter
-    double tMax;
-    double dt;
-    unsigned int nStepsPerTimePoint;
-    unsigned int nTimePoints;
+    double tMax;                                                    //<- Maximum time extend of the simulation 
+    double dt;                                                      //<- Time step of calculated observables        
+    unsigned int nStepsPerTimePoint;                                //<- Number of simulated time steps between the calculation of observable
+    unsigned int nTimePoints;                                       //<- Number of time steps (=tMax/dt)
 // Other parameters :
-    unsigned int nPartU;
-    unsigned int nPartD;
-    unsigned int basisSizeSpinUp;
-    unsigned int basisSizeSpinDown;
-    unsigned int basisSize;
-    std::vector<std::vector<unsigned int>> basisArray;
+    unsigned int nPartU;                                            //<- Number of up-spin fermions
+    unsigned int nPartD;                                            //<- Number of down-spin fermions
+    unsigned int basisSizeSpinUp;                                   //<- Size of the basis of up-spin fermions (nPartU among nSites)
+    unsigned int basisSizeSpinDown;                                 //<- Size of the basis of down-spin fermions (nPartD among nSites)
+    unsigned int basisSize;                                         //<- Size of the Hilbert space basis  (basisSizeSpinUp X basisSizeSpinDown)
+    std::vector<std::vector<unsigned int>> basisArray;              
     std::vector<std::vector<bool>> c_pu;
     std::vector<std::vector<bool>> c_pd;
 // Initial conditions :
     std::vector<bool> posPartU;
     std::vector<bool> posPartD;
-    arma::cx_dvec psi_0;
+    arma::cx_dvec psi_0;                                            //<- Initial wave function
 
 // Current Wave function :
-    arma::cx_dvec psi;
+    arma::cx_dvec psi;                                              //<- Current wave function
 // operators :
     arma::sp_cx_dmat H_U;
     arma::sp_cx_dmat H_J;
@@ -75,19 +77,19 @@ private:
     std::vector<std::vector<arma::sp_cx_dmat>> NijuSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijdSet;
 
-    unsigned int getBasisIndex(std::vector<bool> posPU, std::vector<bool> posPD );
+    unsigned int getBasisIndex(std::vector<bool>& posPU, std::vector<bool>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
 
 
-    std::complex<double> U_os_psil(unsigned int phi_l);
+    std::complex<double> U_os_psil(unsigned int phi_l);                                     //<- Compute the interation energy of the basis vector 'phi_l'
 
 
-    void buildHamiltonian_U();
-    void buildHamiltonian_J();
-    void buildPairOperators();
-    arma::sp_cx_dmat numberOperatorSpinUp(unsigned int iSite);
-    arma::sp_cx_dmat numberOperatorSpinDown(unsigned int iSite);
-    arma::sp_cx_dmat tunnelingOperatorSpinUp(unsigned int iSite, unsigned int jSite);
-    arma::sp_cx_dmat tunnelingOperatorSpinDown(unsigned int iSite, unsigned int jSite);
+    void buildHamiltonian_U();                                                              //<- Build and store the operator "Interaction part of the Hamiltonian"
+    void buildHamiltonian_J();                                                              //<- Build and store the operator "Tunneling part of the Hamiltonian"
+    void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
+    arma::sp_cx_dmat numberOperatorSpinUp(unsigned int iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
+    arma::sp_cx_dmat numberOperatorSpinDown(unsigned int iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
+    arma::sp_cx_dmat tunnelingOperatorSpinUp(unsigned int iSite, unsigned int jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
+    arma::sp_cx_dmat tunnelingOperatorSpinDown(unsigned int iSite, unsigned int jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
 
 };
 

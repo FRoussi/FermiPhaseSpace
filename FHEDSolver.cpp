@@ -357,7 +357,7 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(unsigned int iSite, unsig
     return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
 }
 
-unsigned int FHEDSolver::getBasisIndex(std::vector<bool> posPU, std::vector<bool> posPD)
+unsigned int FHEDSolver::getBasisIndex(std::vector<bool>& posPU, std::vector<bool>& posPD)
 {
     unsigned int lu = 0;
     bool index1Found = false;
