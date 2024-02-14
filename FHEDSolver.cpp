@@ -3,7 +3,16 @@
 FHEDSolver::FHEDSolver(FHSystem *fhS)
 {
     fhSystem = fhS;
+    writeResults = false;
 }
+
+void FHEDSolver::setResultFile(std::string wN, std::string fN)
+{
+    workName = wN;
+    folderName = fN;
+    writeResults = true;
+}
+
 
 void FHEDSolver::setTimeParameters(double t_max, double d_t, unsigned int nPerTS)
 {
@@ -140,90 +149,6 @@ void FHEDSolver::buildHamiltonian_J()
     }
 
 }
-/*
-    // Up-spin particle hopps :
-    unsigned int halhMatSizeUp = floor(pow(basisSizeSpinUp, 2) / 2);
-    arma::umat locationsUp = arma::umat(2, halhMatSizeUp, arma::fill::zeros);
-    arma::cx_drowvec valuesUp = arma::cx_drowvec(halhMatSizeUp, arma::fill::zeros);
-
-    for (unsigned int l = 0; l < basisSizeSpinUp; l++)
-    {
-        unsigned int index = 0;
-        for (unsigned int m = l + 1; m < basisSizeSpinUp; m++) // (l+1):upSpinBSize: # down spin is the same : m_d=l_d
-        {                                                      // m0 = l_u*downSpinBSize + l_d = l + downSpinBSize
-            unsigned int iSiteFrom = 0;
-            unsigned int iSiteTo = 0;
-            bool yn = canHopHalf(c_pu[l], c_pu[m], fhSystem->getnSites(), &iSiteFrom, &iSiteTo);
-            if (yn)
-            {
-                locationsUp(0, index) = iSiteFrom;
-                locationsUp(1, index) = iSiteTo;
-                valuesUp(index) = fhSystem->getTunnelingEnergy(iSiteFrom, iSiteTo);
-                index++;
-            }
-        }
-    }
-
-    arma::sp_cx_dmat Hopp_spinU = arma::sp_cx_dmat(true, locationsUp, valuesUp, basisSizeSpinUp, basisSizeSpinUp);
-
-    // Down-spin particles hopps :
-    unsigned int halhMatSizeDown = floor(pow(basisSizeSpinDown, 2) / 2);
-    arma::umat locationsDown = arma::umat(2, halhMatSizeDown, arma::fill::zeros);
-    arma::cx_drowvec valuesDown = arma::cx_drowvec(halhMatSizeDown, arma::fill::zeros);
-
-    for (unsigned int l = 0; l < basisSizeSpinDown; l++)
-    {
-        unsigned int index = 0;
-        for (unsigned int m = l + 1; m < basisSizeSpinDown; m++)
-        {
-            unsigned int iSiteFrom = 0;
-            unsigned int iSiteTo = 0;
-            bool yn = canHopHalf(c_pd[l], c_pd[m], fhSystem->getnSites(), &iSiteFrom, &iSiteTo);
-            if (yn)
-            {
-                locationsDown(0, index) = iSiteFrom;
-                locationsDown(1, index) = iSiteTo;
-                valuesDown(index) = fhSystem->getTunnelingEnergy(iSiteFrom, iSiteTo);
-                index++;
-            }
-        }
-    }
-    arma::sp_cx_dmat Hopp_spinD = arma::sp_cx_dmat(true, locationsDown, valuesDown, basisSizeSpinDown, basisSizeSpinDown);
-
-    // Fusion of the two :
-    unsigned int MatSize = floor(pow(basisSize, 2) / 2);
-    arma::umat locations = arma::umat(2, MatSize, arma::fill::zeros);
-    arma::cx_drowvec values = arma::cx_drowvec(MatSize, arma::fill::zeros);
-
-    unsigned index = 0;
-    for (unsigned int l_part_u = 0; l_part_u < basisSizeSpinUp; l_part_u++)
-    {
-        unsigned int l_u = l_part_u * basisSizeSpinDown;
-        for (unsigned int id = 0; id < basisSizeSpinUp; id++)
-        {
-            locations(0, index) = locationsUp(0, id) + l_u;
-            locations(1, index) = locationsUp(1, id) + l_u;
-            values(index) = valuesUp(id);
-            index++;
-        }
-    }
-
-    for (unsigned int l_part_d = 0; l_part_d < basisSizeSpinDown; l_part_d++)
-    {
-        for (unsigned int id = 0; id < basisSizeSpinDown; id++)
-        {
-            locations(0, index) = locationsDown(0, id) * basisSizeSpinDown + l_part_d;
-            locations(1, index) = locationsDown(1, id) * basisSizeSpinDown + l_part_d;
-            values(index) = valuesDown(id);
-            index++;
-        }
-    }
-    arma::sp_cx_dmat H_triU = arma::sp_cx_dmat(true, locations, values, basisSize, basisSize);
-
-
-   H_J = H_triU + H_triU.st();
-   */
-
 
 
 void FHEDSolver::buildHamiltonian()
@@ -448,21 +373,20 @@ void FHEDSolver::runSimulation()
     
 
     // Writing the results :
-    std::string folderName = fhSystem->getFolder();
-    std::string fileName = fhSystem->getName();
-    std::string fEDName = fileName.substr(0, fileName.size() - 4);
-    std::string fEDAdressName = fEDName + "_ED";
-
-    ResultWriter results = ResultWriter(fEDAdressName, folderName);
-    results.newResults();
-    results.writeLine("t", timeLine);
-    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+    if (writeResults)
     {
-        results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", niiu.row(iSite));
+        ResultWriter results = ResultWriter(workName, folderName);
+        results.newResults();
+        results.writeLine("t", timeLine);
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", niiu.row(iSite));
+        }
+        results.writeLine("E_U", EU);
+        results.writeLine("E_J", EJ);
+        results.writeLine("E", E);
     }
-    results.writeLine("E_U", EU);
-    results.writeLine("E_J", EJ);
-    results.writeLine("E", E);
+
 
     
 

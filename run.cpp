@@ -117,6 +117,7 @@ int main()
          
          printf("-- ED dynamic \n");
          FHEDSolver edSolver = FHEDSolver(&fhSystem);
+         edSolver.setResultFile(work + "_ED", workFolder);
          edSolver.initiateSolver();
          edSolver.setTimeParameters(edParameters[0], edParameters[1], edParameters[2]);
          edSolver.runSimulation();
@@ -130,6 +131,7 @@ int main()
          
          printf("-- HF dynamic \n");
          FHHFSolver hfSolver = FHHFSolver(&fhSystem);
+         hfSolver.setResultFile(work + "_HF", workFolder);
          hfSolver.initiateSolver();
          hfSolver.setTimeParameters(hfParameters[0], hfParameters[1], hfParameters[2]);
          hfSolver.runSimulation();
@@ -143,6 +145,7 @@ int main()
          
          printf("-- fTWA dynamic \n");
          FHfTWASolver ftwaSolver = FHfTWASolver(&fhSystem);
+         ftwaSolver.setResultFile(work + "_fTWA", workFolder);
          ftwaSolver.initiateSolver();
          ftwaSolver.setTimeParameters(ftwaParameters[0], ftwaParameters[1], ftwaParameters[2]);
          ftwaSolver.setfTWAParameters(ftwaParameters[3]);
@@ -157,6 +160,7 @@ int main()
          
          printf("-- GPSR dynamic \n");
          FHGPSRSolver gpsrSolver = FHGPSRSolver(&fhSystem);
+         gpsrSolver.setResultFile(work + "_GPSR", workFolder);
          gpsrSolver.initiateSolver();
          gpsrSolver.setTimeParameters(gpsrParameters[0], gpsrParameters[1], gpsrParameters[2]);
          gpsrSolver.setGPSRParameters(gpsrParameters[3]);

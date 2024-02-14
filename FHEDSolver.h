@@ -29,6 +29,7 @@ class FHEDSolver
 public:
     FHEDSolver(FHSystem* fhSystem);
 
+    void setResultFile(std::string workName, std::string folderNameName);
     void setTimeParameters(double t_max, double dt, unsigned int nPerTS);
 
     void initiateSolver();
@@ -44,6 +45,11 @@ public:
 private:
 // Fermi Hubbard System  :
     FHSystem* fhSystem;                                             //<- Pointer to the Fermi-Hubbard model
+
+// results in :
+    bool writeResults;
+    std::string workName;                                           //<- A name for the work, for the results file
+    std::string folderName;                                         //<- A name for the work folder, for the results file
 
 // Time parameter
     double tMax;                                                    //<- Maximum time extend of the simulation 

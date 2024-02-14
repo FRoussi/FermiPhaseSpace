@@ -8,6 +8,12 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     J = fhSystem->getJMatrixPointer();
 }
 
+void FHHFSolver::setResultFile(std::string wN, std::string fN)
+{
+    workName = wN;
+    folderName = fN;
+    writeResults = true;
+}
 
 
 void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
@@ -200,21 +206,19 @@ void FHHFSolver::runSimulation( )
 
 
        // Writing the results :
-    std::string folderName = fhSystem->getFolder();
-    std::string fileName = fhSystem->getName();
-    std::string fHFName = fileName.substr(0, fileName.size() - 4);
-    std::string fHFAdressName = fHFName + "_HF";
-
-    ResultWriter results = ResultWriter(fHFAdressName, folderName);
-    results.newResults();
-    results.writeLine("t", timeLine);
-    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+    if (writeResults)
     {
-        results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
+        ResultWriter results = ResultWriter(workName, folderName);
+        results.newResults();
+        results.writeLine("t", timeLine);
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
+        }
+        results.writeLineInReal("E_U", EU);
+        results.writeLineInReal("E_J", EJ);
+        results.writeLineInReal("E", E);
     }
-    results.writeLineInReal("E_U", EU);
-    results.writeLineInReal("E_J", EJ);
-    results.writeLineInReal("E", E);
 
 
     

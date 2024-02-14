@@ -14,6 +14,14 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS)
     J = fhSystem->getJMatrixPointer();
 }
 
+void FHfTWASolver::setResultFile(std::string wN, std::string fN)
+{
+    workName = wN;
+    folderName = fN;
+    writeResults = true;
+}
+
+
 void FHfTWASolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
 {
     this->tMax = t_max;
@@ -177,17 +185,19 @@ void FHfTWASolver::runSimulation( )
             }
         }
 
-        // We compute the trajectory dynamic and add up the diagnoal to the result
+        // We compute the trajectory dynamic and add up the diagonal to the result
         for (unsigned int t = 0;  t<nTimePoints; t++)
-        {
-            timeLine[t] = t*dt;          
-            rhou_t_loc.slice(t) = rhou_t_loc.slice(t) + rhou;
-            rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;
-            rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();
-            rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
+        {   
+            // We first store the density in the thread-local variables  
+            timeLine[t] = t*dt;                                     //<- time line, stored too many times. To Fix ?
+            rhou_t_loc.slice(t) = rhou_t_loc.slice(t) + rhou;       //<- Up-spin density matrix
+            rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;       //<- Down-spin density matrix
+            rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
+            rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
+            // We do 'nStepsPerTimePoint' simulation steps
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
             {
-                step_RK4_38(rhou, rhod, dt/nStepsPerTimePoint);
+                step_RK4_38(rhou, rhod, dt/nStepsPerTimePoint);     //<- RK4 integrator chosen
             }
         }
 
@@ -195,6 +205,7 @@ void FHfTWASolver::runSimulation( )
         printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());       
     }
 
+    // We add up all thread-local variables into the global ones :
     #pragma omp critical
     {
         rhou_t +=rhou_t_loc;
@@ -229,22 +240,19 @@ void FHfTWASolver::runSimulation( )
     arma::cx_drowvec E = EJ+ EU;
 
     // Writing the results :
-    std::string folderName = fhSystem->getFolder();
-    std::string fileName = fhSystem->getName();
-    std::string fHFName = fileName.substr(0, fileName.size() - 4);
-    std::string fHFAdressName = fHFName + "_fTWA";
-
-    ResultWriter results = ResultWriter(fHFAdressName, folderName);
-    results.newResults();
-    results.writeLine("t", timeLine);
-    for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+    if (writeResults)
     {
-        results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+        ResultWriter results = ResultWriter(workName, folderName);
+        results.newResults();
+        results.writeLine("t", timeLine);
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+        }
+        results.writeLineInReal("E_U", EU);
+        results.writeLineInReal("E_J", EJ);
+        results.writeLineInReal("E", E);
     }
-    results.writeLineInReal("E_U", EU);
-    results.writeLineInReal("E_J", EJ);
-    results.writeLineInReal("E", E);
-
 }
 
 FHfTWASolver::~FHfTWASolver()

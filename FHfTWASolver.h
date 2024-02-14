@@ -17,6 +17,7 @@ class FHfTWASolver
 public:
     FHfTWASolver(FHSystem* fhs);
 
+    void setResultFile(std::string workName, std::string folderNameName);
     void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
     void setfTWAParameters(unsigned int nTraj);
     void initiateSolver();
@@ -35,6 +36,11 @@ private:
 
 // Fermi Hubbard System  :
     FHSystem* fhSystem;
+
+// results in :
+    bool writeResults;
+    std::string workName;                                           //<- A name for the work, for the results file
+    std::string folderName;                                         //<- A name for the work folder, for the results file
 
 // fTWA parameters :
     unsigned int nTraj;
