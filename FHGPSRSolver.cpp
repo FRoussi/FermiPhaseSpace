@@ -357,7 +357,7 @@ void FHGPSRSolver::runSimulation( )
             rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();
             rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
 
-            EU_loc(t) = EU_loc(t) + (arma::cdot(rhou.diag(), *U * rhod.diag() ) + arma::cdot(rhod.diag(), *U * rhou.diag() )) / arma::cx_double(2,0);
+            EU_loc(t) = EU_loc(t) + (arma::dot(rhou.diag(), *U * rhod.diag() ) + arma::dot(rhod.diag(), *U * rhou.diag() )) / arma::cx_double(2,0);
             EtH_loc(t) = EtH_loc(t) + arma::accu((rhou + rhod) % *J);
 
             step(rhou, rhod, dt);
