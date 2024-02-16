@@ -224,7 +224,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EU     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EJ     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EtH     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     
     for (unsigned int t = 0; t < nTimePoints; t++)
     {
@@ -233,11 +233,11 @@ void FHfTWASolver::runSimulation( )
         N2iiu.col(t) = rho2iiu.col(t) / arma::cx_double(nTraj,0) + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(arma::size(rho2iiu.col(t)), arma::fill::ones) / arma::cx_double(4,0);
         N2iid.col(t) = rho2iid.col(t) / arma::cx_double(nTraj,0) + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(arma::size(rho2iid.col(t)), arma::fill::ones) / arma::cx_double(4,0);
         EU(t)= (arma::cdot(Nu.slice(t).diag(), *U * Nd.slice(t).diag()) + arma::cdot(Nd.slice(t).diag(), *U * Nu.slice(t).diag())) / arma::cx_double(2,0);
-        EJ(t) = arma::accu((Nu.slice(t) + Nd.slice(t)) % *J);
+        EtH(t) = arma::accu((Nu.slice(t) + Nd.slice(t)) % *J);
     }
 
 
-    arma::cx_drowvec E = EJ+ EU;
+    arma::cx_drowvec E = EtH+ EU;
 
     // Writing the results :
     if (writeResults)
@@ -249,8 +249,8 @@ void FHfTWASolver::runSimulation( )
         {
             results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
         }
-        results.writeLineInReal("E_U", EU);
-        results.writeLineInReal("E_J", EJ);
+        results.writeLineInReal("EU", EU);
+        results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
     }
 }

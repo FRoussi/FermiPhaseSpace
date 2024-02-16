@@ -10,7 +10,7 @@
 #include "FHfTWASolver.h"
 #include "FHGPSRSolver.h"
 
-#define THREAD_NUM 2
+#define THREAD_NUM 4
 
 int main()
 {
@@ -96,6 +96,8 @@ int main()
          fhSystem = FHSystem(systemFileName, workFolder);
          systemLoaded = true;
          std::cout << "System loaded" << std::endl;
+         std::cout << "Initial conditions spin up   : [" << fhSystem.getInitialCondition_upSpin()[0] << fhSystem.getInitialCondition_upSpin()[1] << "]"<< std::endl;
+         std::cout << "Initial conditions spin down : [" << fhSystem.getInitialCondition_downSpin()[0] << fhSystem.getInitialCondition_downSpin()[1] << "]"<< std::endl;
       }
       else if (taskNumber == 1)
       {

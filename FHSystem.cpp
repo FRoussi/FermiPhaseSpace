@@ -154,18 +154,20 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 std::stringstream ss(line);
                 std::string siteN;
                 
-                if (!initCondUpSpinRead)
+                if (!initCondUpSpinRead)                            //<- If the Up-spin particles positions have not been read yet
                 {
-                    while (std::getline (ss, siteN, ' ')) 
+                    while (std::getline(ss, siteN, ' '))            //<- We read the line word by word
                     {
-                        initCond_up.push_back(std::stoi(siteN)); 
+                        //std::cout << "Reading initial positions of up-spin particles, siteN = " << siteN << std::endl;
+                        initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
                     }
-                    initCondUpSpinRead = true;
+                    initCondUpSpinRead = true;                      //<- At the end, the up-spin particles positions have been read.
                 }
-                else if (!initCondDownSpinRead)
+                else if (!initCondDownSpinRead)                     //<- Else, if the down-spin particles positions have not been read yet
                 {
-                    while (std::getline (ss, siteN, ' ')) 
+                    while (std::getline(ss, siteN, ' ')) 
                     {
+                       // std::cout << "Reading initial positions of down-spin particles, siteN = " << siteN << std::endl;
                         initCond_down.push_back(std::stoi(siteN)); 
                     }
                     initCondDownSpinRead = true;
@@ -313,11 +315,11 @@ void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std
 
     for (unsigned int itSite = 0; itSite < initConditions[0].size(); itSite++)
     {
-        initConditions_upSpin[itSite] = true;
+        initConditions_upSpin[initConditions[0][itSite]] = true;
     }
     for (unsigned int itSite = 0; itSite < initConditions[1].size(); itSite++)
     {
-        initConditions_downSpin[itSite] = true;
+        initConditions_downSpin[initConditions[1][itSite]] = true;
     }
 
 }

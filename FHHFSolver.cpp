@@ -180,7 +180,7 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EU =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EJ =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EtH =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec nPartU =  arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec nPartD =  arma::drowvec(nTimePoints, arma::fill::zeros);
     for (unsigned int t = 0;  t<nTimePoints; t++)
@@ -192,12 +192,12 @@ void FHHFSolver::runSimulation( )
         nPartU(t) = std::real(arma::accu(diagNu));
         nPartD(t) = std::real(arma::accu(diagNd));
 
-        EJ(t) =  arma::accu(*J % Nu.slice(t)) + arma::accu(*J % Nd.slice(t));
+        EtH(t) =  arma::accu(*J % Nu.slice(t)) + arma::accu(*J % Nd.slice(t));
         EU(t) = (arma::cdot(diagNu, *U * diagNd) + arma::cdot(diagNd,  *U * diagNu)) / arma::cx_double(2,0);
 
     }
 
-    arma::cx_drowvec E = EU + EJ;
+    arma::cx_drowvec E = EU + EtH;
 
     printf("--- Mean field dynamic, n1u : \n");
     (arma::real(Niiu.row(0))).print();
@@ -215,8 +215,12 @@ void FHHFSolver::runSimulation( )
         {
             results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
         }
-        results.writeLineInReal("E_U", EU);
-        results.writeLineInReal("E_J", EJ);
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
+        }
+        results.writeLineInReal("EU", EU);
+        results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
     }
 

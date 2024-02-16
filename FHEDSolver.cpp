@@ -25,7 +25,7 @@ void FHEDSolver::setTimeParameters(double t_max, double d_t, unsigned int nPerTS
 void FHEDSolver::initiateSolver()
 {
     this->posPartU = fhSystem->getInitialCondition_upSpin();
-    this->posPartD = fhSystem->getInitialCondition_upSpin();
+    this->posPartD = fhSystem->getInitialCondition_downSpin();
     this->nPartU = 0;
     for (std::vector<bool>::iterator itpu = posPartU.begin(); itpu != posPartU.end(); itpu++)
     {
@@ -58,6 +58,7 @@ void FHEDSolver::initiateSolver()
     }
 
     unsigned int l = getBasisIndex(this->posPartU, this->posPartD);
+    //std::cout << "ED Initial basis index : " << l << std::endl;
     this->psi_0 = arma::cx_dvec(this->basisSize, arma::fill::zeros);
     this->psi_0[l] = 1;
 
@@ -303,7 +304,10 @@ unsigned int FHEDSolver::getBasisIndex(std::vector<bool>& posPU, std::vector<boo
             ld++;
     }
     if (index1Found && index2Found)
+    {
+        //std::cout << "Looking for the basis index, lu = " << lu << ", ld = " << ld << std::endl;
         return lu * this->basisSizeSpinDown + ld;
+    }
     else
     {
         printf("The basis vector of a particle configuration cannot be found. \n");
@@ -348,8 +352,9 @@ void FHEDSolver::runSimulation()
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
     arma::dmat niiu = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+    arma::dmat niid = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec EJ = arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
 
     this->psi = this->psi_0;
@@ -360,10 +365,11 @@ void FHEDSolver::runSimulation()
         for (unsigned int iSite = 0; iSite < fhSystem->getnSites(); iSite++)
         {
             niiu(iSite,t) = static_cast<double>(std::real(arma::cdot(psi, NijuSet[iSite][iSite] * psi)));
+            niid(iSite,t) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][iSite] * psi)));
         }     
         EU[t] = static_cast<double>(std::real(arma::cdot(psi, H_U * psi)));
-        EJ[t] = static_cast<double>(std::real(arma::cdot(psi, H_J * psi)));
-        E[t] = EU[t] + EJ[t];
+        EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_J * psi)));
+        E[t] = EU[t] + EtH[t];
 
         step();
     }
@@ -382,8 +388,12 @@ void FHEDSolver::runSimulation()
         {
             results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", niiu.row(iSite));
         }
-        results.writeLine("E_U", EU);
-        results.writeLine("E_J", EJ);
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", niid.row(iSite));
+        }
+        results.writeLine("EU", EU);
+        results.writeLine("EtH", EtH);
         results.writeLine("E", E);
     }
 

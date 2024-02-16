@@ -46,6 +46,13 @@ void FHGPSRSolver::initiateSolver()
 
 }
 
+/// @brief Drift part a ttime step, computed with Runge-Kutta 2 
+/// @param rhou the up-spin density matrix
+/// @param rhod the down-spin density matrix 
+/// @param dt the time step
+/// @param drhou_Drift the up-spin density matrix step, to be updated
+/// @param drhod_Drift the down-spin density matrix step, to be updated
+/// @return void
 void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
@@ -63,6 +70,13 @@ void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat
     drhod_Drift = drhod_dt * dt;
 }
 
+/// @brief Drift part a ttime step, computed with Runge-Kutta 4 
+/// @param rhou the up-spin density matrix
+/// @param rhod the down-spin density matrix 
+/// @param dt the time step
+/// @param drhou_Drift the up-spin density matrix step, to be updated
+/// @param drhod_Drift the down-spin density matrix step, to be updated
+/// @return void
 void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
@@ -98,6 +112,14 @@ void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_d
     drhod_Drift = (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4)* dt/8;
 }
 
+/// @brief Diffusion part of a time step, computed with the analytical method 
+/// @param rhou the up-spin density matrix
+/// @param rhod the down-spin density matrix 
+/// @param U0 the on-site interaction energy
+/// @param dt the time step
+/// @param drhou_Drift the up-spin density matrix step, to be updated
+/// @param drhod_Drift the down-spin density matrix step, to be updated
+/// @return void
 void FHGPSRSolver::step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff)
 {
     unsigned int nSites = fhSystem->getnSites();
@@ -115,6 +137,14 @@ void FHGPSRSolver::step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat
     drhod_Diff = sqrt_mjj * rhod * sqrtU * arma::conj(W1) * rhod_H    + sqrt_pjj * rhod_H * arma::conj(W2) * rhod ;
 }
 
+/// @brief Diffusion part of a time step, computed with the MaxAndrii method
+/// @param rhou the up-spin density matrix 
+/// @param rhod the down-spin density matrix 
+/// @param U0 the on-site interaction energy 
+/// @param dt the time step
+/// @param drhou_Diff the up-spin density matrix step, to be updated
+/// @param drhod_Diff the down-spin density matrix step, to be updated
+/// @return void
 void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff)
 {
 
@@ -123,12 +153,12 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
     arma::cx_dmat D =diffusionMatrix(rhou, rhod, U0);
     double D_norm = arma::norm(D,1);
 
-    printf("Dnorm = %f \n", D_norm);
+    //printf("Dnorm = %f \n", D_norm);
 
     arma::cx_dmat B =sqrtDecomposition(D);
-    printf("Bnorm = %f \n", arma::norm(B,1));
+    //printf("Bnorm = %f \n", arma::norm(B,1));
 
-    std::cout << "Decomposition error = " << arma::norm(D - B * B.st()) << std::endl;
+    //std::cout << "Decomposition error = " << arma::norm(D - B * B.st()) << std::endl;
 
     arma::cx_dvec W_m = arma::cx_dvec(B.n_cols, arma::fill::randn) * std::sqrt(dt);
     arma::cx_dvec BW = B*W_m;
@@ -136,7 +166,7 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
     arma::cx_dmat BW_d =BW.subvec(nSites^2, 2*nSites^2-1);
 
 
-    std::cout << "size Wm : " << arma::size(W_m) << " - size BW : " << arma::size(BW) << std::endl;
+    //std::cout << "size Wm : " << arma::size(W_m) << " - size BW : " << arma::size(BW) << std::endl;
 
     drhou_Diff =  BW_u.reshape(nSites, nSites);
     drhod_Diff =  BW_d.reshape(nSites, nSites);
@@ -144,7 +174,11 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
     
 }
 
-
+/// @brief Calculation of a diffusion matrix
+/// @param rhou the up-spin density matrix 
+/// @param rhod the down-spin density matrix 
+/// @param U0 the on-site interaction energy 
+/// @return D the diffusion matrix
 arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0)
 {
    
@@ -197,10 +231,14 @@ arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arm
 
 }
 
+/// @brief Decomposition of a diffusion matrice into its diffusion rate
+/// @param D, the diffusion matrix to decompose 
+/// @return B, a square root of D, BB' = D
 arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
 {
 
     unsigned int sizeD = D.n_rows;
+    unsigned int sizeD_2 = sizeD/2;
 
     if (D.has_nan() || D.has_inf())
     {
@@ -211,7 +249,7 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
         // D =  | 0     A |
         //      | A^T   0 |
         // D1 = -0.5i A
-        arma::cx_dmat D1 = -0.5 * jj * D.submat(0,sizeD/2, sizeD/2-1, sizeD-1);
+        arma::cx_dmat D1 = -0.5 * jj * D.submat(0,sizeD_2, sizeD_2-1, sizeD-1);
 
         arma::cx_dmat U;
         arma::dvec s;
@@ -236,6 +274,11 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
 
 }
 
+/// @brief Simulation time step
+/// @param rhou the up-spin density matrix, to be updated
+/// @param rhod the down-spin density matrix, to be updated 
+/// @param dt the time step
+/// @return void
 void FHGPSRSolver::step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
 
@@ -267,6 +310,7 @@ void FHGPSRSolver::step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 
 }
 
+/// @brief Launch simulation and write the results
 void FHGPSRSolver::runSimulation( )
 {
 
@@ -279,12 +323,13 @@ void FHGPSRSolver::runSimulation( )
     arma::cx_dmat rho2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat rho2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
-
+    arma::cx_drowvec EU     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EtH     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
 
 
 
 // PARALLEL LOOP ON TRAJECTORIES
-//#pragma omp parallel
+#pragma omp parallel
 {
     arma::cx_dcube rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dcube rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
@@ -292,7 +337,10 @@ void FHGPSRSolver::runSimulation( )
     arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
-//    #pragma omp for 
+    arma::cx_drowvec EU_loc = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EtH_loc = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+
+    #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
         // Noiseless initial rho matrices :
@@ -308,6 +356,10 @@ void FHGPSRSolver::runSimulation( )
             rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;
             rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();
             rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
+
+            EU_loc(t) = EU_loc(t) + (arma::cdot(rhou.diag(), *U * rhod.diag() ) + arma::cdot(rhod.diag(), *U * rhou.diag() )) / arma::cx_double(2,0);
+            EtH_loc(t) = EtH_loc(t) + arma::accu((rhou + rhod) % *J);
+
             step(rhou, rhod, dt);
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s++)
             {
@@ -317,31 +369,27 @@ void FHGPSRSolver::runSimulation( )
         printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());       
     }
 
-  //  #pragma omp critical
+    #pragma omp critical
     {
         rhou_t +=rhou_t_loc;
         rhod_t +=rhod_t_loc;
         rho2iiu +=rho2iiu_loc;
         rho2iid +=rho2iid_loc;
+        EU += EU_loc;
+        EtH += EtH_loc;
     }
 }
     
 
-    
-    arma::cx_dcube Nu       = rhou_t / arma::cx_double(nTraj,0) ; 
-    arma::cx_dcube Nd       = rhod_t / arma::cx_double(nTraj,0) ; 
-    arma::cx_dmat N2iiu     = rho2iiu / arma::cx_double(nTraj,0) ;
-    arma::cx_dmat N2iid     = rho2iid / arma::cx_double(nTraj,0) ;
-    arma::cx_drowvec EU     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EJ     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_double nTrajComplex = arma::cx_double(nTraj,0);
+    arma::cx_dcube Nu       = rhou_t / nTrajComplex ; 
+    arma::cx_dcube Nd       = rhod_t / nTrajComplex ; 
+    arma::cx_dmat N2iiu     = rho2iiu / nTrajComplex ;
+    arma::cx_dmat N2iid     = rho2iid / nTrajComplex ;
+    EU = EU/ nTrajComplex;
+    EtH = EtH / nTrajComplex;
 
-    for (unsigned int t = 0; t < nTimePoints; t++)
-    {
-        EU(t)= (arma::cdot(Nu.slice(t).diag(), *U * Nd.slice(t).diag()) + arma::cdot(Nd.slice(t).diag(), *U * Nu.slice(t).diag())) / arma::cx_double(2,0);
-        EJ(t) = arma::accu((Nu.slice(t) + Nd.slice(t)) % *J);
-    }
-
-    arma::cx_drowvec E     = EJ + EU;
+    arma::cx_drowvec E = EtH + EU;
 
 
     // Writing the results :
@@ -353,15 +401,26 @@ void FHGPSRSolver::runSimulation( )
         for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
         {
             results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+            results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u2", Nu.tube(iSite, iSite));
         }
-        results.writeLineInReal("E_U", EU);
-        results.writeLineInReal("E_J", EJ);
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Nd.tube(iSite, iSite));
+        }
+        results.writeLineInReal("EU", EU);
+        results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
     }
 
 
 }
 
+/// @brief Drift time derivative of the dynamical simulation
+/// @param rhou the up-spin density matrix
+/// @param rhod the down-spin density matrix 
+/// @param drhou_dt the time derivative of the up-spin density matrix, to be updated
+/// @param drhod_dt the time derivative of the down-spin density matrix, to be updated 
+/// @return void
 void FHGPSRSolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
     arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * rhod.diag());
