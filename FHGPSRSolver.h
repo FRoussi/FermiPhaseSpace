@@ -48,8 +48,9 @@ public:
     void runSimulation();
 
     const std::complex<double> jj = std::complex<double>(0,1);
-    const std::complex<double> sqrt_mjj = std::sqrt(-jj);
     const std::complex<double> sqrt_pjj = std::sqrt(jj);
+    const std::complex<double> sqrt_mjj = std::sqrt(-jj);
+
 
     
 
