@@ -21,7 +21,11 @@ void FHfTWASolver::setResultFile(std::string wN, std::string fN)
     writeResults = true;
 }
 
-
+/// @brief Set time simulation parameters.
+/// @param t_max the maximum simulation time
+/// @param d_t the time step between stored values in the simulation 
+/// @param nSPTP number of simulation steps between two time steps
+/// @return void
 void FHfTWASolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
 {
     this->tMax = t_max;
@@ -30,11 +34,15 @@ void FHfTWASolver::setTimeParameters(double t_max, double d_t, unsigned int nSPT
     this->nTimePoints = floor(tMax/dt +1);
 }
 
+/// @brief Set fTWA simulation parameters.
+/// @param nT number of trajectories used
+/// @return void
 void FHfTWASolver::setfTWAParameters(unsigned int nT)
 {
     this->nTraj = nT;
 }
 
+/// @brief Initiate the fTWA solver, compute the initial density matrix probability and the noise variance to apply.
 void FHfTWASolver::initiateSolver()
 {
 
@@ -74,6 +82,30 @@ void FHfTWASolver::initiateSolver()
 
 }
 
+/// @brief Time derivative of the trajectories
+/// @param rhou the up-spin density matrix
+/// @param rhod the down-spin density matrix 
+/// @param drhou_dt the time derivative of the up-spin density matrix, to be updated
+/// @param drhod_dt the time derivative of the down-spin density matrix, to be updated 
+/// @return void
+void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
+{
+
+    arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou.n_rows, arma::fill::ones); 
+
+    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * (rhod.diag() + half));
+    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * (rhou.diag() + half));
+
+    drhou_dt = - jj * ( rhou * DeltaUp - DeltaUp * rhou) ;
+    drhod_dt = - jj * ( rhod * DeltaDo - DeltaDo * rhod) ;
+}
+
+
+/// @brief Time step of a trajectory, computed with Runge-Kutta 2 
+/// @param rhou the up-spin density matrix, to be updated
+/// @param rhod the down-spin density matrix , to be updated
+/// @param dt the time step
+/// @return void
 void FHfTWASolver::step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
     arma::cx_dmat drhou_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -90,6 +122,11 @@ void FHfTWASolver::step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
     rhod = rhod + drhod_dt * dt ;
 }
 
+/// @brief Time step of a trajectory, computed with Runge-Kutta 4
+/// @param rhou the up-spin density matrix, to be updated
+/// @param rhod the down-spin density matrix , to be updated
+/// @param dt the time step
+/// @return void
 void FHfTWASolver::step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
    unsigned int nSites = fhSystem->getnSites();
@@ -124,19 +161,9 @@ void FHfTWASolver::step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double 
     rhod = rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * dt / 8;
 }
 
-void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
-{
-
-    arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou.n_rows, arma::fill::ones); 
-
-    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * (rhod.diag() + half));
-    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * (rhou.diag() + half));
-
-    drhou_dt = - jj * ( rhou * DeltaUp - DeltaUp * rhou) ;
-    drhod_dt = - jj * ( rhod * DeltaDo - DeltaDo * rhod) ;
-}
 
 
+/// @brief Launch simulation and write the results
 void FHfTWASolver::runSimulation( )
 {
 
@@ -149,10 +176,13 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rho2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat rho2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
+    arma::cx_drowvec EU   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EtH  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+
    // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 
-
+    arma::cx_dmat halfDiagMatrix = arma::cx_dmat(0.5 * arma::dmat(nSites, nSites, arma::fill::eye), arma::dmat(nSites, nSites, arma::fill::zeros)); //<- Matrix of diagnoal 1/2
 
 // PARALLEL LOOP ON TRAJECTORIES
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
@@ -164,6 +194,9 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
+    arma::cx_drowvec EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+
     #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
@@ -171,13 +204,16 @@ void FHfTWASolver::runSimulation( )
         arma::cx_dmat rhou = rhou0_mean;
         arma::cx_dmat rhod = rhod0_mean;
 
+        arma::cx_dmat Nu_loc = rhou + halfDiagMatrix;
+        arma::cx_dmat Nd_loc = rhod + halfDiagMatrix;
+
         // We add up the white noises : 
         arma::arma_rng::set_seed_random();
-        arma::cx_dmat wnM = arma::cx_dmat(nSites, nSites, arma::fill::randn);
+        arma::cx_dmat wnM = arma::cx_dmat(nSites, nSites, arma::fill::randn)/sqrt(2);
         for (unsigned int i = 0; i<nSites; i++)
         {
             for (unsigned int j = i+1; j<nSites; j++)
-            {
+            {               
                 rhou(i,j) += wnM(i,j) * sqrtNoiseVarianceMatrixU(i,j);
                 rhou(j,i) += std::conj(wnM(i,j)) * sqrtNoiseVarianceMatrixU(j,i);
                 rhod(i,j) += wnM(j,i) * sqrtNoiseVarianceMatrixD(i,j);
@@ -194,6 +230,12 @@ void FHfTWASolver::runSimulation( )
             rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;       //<- Down-spin density matrix
             rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
             rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
+
+            Nu_loc =  rhou + halfDiagMatrix;
+            Nd_loc =  rhod + halfDiagMatrix;
+            EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+            EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *J);
+
             // We do 'nStepsPerTimePoint' simulation steps
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
             {
@@ -212,30 +254,32 @@ void FHfTWASolver::runSimulation( )
         rhod_t +=rhod_t_loc;
         rho2iiu +=rho2iiu_loc;
         rho2iid +=rho2iid_loc;
+        EU += EU_loc;
+        EtH += EtH_loc;
     }
 
 
 }
 
 // of 
+     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
     arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EU     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EtH     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+
+    EU = EU/nTraj_arma;
+    EtH = EtH/nTraj_arma;
     
+
     for (unsigned int t = 0; t < nTimePoints; t++)
     {
-        Nu.slice(t) = rhou_t.slice(t) / arma::cx_double(nTraj,0) + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-        Nd.slice(t) = rhod_t.slice(t) / arma::cx_double(nTraj,0) + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-        N2iiu.col(t) = rho2iiu.col(t) / arma::cx_double(nTraj,0) + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(arma::size(rho2iiu.col(t)), arma::fill::ones) / arma::cx_double(4,0);
-        N2iid.col(t) = rho2iid.col(t) / arma::cx_double(nTraj,0) + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(arma::size(rho2iid.col(t)), arma::fill::ones) / arma::cx_double(4,0);
-        EU(t)= (arma::cdot(Nu.slice(t).diag(), *U * Nd.slice(t).diag()) + arma::cdot(Nd.slice(t).diag(), *U * Nu.slice(t).diag())) / arma::cx_double(2,0);
-        EtH(t) = arma::accu((Nu.slice(t) + Nd.slice(t)) % *J);
+        Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+        Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+        N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+        N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
     }
-
 
     arma::cx_drowvec E = EtH+ EU;
 
