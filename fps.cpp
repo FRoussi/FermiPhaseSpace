@@ -170,8 +170,9 @@ int main()
       }
    }
 
-   arma::cx_dvec W = arma::cx_dvec(10000,arma::fill::randn);
-   std::cout << "mu = " << std::real(arma::accu(W)/arma::cx_double(10000,0)) << std::imag(arma::accu(W)/arma::cx_double(10000,0)) << "   std = " << std::real(arma::cdot(W, W)/arma::cx_double(10000,0)) << std::endl;
+   unsigned int nPoints = 10000;
+   arma::cx_dvec W = arma::cx_dvec(nPoints,arma::fill::randn);
+   std::cout <<  "std = " << std::real(arma::cdot(W, W)/arma::cx_double(nPoints,0)) << std::endl;
 
 
    std::cout <<"Final entry. Looks good." << " \n";

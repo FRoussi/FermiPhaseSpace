@@ -154,8 +154,8 @@ void FHGPSRSolver::step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat
     arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhou;
     arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhod;
 
-    arma::cx_dvec diagW1 = arma::cx_dvec(nSites, arma::fill::randn) * std::sqrt(dt);
-    arma::cx_dvec diagW2 = arma::cx_dvec(nSites, arma::fill::randn) * std::sqrt(dt);
+    arma::cx_dvec diagW1 = arma::cx_dvec(nSites, arma::fill::randn)/std::sqrt(2) * std::sqrt(dt);
+    arma::cx_dvec diagW2 = arma::cx_dvec(nSites, arma::fill::randn)/std::sqrt(2) * std::sqrt(dt);
 
     arma::cx_dmat W1 = arma::diagmat(diagW1);
     arma::cx_dmat W2 = arma::diagmat(diagW2);
