@@ -101,7 +101,7 @@ void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rh
 }
 
 
-/// @brief Time step of a trajectory, computed with Runge-Kutta 2 
+/// @brief Time step of a trajectory, computed with the 2nd order Runge-Kutta method. 
 /// @param rhou the up-spin density matrix, to be updated
 /// @param rhod the down-spin density matrix , to be updated
 /// @param dt the time step
@@ -122,7 +122,7 @@ void FHfTWASolver::step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
     rhod = rhod + drhod_dt * dt ;
 }
 
-/// @brief Time step of a trajectory, computed with Runge-Kutta 4
+/// @brief Time step of a trajectory, computed with the "3/8 rule" 4th order Runge-Kutta method.
 /// @param rhou the up-spin density matrix, to be updated
 /// @param rhod the down-spin density matrix , to be updated
 /// @param dt the time step

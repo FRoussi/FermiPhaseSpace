@@ -12,7 +12,7 @@
 
 #define THREAD_NUM 4
 
-int main()
+int main(int argc, char* argv[])
 {
 
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
@@ -28,24 +28,33 @@ int main()
    omp_set_num_threads(THREAD_NUM);
 
 
-   std::string workFolder = "systemsFolder";
    std::string work = "2Sites";
+    if (argc > 1)
+    {
+        work = std::string(argv[1]);
+        std::cout << "== Work file : " << work << std::endl;
+    }
+
+
+   std::string workFolder = "systemsFolder";
    std::string instructionsFileName = work + ".txt";
    std::stringstream instructionsStream("");
    std::string systemFileName;
    FHSystem fhSystem;
    std::vector<double> nrjParameters;
 
-
+   std::cout << "-- Reading work file "<< instructionsFileName << " --" << std::endl;
    std::ifstream instructionsFile = std::ifstream(workFolder + "/" + instructionsFileName);
    std::string line, word;
    std::stringstream lineStream;
+
    while(std::getline(instructionsFile, line))
    {
       instructionsStream << line << "\n";
       std::cout << line.c_str() << "\n";
    }
    instructionsFile.close();
+   std::cout << "---------------------------" << std::endl;
 
    int taskNumber = -1;
    bool systemLoaded = false;
@@ -96,8 +105,8 @@ int main()
          fhSystem = FHSystem(systemFileName, workFolder);
          systemLoaded = true;
          std::cout << "System loaded" << std::endl;
-         std::cout << "Initial conditions spin up   : [" << fhSystem.getInitialCondition_upSpin()[0] << fhSystem.getInitialCondition_upSpin()[1] << "]"<< std::endl;
-         std::cout << "Initial conditions spin down : [" << fhSystem.getInitialCondition_downSpin()[0] << fhSystem.getInitialCondition_downSpin()[1] << "]"<< std::endl;
+         //std::cout << "Initial conditions spin up   : [" << fhSystem.getInitialCondition_upSpin()[0] << fhSystem.getInitialCondition_upSpin()[1] << "]"<< std::endl;
+         //std::cout << "Initial conditions spin down : [" << fhSystem.getInitialCondition_downSpin()[0] << fhSystem.getInitialCondition_downSpin()[1] << "]"<< std::endl;
       }
       else if (taskNumber == 1)
       {

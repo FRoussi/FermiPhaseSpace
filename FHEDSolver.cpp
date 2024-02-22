@@ -22,6 +22,9 @@ void FHEDSolver::setTimeParameters(double t_max, double d_t, unsigned int nPerTS
     this->nTimePoints = floor(tMax / dt + 1);
 }
 
+
+/// @brief Initiate the ED solver, compute the initial wave-function, then the usefull operators.
+///@return void
 void FHEDSolver::initiateSolver()
 {
     this->posPartU = fhSystem->getInitialCondition_upSpin();
@@ -75,6 +78,9 @@ void FHEDSolver::initiateSolver()
     NijuSet[0][0].print_dense();
 }
 
+
+///@brief Compute the system's pair operators. First the number operators, then the important tunneling operators.
+///@return void
 void FHEDSolver::buildPairOperators()
 {
     unsigned int nSites = fhSystem->getnSites();
@@ -108,6 +114,9 @@ void FHEDSolver::buildPairOperators()
     NijuSet[1][0].print_dense();*/
 }
 
+
+///@brief Compute the system's Hamiltonian interaction part
+///@return void
 void FHEDSolver::buildHamiltonian_U()
 {
 
@@ -135,6 +144,9 @@ void FHEDSolver::buildHamiltonian_U()
     */
 }
 
+
+///@brief Compute the system's Hamiltonian tunneling part
+///@return void
 void FHEDSolver::buildHamiltonian_J()
 {
     H_J = arma::sp_cx_dmat(basisSize, basisSize);
@@ -152,6 +164,8 @@ void FHEDSolver::buildHamiltonian_J()
 }
 
 
+///@brief Compute the system's Hamiltonian
+///@return void
 void FHEDSolver::buildHamiltonian()
 {
     buildHamiltonian_U();
@@ -161,9 +175,13 @@ void FHEDSolver::buildHamiltonian()
 
     printf("Test 2 - small system Hamiltonian : \n");
     H.print_dense();
-    Hdense = arma::cx_dmat(H);
+    //Hdense = arma::cx_dmat(H);
 }
 
+
+///@brief Compute the operator "$\\hat{n}_{ii\\uparrow}$"
+///@param iSite Site number
+///@return The operator "$\\hat{n}_{ii\\uparrow}$"
 arma::sp_cx_dmat FHEDSolver::numberOperatorSpinUp(unsigned int iSite)
 {
     arma::umat locations = arma::umat(2, basisSize, arma::fill::zeros);
@@ -189,6 +207,10 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinUp(unsigned int iSite)
     return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
 }
 
+
+///@brief Compute the operator "$\\hat{n}_{ii\\downarrow}$"
+///@param iSite Site number
+///@return The operator "$\\hat{n}_{ii\\downarrow}$"
 arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(unsigned int iSite)
 {
     arma::umat locations = arma::umat(2, basisSize, arma::fill::zeros);
@@ -214,6 +236,11 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(unsigned int iSite)
     return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
 }
 
+
+///@brief Compute the operator "$\\hat{n}_{ij\\uparrow}$"
+///@param iSite Site number
+///@param jSite Site number
+///@return The operator "$\\hat{n}_{ij\\uparrow}$"
 arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(unsigned int iSite, unsigned int jSite)
 {
     unsigned int halfMatSizeUp = floor(basisSize * basisSizeSpinUp / 2);
@@ -248,6 +275,12 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(unsigned int iSite, unsigne
 
     return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
 }
+
+
+///@brief Compute the operator "$\\hat{n}_{ij\\downarrow}$"
+///@param iSite Site number
+///@param jSite Site number
+///@return The operator "$\\hat{n}_{ij\\downarrow}$"
 arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(unsigned int iSite, unsigned int jSite)
 {
      unsigned int halfMatSizeDown = floor(basisSize * basisSizeSpinDown / 2);
@@ -283,6 +316,11 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(unsigned int iSite, unsig
     return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
 }
 
+
+///@brief Find the index of a wave-function basis vector
+///@param posPU Positions of up-spin particles in the wave-function basis vector
+///@param posPD Positions of down-spin particles in the wave-function basis vector
+///@return The index of the corresponding wave-function basis vector, 0 if not found. 
 unsigned int FHEDSolver::getBasisIndex(std::vector<bool>& posPU, std::vector<bool>& posPD)
 {
     unsigned int lu = 0;
@@ -315,7 +353,9 @@ unsigned int FHEDSolver::getBasisIndex(std::vector<bool>& posPU, std::vector<boo
     }
 }
 
-// Contribution of the interaction of opposite-spin electrons of basis
+///@brief Contribution of the interaction of opposite-spin electrons of basis wave-function
+///@param phi_l the index of the wave-function basis
+///@return Opposite-spin interaction energy of basis wave-function phi_l 
 std::complex<double> FHEDSolver::U_os_psil(unsigned int phi_l)
 {
     std::vector<bool> *posPU = &c_pu[basisArray[0][phi_l]];
@@ -336,17 +376,23 @@ std::complex<double> FHEDSolver::U_os_psil(unsigned int phi_l)
     return u;
 }
 
-void FHEDSolver::step()
+
+/// @brief Simulation step, update the wave-function psi.
+/// @param d_t Time step
+/// @return void
+void FHEDSolver::step(double d_t)
 {
     //std::complex<double> alpha = std::complex<double>(0, -1);
 
     //this->psi = expmv(this->dt, alpha * H, this->psi);
 
-    std::complex<double> alpha = std::complex<double>(0, -this->dt); // <- alpha = -i dt / h
+    std::complex<double> alpha = std::complex<double>(0, -d_t); // <- alpha = -i dt / h
 
     this->psi = expmv(alpha, H, this->psi);
 }
 
+
+/// @brief Launch simulation and write the results
 void FHEDSolver::runSimulation()
 {
 
@@ -371,7 +417,7 @@ void FHEDSolver::runSimulation()
         EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_J * psi)));
         E[t] = EU[t] + EtH[t];
 
-        step();
+        step(this->dt);
     }
 
     printf("Test 3 - small system dynamic, n_1u : \n");
@@ -402,6 +448,8 @@ void FHEDSolver::runSimulation()
 
 }
 
+
+/// @brief Destructor
 FHEDSolver::~FHEDSolver()
 {
 }
@@ -409,6 +457,11 @@ FHEDSolver::~FHEDSolver()
 // ---------------------------
 // Other functions
 
+
+/// @brief Binomial coefficient or all combinations
+/// @param n Number of possible choices - here sites
+/// @param p Number of selected choices - here particles
+/// @return Number of non-ordered combinations 
 unsigned int nChoosep(unsigned int n, unsigned int p)
 {
     unsigned int num = 1;
@@ -433,7 +486,12 @@ unsigned int nChoosep(unsigned int n, unsigned int p)
     return (unsigned int)num / den;
 }
 
-std::vector<bool> positionToBinary(std::vector<unsigned int> pos, unsigned int nSites)
+
+/// @brief Convert a position vector into an empty/filled vector.
+/// @param pos vector of particle positions
+/// @param nSites number of sites.
+/// @return Boolean vector of empty/filled sites 
+std::vector<bool> positionToBinary(std::vector<unsigned int>& pos, unsigned int nSites)
 {
     std::vector<bool> vec = std::vector<bool>(nSites, false);
     for (std::vector<unsigned int>::iterator it = pos.begin(); it != pos.end(); it++)
@@ -443,7 +501,11 @@ std::vector<bool> positionToBinary(std::vector<unsigned int> pos, unsigned int n
     return vec;
 }
 
-std::vector<unsigned int> binaryToPosition(std::vector<bool> binaryPos)
+
+/// @brief Convert an empty/filled vector into a position vector.
+/// @param binaryPos an empty/filled vector
+/// @return Position vector 
+std::vector<unsigned int> binaryToPosition(std::vector<bool>& binaryPos)
 {
     std::vector<unsigned int> vec = std::vector<unsigned int>();
     for (unsigned int it = 0; it < binaryPos.size(); it++)
@@ -456,8 +518,13 @@ std::vector<unsigned int> binaryToPosition(std::vector<bool> binaryPos)
     return vec;
 }
 
-// getCombinations(n, p, max_n) builds a vector of boolean vectors of all combination of p particles in n sites.
-// max_n is the final size of the vectors, the total number of sites. It does not crash if it's wrong, it will just be less efficient.
+
+/// @brief Builds a vector of boolean vectors of all combination of p particles in n sites. 
+/// There are no check on the entrance variables. This programm will malfunction if there are not adapted, like if n<p.
+/// @param n number of sites
+/// @param p number of particles
+/// @param max_n is the final size of the vectors, the total number of sites. It does not crash if it's wrong, it will just be less efficient.
+/// @return All combination of p particles in n sites.
 std::vector<std::vector<bool>> getCombinations(unsigned int n, unsigned int p, unsigned int max_n)
 {
     // getCombinations is a recursive function:
@@ -493,7 +560,14 @@ std::vector<std::vector<bool>> getCombinations(unsigned int n, unsigned int p, u
 
 } // There are no check on the entrance variables. This programm will malfunction if there are not adapted, like if n<p.
 
-unsigned int countSimilarities(std::vector<bool> phiH1, std::vector<bool> phiH2, unsigned int *lastIndexWrong1, unsigned int *lastIndexWrong2)
+
+/// @brief Count the similarities between 2 boolean half vectors and store the last difference.
+/// @param phiH1 wave-function half basis vector
+/// @param phiH2 wave-function half basis vector
+/// @param lastIndexWrong1 If there is a difference, update it to be the last difference with a particle of phiH1
+/// @param lastIndexWrong2 If there is a difference, update it to be the last difference with a particle of phiH2
+/// @return Number of similarities between the 2 wave-function basis vector.
+unsigned int countSimilarities(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int& lastIndexWrong1, unsigned int& lastIndexWrong2)
 {
     unsigned int simCount = 0;
     unsigned int lastIdW1 = 0;
@@ -514,27 +588,41 @@ unsigned int countSimilarities(std::vector<bool> phiH1, std::vector<bool> phiH2,
         }
     }
 
-    *lastIndexWrong1 = lastIdW1;
-    *lastIndexWrong2 = lastIdW2;
+    lastIndexWrong1 = lastIdW1;
+    lastIndexWrong2 = lastIdW2;
     return simCount;
 }
 
-bool canHopHalf(std::vector<bool> phiH1, std::vector<bool> phiH2, unsigned int nSites, unsigned int *indexFrom, unsigned int *indexTo)
+
+/// @brief Check if two wave-function basis vectors are one particle tunneling away.
+/// @param phiH1 wave function half basis vector
+/// @param phiH2 wave function half basis vector
+/// @param nSites number of sites (usefull ???)
+/// @param indexFrom If there is a difference, update it to be the last difference with a particle of phiH1
+/// @param indexTo If there is a difference, update it to be the last difference with a particle of phiH2
+/// @return True if exactly one particle can jump.
+bool canHopHalf(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int nSites, unsigned int& indexFrom, unsigned int& indexTo)
 {
     unsigned int idFrom = 0;
     unsigned int idTo = 0;
-    unsigned int numOfSim = countSimilarities(phiH1, phiH2, &idFrom, &idTo); // check if there are differences in the up-spin particle positions
+    unsigned int numOfSim = countSimilarities(phiH1, phiH2, idFrom, idTo); // check if there are differences in the up-spin particle positions
     if ((nSites - numOfSim) == 2)                                            // if there is one difference, check if the hop is allowed
     {
-        *indexFrom = idFrom;
-        *indexTo = idTo;
+        indexFrom = idFrom;
+        indexTo = idTo;
         return true;
     }
     else
         return false;
 }
 
-unsigned int getParticleNumberBetween(std::vector<bool> posP, unsigned int from, unsigned int to)
+
+/// @brief Count the number of particles in a wave-function basis vector between 2 sites
+/// @param posP empty/filled vector
+/// @param from index of 1st site
+/// @param to index of 2nd site
+/// @return Number of particles between 'from' and 'to'
+unsigned int getParticleNumberBetween(std::vector<bool>& posP, unsigned int from, unsigned int to)
 {
     unsigned int nPart = 0;
     if ((from < posP.size()) && (to < posP.size()))
@@ -552,7 +640,14 @@ unsigned int getParticleNumberBetween(std::vector<bool> posP, unsigned int from,
 }
 
 
-arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol, unsigned int m1 )
+/// @brief Copy of the EXPOKIT expmv function
+/// @param t double
+/// @param A sparse matrix
+/// @param v vector
+/// @param tol
+/// @param m1
+/// @return exp(t.A)v
+arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol, unsigned int m1 )
 {
     unsigned int n = A.n_rows;
     unsigned int m = std::min(n, m1);

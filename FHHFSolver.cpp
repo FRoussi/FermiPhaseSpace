@@ -8,6 +8,7 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     J = fhSystem->getJMatrixPointer();
 }
 
+
 void FHHFSolver::setResultFile(std::string wN, std::string fN)
 {
     workName = wN;
@@ -16,6 +17,11 @@ void FHHFSolver::setResultFile(std::string wN, std::string fN)
 }
 
 
+/// @brief Set time simulation parameters.
+/// @param t_max the maximum simulation time
+/// @param d_t the time step between stored values in the simulation 
+/// @param nSPTP number of simulation steps between two time steps
+/// @return void
 void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
 {
     this->tMax = t_max;
@@ -24,6 +30,8 @@ void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
     this->nTimePoints = floor(tMax/dt +1);
 }
 
+
+/// @brief Initiate the HF solver, compute the initial density matrix.
 void FHHFSolver::initiateSolver()
 {
 
@@ -37,10 +45,12 @@ void FHHFSolver::initiateSolver()
 
     printf("Test 4 - Initial Density matrix : \n");
     Nu0.print();
-
-
 }
 
+
+/// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
+/// @param dt the time step
+/// @return void
 void FHHFSolver::step_RK1(double dt)
 {
     arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -52,6 +62,10 @@ void FHHFSolver::step_RK1(double dt)
     Ndt = Ndt + dNd_dt * dt ;
 }
 
+
+/// @brief Time step of a trajectory, computed with the 2nd order Runge-Kutta method.
+/// @param dt the time step
+/// @return void
 void FHHFSolver::step_RK2(double dt)
 {
     arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -68,6 +82,10 @@ void FHHFSolver::step_RK2(double dt)
     Ndt = Ndt + dNd_dt * dt ;
 }
 
+
+/// @brief Time step of a trajectory, computed with "original" 4th order Runge-Kutta method.
+/// @param dt the time step
+/// @return void
 void FHHFSolver::step_RK4(double dt)
 {
     arma::cx_dmat dNu_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -101,6 +119,10 @@ void FHHFSolver::step_RK4(double dt)
     Ndt = Ndt + (dNd_dt_k1 + 2* dNd_dt_k2 + 2*dNd_dt_k3 + dNd_dt_k4) * dt/6;
 }
 
+
+/// @brief Time step of a trajectory, computed with the "3/8 rule" 4th order Runge-Kutta method.
+/// @param dt the time step
+/// @return void
 void FHHFSolver::step_RK4_38(double dt)
 {
     arma::cx_dmat dNu_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -134,10 +156,21 @@ void FHHFSolver::step_RK4_38(double dt)
     Ndt = Ndt + (dNd_dt_k1 + dNd_dt_k2*3 + dNd_dt_k3*3 + dNd_dt_k4) * dt/8;
 }
 
+
+/// @brief ==NOT IMPLEMENTED== Time step of a trajectory, computed with the adaptive 4th/5th order Runge-Kutta method.
+/// @param dt the time step
+/// @return void
 void FHHFSolver::step_RK45(double dt)
 {
 }
 
+
+/// @brief Time derivative of the density matrix.
+/// @param nut the up-spin density matrix.
+/// @param ndt the down-spin density matrix.
+/// @param dnut_dt the time derivative of the up-spin density matrix, to be updated.
+/// @param dndt_dt the time derivative of the down-spin density matrix, to be updated.
+/// @return void
 void FHHFSolver::derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt)
 {
 
@@ -149,6 +182,7 @@ void FHHFSolver::derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, 
 }
 
 
+/// @brief Launch simulation and write the results
 void FHHFSolver::runSimulation( )
 {
 
@@ -229,6 +263,7 @@ void FHHFSolver::runSimulation( )
 
 }
 
+/// @brief Destructor
 FHHFSolver::~FHHFSolver()
 {
 

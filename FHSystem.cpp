@@ -95,7 +95,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     std::ifstream systFile (fileAdressName);
     if (systFile.is_open())
     {
-        printf("Reading %s \n", fileName.c_str());
+        printf("== Reading %s \n", fileName.c_str());
 
         bool readPosition = false;
         bool readInitCond = false;

@@ -16,13 +16,13 @@
 
 std::vector<std::vector<bool>> getCombinations(unsigned int n, unsigned int p, unsigned int max_n);
 unsigned int nChoosep(unsigned int n, unsigned int p);
-std::vector<bool> positionToBinary(std::vector<unsigned int>, unsigned int nSites);
-std::vector<unsigned int> binaryToPosition(std::vector<bool>);
+std::vector<bool> positionToBinary(std::vector<unsigned int>&, unsigned int nSites);
+std::vector<unsigned int> binaryToPosition(std::vector<bool>&);
 
-unsigned int countSimilarities(std::vector<bool> phiH1, std::vector<bool> phiH2, unsigned int * lastIndexWrong1, unsigned int * lastIndexWrong2);
-bool canHopHalf(std::vector<bool> phiH1, std::vector<bool> phiH2, unsigned int n_pH, unsigned int * idFrom, unsigned int * idTo);
-unsigned int getParticleNumberBetween(std::vector<bool> posP, unsigned int from, unsigned int to);
-arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat A, arma::cx_dvec v, double tol = 1.e-7, unsigned int m = 30);
+unsigned int countSimilarities(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int& lastIndexWrong1, unsigned int& lastIndexWrong2);
+bool canHopHalf(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
+unsigned int getParticleNumberBetween(std::vector<bool>& posP, unsigned int from, unsigned int to);
+arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
 
 class FHEDSolver  	
 {
@@ -37,7 +37,7 @@ public:
     void buildHamiltonian();
     //void numberOperator();
 
-    void step();
+    void step(double d_t);
     void runSimulation();
 
     ~FHEDSolver();
@@ -77,7 +77,7 @@ private:
     arma::sp_cx_dmat H_J;
     arma::sp_cx_dmat H;
 
-    arma::cx_dmat Hdense;
+    //arma::cx_dmat Hdense;
     //std::vector<arma::sp_cx_dmat> NiiuSet;
     //std::vector<arma::sp_cx_dmat> NiidSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijuSet;
