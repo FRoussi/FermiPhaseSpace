@@ -54,28 +54,21 @@ void FHEDSolver::initiateSolver()
     {
         for (uint k = 0; k < basisSizeSpinUp; k++)
         {
-            basisArray[0][countor] = l; // up-spin particle combinations of position
-            basisArray[1][countor] = k; // down-spin particle combinations of position
+            basisArray[0][countor] = l;         //<- up-spin particle combinations of position
+            basisArray[1][countor] = k;         //<- down-spin particle combinations of position
             countor += 1;
         }
     }
 
     unsigned int l = getBasisIndex(this->posPartU, this->posPartD);
-    //std::cout << "ED Initial basis index : " << l << std::endl;
     this->psi_0 = arma::cx_dvec(this->basisSize, arma::fill::zeros);
-    this->psi_0[l] = 1;
+    this->psi_0[l] = 1;                         //<- Compute the initial wave-function
 
-    this->psi = this->psi_0;
+    this->psi = this->psi_0;                    //< The current wave-function becomes the initial one.
 
-    buildPairOperators();
+    buildPairOperators();                       //<- Usefull pair operators
+    buildHamiltonian();                         //<- Hamiltonian
 
-    // Hamiltonian
-    buildHamiltonian();
-
-    // Operators :
-
-    printf("Test 3 - Number operator :\n");
-    NijuSet[0][0].print_dense();
 }
 
 
@@ -173,8 +166,8 @@ void FHEDSolver::buildHamiltonian()
 
     H = H_U + H_J;
 
-    printf("Test 2 - small system Hamiltonian : \n");
-    H.print_dense();
+    //printf("Test 2 - small system Hamiltonian : \n");
+    //H.print_dense();
     //Hdense = arma::cx_dmat(H);
 }
 
@@ -405,6 +398,11 @@ void FHEDSolver::runSimulation()
 
     this->psi = this->psi_0;
 
+    // Bad filling thing :
+    unsigned int tt = nTimePoints/20;
+    std::cout << "|                     |" << std::endl;
+    std::cout << "|" ;
+
     for (unsigned int t = 0; t < nTimePoints; t++)
     {
         timeLine[t] = t * dt;
@@ -418,8 +416,12 @@ void FHEDSolver::runSimulation()
         E[t] = EU[t] + EtH[t];
 
         step(this->dt);
-    }
 
+        if ((t%tt) == 0) {
+            std::cout << "=" << std::flush ;        }
+
+    }
+std::cout << "|" << std::endl; ;
     printf("Test 3 - small system dynamic, n_1u : \n");
     niiu.row(0).print();
     

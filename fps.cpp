@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
    omp_set_num_threads(THREAD_NUM);
 
 
-   std::string work = "2Sites";
+   std::string work = "4Sites";
     if (argc > 1)
     {
         work = std::string(argv[1]);
@@ -179,9 +179,6 @@ int main(int argc, char* argv[])
       }
    }
 
-   unsigned int nPoints = 10000;
-   arma::cx_dvec W = arma::cx_dvec(nPoints,arma::fill::randn);
-   std::cout <<  "std = " << std::real(arma::cdot(W, W)/arma::cx_double(nPoints,0)) << std::endl;
 
 
    std::cout <<"Final entry. Looks good." << " \n";

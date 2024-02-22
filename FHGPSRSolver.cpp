@@ -395,7 +395,12 @@ void FHGPSRSolver::runSimulation( )
                 step(rhou, rhod, dt/nStepsPerTimePoint);
             }
         }
-        printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());       
+unsigned int tt = std::floor(nTraj/10);
+    if ((i_traj%tt) == 0)
+    {
+        printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());    
+    }
+   
     }
 
     #pragma omp critical
