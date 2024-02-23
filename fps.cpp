@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
    omp_set_num_threads(THREAD_NUM);
 
 
-   std::string work = "4Sites";
+   std::string work = "2Sites";
     if (argc > 1)
     {
         work = std::string(argv[1]);
