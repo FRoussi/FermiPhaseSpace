@@ -6,7 +6,9 @@
 #include <armadillo>
 //#include <cmath>
 
+#include "fnct.h"
 #include "FHSystem.h"
+
 
 
 #include "ResultWriter.h"
@@ -22,7 +24,7 @@ std::vector<unsigned int> binaryToPosition(std::vector<bool>&);
 unsigned int countSimilarities(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int& lastIndexWrong1, unsigned int& lastIndexWrong2);
 bool canHopHalf(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
 unsigned int getParticleNumberBetween(std::vector<bool>& posP, unsigned int from, unsigned int to);
-arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
+//arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
 
 class FHEDSolver  	
 {

@@ -1,4 +1,5 @@
 #include "FHGPSRSolver.h"
+#include "fnct.h"
 
 
 FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
@@ -184,7 +185,17 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
     arma::cx_dmat D =diffusionMatrix(rhou, rhod, U0);
     double D_norm = arma::norm(D,1);
 
-    arma::cx_dmat B =sqrtDecomposition(D);
+arma::cx_dmat B;
+    if (D_norm < 1.e-7) 
+    {
+        B = arma::cx_dmat(2*sizeMat, 1, arma::fill::zeros);
+    }
+    else
+    {
+        B = sqrtDecomposition(D);
+    }
+       
+
     //printf("Bnorm = %f \n", arma::norm(B,1));
 
     //std::cout << "Dnorm=" << D_norm << "\t - Decomposition error=" << arma::norm(D - B * B.st())/D_norm << std::endl;
@@ -286,17 +297,20 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
         arma::cx_dmat V;
 
         // D1 = U s V^T
-        arma::svd(U, s, V, D1);
+        //bool SVDsuccess = arma::svd(U, s, V, D1);
+
+        unsigned int nSites = static_cast<unsigned int>(std::sqrt(sizeD_2));
+        bool SVDsuccess = rsvd(U,s,V,D1,2*nSites);
 
         arma::dmat sqrtS = arma::diagmat(arma::sqrt(s)); 
 
         // B =  | U.sqrtS           i.U.sqrtS  |
         //      | ii.c(V).sqrtS     c(V).sqrtS |
-        arma::cx_dmat B = arma::cx_dmat(sizeD, sizeD, arma::fill::zeros);
-        B.submat(0,         0,          sizeD/2-1,    sizeD/2-1)    = U * sqrtS;
-        B.submat(0,         sizeD/2,    sizeD/2-1,    sizeD-1)      = FHGPSRSolver::jj * U * sqrtS;
-        B.submat(sizeD/2,   0,          sizeD-1,      sizeD/2-1)    = FHGPSRSolver::jj * arma::conj(V) * sqrtS;  
-        B.submat(sizeD/2,   sizeD/2,    sizeD-1,      sizeD-1)      = arma::conj(V) * sqrtS; 
+        arma::cx_dmat B = arma::cx_dmat(2*U.n_rows, 2*U.n_cols, arma::fill::zeros);
+        B.submat(0,          0,           B.n_rows/2-1, B.n_cols/2-1)    = U * sqrtS;
+        B.submat(0,          B.n_cols/2,  B.n_rows/2-1, B.n_cols-1)      = FHGPSRSolver::jj * U * sqrtS;
+        B.submat(B.n_rows/2, 0,           B.n_rows-1,   B.n_cols/2-1)    = FHGPSRSolver::jj * arma::conj(V) * sqrtS;  
+        B.submat(B.n_rows/2, B.n_cols/2,  B.n_rows-1,   B.n_cols-1)      = arma::conj(V) * sqrtS; 
 
         return B;
     }

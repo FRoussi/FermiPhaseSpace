@@ -641,6 +641,7 @@ unsigned int getParticleNumberBetween(std::vector<bool>& posP, unsigned int from
     return nPart;
 }
 
+/*
 
 /// @brief Copy of the EXPOKIT expmv function
 /// @param t double
@@ -783,3 +784,4 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& 
     return w;
 
 }
+*/
