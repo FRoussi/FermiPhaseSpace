@@ -11,6 +11,7 @@ using std::string;
 using std::vector;
 using std::ofstream;
 
+using namespace std;
 
 /// @brief The suite of integer doubles S defined by  S(t+1) = getNextIndex(S(t))
 /// and starting by (0,0) paves the positive plan in an ordely fashion. The
@@ -72,17 +73,17 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
 unsigned int nOfPoints = 0;
     vector<vector<double>> pos = vector<vector<double>>();
 
-vector<vector<double>> pos0 = { {-sqrt3/2, -0.5},
-                                {-sqrt3/2, 0.5},
-                                {0  ,      1  },
-                                {0  ,      -1 },
-                                {sqrt3/2, -0.5},
-                                {sqrt3/2, 0.5 }};
+vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a},
+                                {-sqrt3/2 *a, 0.5 *a},
+                                {0   *a,      1   *a},
+                                {0   *a,      -1  *a},
+                                {sqrt3/2 *a, -0.5 *a},
+                                {sqrt3/2 *a, 0.5  *a}};
 vector<vector<double>> posNew = pos0;
 
 
-double iVec[2] = {sqrt3, 0};
-double jVec[2] = {sqrt3/2, 1.5};
+double iVec[2] = {sqrt3 *a, 0 *a};
+double jVec[2] = {sqrt3/2 *a, 1.5 *a};
 
 unsigned int basisIndex[2] = {0,0};
 
@@ -106,6 +107,32 @@ for (unsigned int bv = 0; bv < nCombs; bv++)
 double samePointThreshold = 0.001 * a;
 
 
+    for (unsigned int i1 = 0; i1< pos.size(); i1++)         //<- we look for all points equal to positions(i1)
+    {
+        unsigned int nDoublonsFound = 0;                    //<- There can't be more than three times the same point
+         
+        unsigned int i2 = i1+1;
+        while ((i2<pos.size()) && (nDoublonsFound < 2))    //<- as long as there are points and more doublons to find
+        {
+            double d = 0;
+            for (unsigned int iDim = 0; iDim<pos[i1].size(); iDim++)
+            {
+                d += std::abs(pos[i1][iDim] - pos[i2][iDim]);
+            }
+            if (abs(d) < samePointThreshold)                //<- if i1 and i2 are the same point :
+            {
+                pos.erase(pos.begin() + i2);                //<- We remove the point i2
+                nDoublonsFound ++;                          //<- We say we found one more doublon
+            }
+            else
+            {
+                i2 ++;                                      //<- else, we look at the next point
+            }
+                
+        }
+
+    }
+    
     pos.shrink_to_fit();
     return pos;
 }
@@ -120,9 +147,37 @@ int main(int argc, char* argv[])
 
     string fileName = "newSystem.txt";
     string fileFolder = "systemsFolder";
-    string fileAdress = fileFolder + "/" + fileName;
 
-   vector<vector<double>> pos = makeGrid(3,1,1,1);
+
+   vector<vector<double>> pos = makeGrid(2,1,1,1);
+
+   if (argc > 1)
+   {
+    string fName = argv[1];
+    fileName = fName;
+   } 
+   if (argc >2)
+   {
+        string geometry = argv[2];
+        if (geometry == "grid")
+        {
+            if (argc == 3)  pos = makeGrid(2,1,1,1);
+            if (argc == 4)  pos = makeGrid(stoi(argv[3]),1,1,1);
+            if (argc == 5)  pos = makeGrid(stoi(argv[3]),stoi(argv[4]),1,1);
+            if (argc == 6)  pos = makeGrid(stoi(argv[3]),stoi(argv[4]),stoi(argv[5]),1);
+            if (argc == 7)  pos = makeGrid(stoi(argv[3]),stoi(argv[4]),stoi(argv[5]),stod(argv[6]));
+        }
+         if (geometry == "graphene")
+        {
+            if (argc == 3)  pos = makeHoneyCombs(1,1);
+            if (argc == 4)  pos = makeHoneyCombs(stoi(argv[3]),1);
+            if (argc == 5)  pos = makeHoneyCombs(stoi(argv[3]),stoi(argv[4]));
+        }
+   }
+
+
+string fileAdress = fileFolder + "/" + fileName;
+
 
    ofstream streamSystem(fileAdress);
    

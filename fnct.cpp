@@ -169,7 +169,8 @@ bool rsvd(arma::cx_dmat& U, arma::dvec& s, arma::cx_dmat& V, arma::cx_dmat& D, u
     unsigned int M = D.n_rows;
     unsigned int N = D.n_cols;                      //<- [M,N] = arma::size(D);
 
-    unsigned int P = std::min(2*K,N);               //<- P = min(2*K,N);
+    //unsigned int P = std::min(2*K,N);               //<- P = min(2*K,N);
+    unsigned int P = std::min(K+5,N);               //<- P = min(K+5,N);
 
 
     arma::dmat X = arma::dmat(N, P, arma::fill::randn); //<- X = randn(N,P);
