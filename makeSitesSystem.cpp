@@ -1,4 +1,4 @@
-//#include <stdio>
+//#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -142,40 +142,105 @@ int main(int argc, char* argv[])
 
 
 
-   cout << "SYSTEEEEEM OFADOOOOOWN" << endl;
+   cout << "Writing a new system." << endl;
 
 
-    string fileName = "newSystem.txt";
+    string fileName = "newSystem";
     string fileFolder = "systemsFolder";
 
+// Default values
+    vector<vector<double>> pos = makeGrid(2,1,1,1);
+    string geometry = "";
+    string IC = "ic_sw";
 
-   vector<vector<double>> pos = makeGrid(2,1,1,1);
 
-   if (argc > 1)
-   {
-    string fName = argv[1];
-    fileName = fName;
-   } 
-   if (argc >2)
-   {
-        string geometry = argv[2];
-        if (geometry == "grid")
+    bool readGeomParam = false;                     //<- are we reading the geometry parameters
+    vector<double> geomParam = vector<double>();    //<- list of geometry parameters stored in double
+    double argDouble = 0;                           //<- the current entry in double
+    bool isANumber = true;                          //<- is the current entry a number
+
+    for (int iArg = 1; iArg < argc ; iArg++)        //<- for each entry
+    {
+
+        isANumber = true;
+        try                                         //<- We check if it's a number with a try/catch block
         {
-            if (argc == 3)  pos = makeGrid(2,1,1,1);
-            if (argc == 4)  pos = makeGrid(stoi(argv[3]),1,1,1);
-            if (argc == 5)  pos = makeGrid(stoi(argv[3]),stoi(argv[4]),1,1);
-            if (argc == 6)  pos = makeGrid(stoi(argv[3]),stoi(argv[4]),stoi(argv[5]),1);
-            if (argc == 7)  pos = makeGrid(stoi(argv[3]),stoi(argv[4]),stoi(argv[5]),stod(argv[6]));
-        }
-         if (geometry == "graphene")
+            argDouble = stod(argv[iArg]);
+        }  catch(const std::invalid_argument& ia) 
         {
-            if (argc == 3)  pos = makeHoneyCombs(1,1);
-            if (argc == 4)  pos = makeHoneyCombs(stoi(argv[3]),1);
-            if (argc == 5)  pos = makeHoneyCombs(stoi(argv[3]),stoi(argv[4]));
+            isANumber = false;
         }
-   }
+
+        if (isANumber && readGeomParam)             //<- if it's a number and we are readinf the geometruy parameters
+        {
+            geomParam.push_back(argDouble);         //<- we store the number in the goemetry parameter vector
+        }
+        else if ((argv[iArg] == string("grid")) || (argv[iArg] == string("graphene")))  //<- else, if the word is among the geometry types
+        {
+            geometry = argv[iArg];                  //<- we note the geometry
+            readGeomParam = true;                   //<- We stand ready to read the geometry parameters
+        } 
+        else if ((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
+        {
+            IC = argv[iArg] ;                       //<- we note the initial condition
+            readGeomParam = false;                  //<- We stop reading geometry parameters
+        }
+        else 
+        {
+             readGeomParam = false;                 //<- Else we don't stand ready for anything
+             if (iArg==1)                           //<- and if it's the first argumentm that's the name of the file
+             {
+                fileName = argv[1];
+             }
+        }
+
+    }
+
+// Computation of the geometry
+for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
+{
+    geomParam.push_back(1.);
+}
+
+    if (geometry == "grid")
+    {
+        pos = makeGrid( static_cast<int>(geomParam[0]), static_cast<int>(geomParam[1]), static_cast<int>(geomParam[2]), geomParam[3]);
+    }
+    if (geometry == "graphene")
+    {
+        pos = makeHoneyCombs(static_cast<int>(geomParam[0]),geomParam[1]);
+    }
+
+// Computation of the Initial condition
+vector<unsigned int> IC_UP = vector<unsigned int>();
+vector<unsigned int> IC_DOWN = vector<unsigned int>();
+if (IC == "ic_sw")
+{
+    for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
+    {
+            IC_UP.push_back(uppos);
+    }
+    for (unsigned int downpos = 1; downpos < pos.size(); downpos+=2)
+    {
+            IC_DOWN.push_back(downpos);
+    }
+}
+else if (IC == "ic_cw")
+{
+    for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
+    {
+            IC_UP.push_back(uppos);
+    }
+    for (unsigned int downpos = 0; downpos < pos.size(); downpos+=2)
+    {
+            IC_DOWN.push_back(downpos);
+    }
+}
 
 
+
+
+// Writing of everything on the file :
 string fileAdress = fileFolder + "/" + fileName;
 
 
@@ -195,26 +260,27 @@ string fileAdress = fileFolder + "/" + fileName;
 
 
         streamSystem << "#INITIALCONDITIONS" << endl;
-        for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
+        for (vector<unsigned int>::iterator itpos = IC_UP.begin(); itpos !=IC_UP.end(); itpos++)
         {
-            streamSystem << uppos << "\t";
+            streamSystem << (*itpos) << "\t";
         }
         streamSystem << endl;
-        for (unsigned int downpos = 1; downpos < pos.size(); downpos+=2)
+        for (vector<unsigned int>::iterator itpos = IC_DOWN.begin(); itpos !=IC_DOWN.end(); itpos++)
         {
-            streamSystem << downpos << "\t";
+            streamSystem << (*itpos) << "\t";
         }
         streamSystem << endl;
         
 
+        streamSystem.close();
     }
     else
     {
-        printf("Stream not open.");
+        cout << "Stream not open." << endl;
     }
 
 
-
+    cout << fileName << " system created with " << pos.size() << " sites and " << IC_UP.size() + IC_DOWN.size() << " particles." << endl;  
 
 
 
