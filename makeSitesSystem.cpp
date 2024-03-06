@@ -259,7 +259,7 @@ string fileAdress = fileFolder + "/" + fileName;
         }
 
 
-        streamSystem << "#INITIALCONDITIONS" << endl;
+        streamSystem << "#INITIALCONDITIONS_GIVENDIAGONAL" << endl;
         for (vector<unsigned int>::iterator itpos = IC_UP.begin(); itpos !=IC_UP.end(); itpos++)
         {
             streamSystem << (*itpos) << "\t";

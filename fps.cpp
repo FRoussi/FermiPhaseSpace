@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 
 
    std::string workFolder = "systemsFolder";
-   std::string instructionsFileName = work + ".txt";
+   std::string instructionsFileName = work;
    std::stringstream instructionsStream("");
    std::string systemFileName;
    FHSystem fhSystem;

@@ -97,31 +97,45 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     {
         printf("== Reading %s \n", fileName.c_str());
 
-        bool readPosition = false;
-        bool readInitCond = false;
-        bool initCondUpSpinRead = false;
-        bool initCondDownSpinRead = false;
+        // 0 : nothing
+        // 1 : positions
+        // 2 : diagonal initial conditions, up spin
+        // 3 : diagonal initial conditions, down spin
+        // 4 : number of particles, up spin
+        // 5 : number of particles, down spin
+        unsigned int whatToRead = 0;    
+
+
         int nDim = -1;
 
+        std::string         initialConditionType;
         std::vector<std::vector<double>> pos =   std::vector<std::vector<double>>();
         std::vector<unsigned int> initCond_up =   std::vector<unsigned int>();
         std::vector<unsigned int> initCond_down =   std::vector<unsigned int>();
+        std::vector<unsigned int> particlesNumber(2, 0);
+        
 
         std::string line;
         while (std::getline(systFile, line))
         {
            if (line == "#POSITIONS")
            {
-                readPosition = true;
-                readInitCond = false;
+                whatToRead = 1;
            }
-           else if (line == "#INITIALCONDITIONS")
+           else if (line == "#INITIALCONDITIONS_GIVENDIAGONAL")
            {
-                readPosition = false;
-                readInitCond = true;
+                initialConditionType = "givenDiagonal";
+                whatToRead = 2;
            }
-           else if(readPosition)
+           else if (line == "#INITIALCONDITIONS_QUENCHED")
            {
+                initialConditionType = "quenched";
+                whatToRead = 4;
+           }
+           else switch (whatToRead)
+           {
+           case 1:  // Read positions
+            {
                 std::stringstream ss(line);
                 std::string coord;
                 std::vector<double> coordinates = std::vector<double>();
@@ -148,34 +162,55 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                         return;
                     }
                 }
-           }
-           else if(readInitCond)
+                break;
+            }
+           case 2:  // Read  up spin particles
            {
                 std::stringstream ss(line);
                 std::string siteN;
                 
-                if (!initCondUpSpinRead)                            //<- If the Up-spin particles positions have not been read yet
+                while (std::getline(ss, siteN, ' '))            //<- We read the line word by word
                 {
-                    while (std::getline(ss, siteN, ' '))            //<- We read the line word by word
-                    {
                         //std::cout << "Reading initial positions of up-spin particles, siteN = " << siteN << std::endl;
-                        initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
-                    }
-                    initCondUpSpinRead = true;                      //<- At the end, the up-spin particles positions have been read.
+                    initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
+                    particlesNumber[0]++;
                 }
-                else if (!initCondDownSpinRead)                     //<- Else, if the down-spin particles positions have not been read yet
+                whatToRead = 3;                      //<- At the end, the up-spin particles positions have been read.
+                break;
+            }
+            case 3:                   //<- Else, if the down-spin particles positions have not been read yet
+            {
+                std::stringstream ss(line);
+                std::string siteN;
+                while (std::getline(ss, siteN, ' ')) 
                 {
-                    while (std::getline(ss, siteN, ' ')) 
-                    {
                        // std::cout << "Reading initial positions of down-spin particles, siteN = " << siteN << std::endl;
-                        initCond_down.push_back(std::stoi(siteN)); 
-                    }
-                    initCondDownSpinRead = true;
+                    initCond_down.push_back(std::stoi(siteN)); 
+                    particlesNumber[1]++;
                 }
-                else
-                {
-                    printf("Too many initial conditions");
-                }
+                whatToRead = 0; 
+                break;
+            }
+            case 4:
+            {
+                std::stringstream ss(line);
+                std::string nPart;
+
+                std::getline(ss, nPart, ' ');
+                particlesNumber[0] = std::stoi(nPart);
+                whatToRead = 5;
+            }
+            break;
+            case 5:
+            {
+                std::stringstream ss(line);
+                std::string nPart;
+
+                std::getline(ss, nPart, ' ');
+                particlesNumber[1] = std::stoi(nPart);
+                whatToRead = 0;
+            }
+            break;
 
 
            }
@@ -193,12 +228,21 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         }
 
 
-        std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
-        initCond[0] = initCond_up;
-        initCond[1] = initCond_down;
+    if (initialConditionType == std::string("givenDiagonal"))
+    {
+            std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+            initCond[0] = initCond_up;
+            initCond[1] = initCond_down;
 
-        initiateSystem(sitePos, initCond);
-        computeMatrices();
+            initiateSystem(sitePos, initCond);
+    }
+    else if (initialConditionType == std::string("quenched"))
+    {
+        initiateSystem(sitePos, initialConditionType, particlesNumber);
+    }
+
+
+    computeMatrices();
 
     }
     else
@@ -214,15 +258,15 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
 void FHSystem::setInteraction_OnSite(double U0)
 {
-    UMatrix = U0 * arma::cx_dmat(nSites, nSites, arma::fill::eye);
+    UMatrix = U0 * arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::eye);
 }
 
 void FHSystem::setTunneling_BetweenNeighbours(double J)
 {
-    JMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    for (unsigned int i = 0; i< nSites; i++)
+    JMatrix = arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::zeros);
+    for (unsigned int i = 0; i< sitePositions.n_cols; i++)
     {
-        for (unsigned int j = 0; j< nSites; j++)
+        for (unsigned int j = 0; j< sitePositions.n_cols; j++)
         {
             if (neighbourMatrix[i][j])
             {
@@ -236,12 +280,12 @@ void FHSystem::setTunneling_BetweenNeighbours(double J)
 
 unsigned int FHSystem::getnSites()
 {
-    return nSites;
+    return sitePositions.n_cols;
 }
 
 double FHSystem::getCoordinate(int dim, int pos)
 { 
-    if ((dim < nDimensions) && (pos < nSites))
+    if ((dim < sitePositions.n_rows) && (pos < sitePositions.n_cols))
     {
         return sitePositions(dim, pos);
     } 
@@ -250,6 +294,20 @@ double FHSystem::getCoordinate(int dim, int pos)
         return 0;
     }
 }
+
+std::string             FHSystem::getInitialCondition()
+{
+    return initialCondition;
+}
+
+    unsigned int            FHSystem::getUpSpinParticleNumber()
+    {
+        return upSpinParticleNumber;
+    }
+    unsigned int            FHSystem::getDownSpinParticleNumber()
+    {
+        return downSpinParticleNumber;
+    }
 
 double FHSystem::getDistance(int i, int j)
 {
@@ -302,30 +360,50 @@ std::vector<bool> FHSystem::getInitialCondition_downSpin()
 }
 
 
-void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions )
+void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& diagonalInitConditions )
 {
-
-    nDimensions = positions.n_rows;
-    nSites = positions.n_cols;
 
     sitePositions = positions;
 
-    initConditions_upSpin = std::vector<bool>(nSites);
-    initConditions_downSpin = std::vector<bool>(nSites);
+    initialCondition = "givenDiagonal";
 
-    for (unsigned int itSite = 0; itSite < initConditions[0].size(); itSite++)
+    upSpinParticleNumber = diagonalInitConditions[0].size();
+    downSpinParticleNumber = diagonalInitConditions[1].size();
+
+    initConditions_upSpin = std::vector<bool>(sitePositions.n_cols);
+    initConditions_downSpin = std::vector<bool>(sitePositions.n_cols);
+
+
+
+    for (unsigned int itSite = 0; itSite < diagonalInitConditions[0].size(); itSite++)
     {
-        initConditions_upSpin[initConditions[0][itSite]] = true;
+        initConditions_upSpin[diagonalInitConditions[0][itSite]] = true;
     }
-    for (unsigned int itSite = 0; itSite < initConditions[1].size(); itSite++)
+    for (unsigned int itSite = 0; itSite < diagonalInitConditions[1].size(); itSite++)
     {
-        initConditions_downSpin[initConditions[1][itSite]] = true;
+        initConditions_downSpin[diagonalInitConditions[1][itSite]] = true;
     }
+
+}
+
+void FHSystem::initiateSystem(const arma::dmat& positions, const std::string initCondition, std::vector<unsigned int> partNumber )
+{
+
+    sitePositions = positions;
+
+    initialCondition = initCondition;
+
+    upSpinParticleNumber = partNumber[0];
+    downSpinParticleNumber = partNumber[1];
+
 
 }
 
 void FHSystem::computeMatrices()
 {
+
+    unsigned int nSites = sitePositions.n_cols;
+
     distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
     neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
     
@@ -334,7 +412,7 @@ void FHSystem::computeMatrices()
         for (int j=0; j<nSites; j++)
         {
             double dist = 0;
-            for (int d = 0; d<nDimensions; d++ )
+            for (int d = 0; d<sitePositions.n_rows; d++ )
             {
                 dist = dist + pow(sitePositions(d, j) - sitePositions(d, i), 2);
             }

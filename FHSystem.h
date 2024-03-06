@@ -13,47 +13,53 @@ public:
     FHSystem(int x, int y, int z);
     FHSystem(std::string fileName, std::string folderName = "");
 
-    void setInteraction_OnSite(double U);
-    void setTunneling_BetweenNeighbours(double J);
+    void                    setInteraction_OnSite(double U);
+    void                    setTunneling_BetweenNeighbours(double J);
 
-    unsigned int getnSites();
-    double getCoordinate(int dim, int pos);
+    unsigned int            getnSites();
+    std::string             getInitialCondition();
+    unsigned int            getUpSpinParticleNumber();
+    unsigned int            getDownSpinParticleNumber();
+    double                  getCoordinate(int dim, int pos);
 
-    double getDistance(int i, int j);
-    bool areNeighbour(int i, int j);
-    std::complex<double> getInteractionEnergy(int i, int j);
-    std::complex<double> getTunnelingEnergy(int i, int j);
-    arma::cx_dmat* getUMatrixPointer();
-    arma::cx_dmat* getJMatrixPointer();
+    double                  getDistance(int i, int j);
+    bool                    areNeighbour(int i, int j);
+    std::complex<double>    getInteractionEnergy(int i, int j);
+    std::complex<double>    getTunnelingEnergy(int i, int j);
+    arma::cx_dmat*          getUMatrixPointer();
+    arma::cx_dmat*          getJMatrixPointer();
 
-    std::string getName();
-    std::string getFolder();
+    std::string             getName();
+    std::string             getFolder();
 
-    std::vector<bool> getInitialCondition_upSpin();
-    std::vector<bool> getInitialCondition_downSpin();
+    std::vector<bool>       getInitialCondition_upSpin();
+    std::vector<bool>       getInitialCondition_downSpin();
 
     ~FHSystem();
 
 private:
-    unsigned int nDimensions;
-    unsigned int nSites;
     
-    arma::dmat sitePositions;
+    arma::dmat                      sitePositions;
 
-    arma::dmat distanceMatrix;
-    std::vector<std::vector<bool>> neighbourMatrix;
+    unsigned int                    upSpinParticleNumber;
+    unsigned int                    downSpinParticleNumber;
 
-    arma::cx_dmat UMatrix;
-    arma::cx_dmat JMatrix;
+    arma::dmat                      distanceMatrix;
+    std::vector<std::vector<bool>>  neighbourMatrix;
 
-    std::vector<bool> initConditions_upSpin;
-    std::vector<bool> initConditions_downSpin;
+    arma::cx_dmat                   UMatrix;
+    arma::cx_dmat                   JMatrix;
 
-    std::string systemName;
-    std::string systemFolder;
+    std::string                     initialCondition;
+    std::vector<bool>               initConditions_upSpin;
+    std::vector<bool>               initConditions_downSpin;
 
-    void initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
-    void computeMatrices();
+    std::string                     systemName;
+    std::string                     systemFolder;
+
+    void        initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
+    void        initiateSystem(const arma::dmat& positions, const std::string initialCondition, std::vector<unsigned int> partNumber );
+    void        computeMatrices();
 
 
 };
