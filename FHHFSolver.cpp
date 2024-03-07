@@ -35,16 +35,66 @@ void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
 void FHHFSolver::initiateSolver()
 {
 
-    Nu0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
-    Nd0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
-    for (unsigned int it= 0; it < fhSystem->getnSites(); it ++)
+    FHSystem::FHInitialConditionType initCondition = fhSystem->getInitialCondition();
+
+    unsigned int nSites = fhSystem->getnSites();
+
+    if (initCondition == FHSystem::FHInitialConditionType::givenDiagonal)
     {
-        Nu0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0) ;
-        Nd0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0) ;
+        Nu0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        Nd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        for (unsigned int it= 0; it < nSites; it ++)
+        {
+            Nu0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0) ;
+            Nd0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0) ;
+        }
+
+        nPartU = std::floor(std::real(arma::accu(Nu0)));
+        nPartD = std::floor(std::real(arma::accu(Nd0)));
+        printf("Test 4 - Initial Density matrix : \n");
+
+        Nu0.print();
+    }
+    else if (initCondition == FHSystem::FHInitialConditionType::quenched)
+    {
+
+        nPartU = fhSystem->getUpSpinParticleNumber();
+        nPartD = fhSystem->getDownSpinParticleNumber();
+
+        arma::dvec eigVal;
+        arma::dmat v_1p;
+
+        arma::dmat Jreal = arma::real(*J);
+
+        //arma::eig_sym(eigVal, v_1p, Jreal);
+
+        //arma::dmat v_1p_1 = v_1p.t();
+
+        arma::cx_dmat Mku_0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        arma::cx_dmat Mkd_0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+        for (unsigned int k=0; k<nPartU ; k++)
+        {
+            Mku_0(k,k) = 1; 
+        }
+
+        for (unsigned int k=0; k<nPartD ; k++)
+        {
+            Mkd_0(k,k) = 1; 
+        }
+
+
+        printf("Test 4 - Initial Density matrix : \n");
+        Nu0.print();
+    }
+    else
+    {
+       std::cout << "No initial condition found." << std::endl;
     }
 
-    printf("Test 4 - Initial Density matrix : \n");
-    Nu0.print();
+
+
+
 }
 
 

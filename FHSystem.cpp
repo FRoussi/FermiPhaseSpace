@@ -295,7 +295,7 @@ double FHSystem::getCoordinate(int dim, int pos)
     }
 }
 
-std::string             FHSystem::getInitialCondition()
+ FHSystem::FHInitialConditionType     FHSystem::getInitialCondition()
 {
     return initialCondition;
 }
@@ -365,7 +365,7 @@ void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std
 
     sitePositions = positions;
 
-    initialCondition = "givenDiagonal";
+    initialCondition =  FHSystem::FHInitialConditionType::givenDiagonal;
 
     upSpinParticleNumber = diagonalInitConditions[0].size();
     downSpinParticleNumber = diagonalInitConditions[1].size();
@@ -391,7 +391,7 @@ void FHSystem::initiateSystem(const arma::dmat& positions, const std::string ini
 
     sitePositions = positions;
 
-    initialCondition = initCondition;
+    initialCondition = FHSystem::FHInitialConditionType::quenched;
 
     upSpinParticleNumber = partNumber[0];
     downSpinParticleNumber = partNumber[1];

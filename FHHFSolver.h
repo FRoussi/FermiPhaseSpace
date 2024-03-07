@@ -14,6 +14,7 @@
 class FHHFSolver
 {
 public:
+
     FHHFSolver(FHSystem* fhs);
 
     void setResultFile(std::string workName, std::string folderNameName);
@@ -50,6 +51,8 @@ private:
 // Initial conditions :
     std::vector<bool> posPartU;
     std::vector<bool> posPartD;
+    unsigned int nPartU;
+    unsigned int nPartD;
 
 // Link to Energy matrices
     arma::cx_dmat* U;

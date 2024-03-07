@@ -8,6 +8,15 @@ std::complex<double> U_os_nij(double U0, double alpha, double d);
 class FHSystem
 {
 public:
+
+    enum FHInitialConditionType {
+        givenDiagonal,
+        givenDensityMatrix,
+        givenWaveFunctionBasisVector,
+        givenWaveFunction,
+        quenched
+    };
+
     FHSystem();
     FHSystem(int x);
     FHSystem(int x, int y, int z);
@@ -17,7 +26,7 @@ public:
     void                    setTunneling_BetweenNeighbours(double J);
 
     unsigned int            getnSites();
-    std::string             getInitialCondition();
+    FHInitialConditionType  getInitialCondition();
     unsigned int            getUpSpinParticleNumber();
     unsigned int            getDownSpinParticleNumber();
     double                  getCoordinate(int dim, int pos);
@@ -50,7 +59,7 @@ private:
     arma::cx_dmat                   UMatrix;
     arma::cx_dmat                   JMatrix;
 
-    std::string                     initialCondition;
+    FHInitialConditionType           initialCondition;
     std::vector<bool>               initConditions_upSpin;
     std::vector<bool>               initConditions_downSpin;
 
