@@ -15,6 +15,13 @@
 class FHfTWASolver
 {
 public:
+
+    enum fTWAIntegrator
+    {
+        RungeKutta2,
+        RungeKutta4_38,
+    };
+
     FHfTWASolver(FHSystem* fhs);
 
     void setResultFile(std::string workName, std::string folderNameName);
@@ -45,35 +52,41 @@ private:
 // fTWA parameters :
     unsigned int nTraj;
 
+    // Integrator
+    fTWAIntegrator integrator;
+
 // Time parameter
-    double tMax;
-    double dt;
-    unsigned int nStepsPerTimePoint;
-    unsigned int nTimePoints;
+    double                      tMax;
+    double                      dt;
+    unsigned int                nStepsPerTimePoint;
+    unsigned int                nTimePoints;
 
 // Initial conditions :
-    std::vector<bool> posPartU;
-    std::vector<bool> posPartD;
+    std::vector<bool>           posPartU;
+    std::vector<bool>           posPartD;
 
-    arma::dvec diagNu0;
-    arma::dvec diagNd0;
+    unsigned int nPartU;
+    unsigned int nPartD;
 
-// Initial rho matrices before adding the noise:
-    arma::cx_dmat rhou0_mean;
-    arma::cx_dmat rhod0_mean;
+    arma::dvec                  diagNu0;
+    arma::dvec                  diagNd0;
+    arma::dvec                  diagMu0;
+    arma::dvec                  diagMd0;
+
+    arma::cx_dmat               rhou0_mean;           // Initial rho matrices before adding the noise:
+    arma::cx_dmat               rhod0_mean;
 
 // Initial noise Variance matrix :
-    arma::dmat sqrtNoiseVarianceMatrixU;
-    arma::dmat sqrtNoiseVarianceMatrixD;
+    arma::dmat                  sqrtNoiseVarianceMatrixU;
+    arma::dmat                  sqrtNoiseVarianceMatrixD;
 
+    arma::cx_dmat*              U;                  //<- Link to Interaction matrix
+    arma::cx_dmat*              J;                  //<- Link to Tunneling matrix
 
-// Link to Energy matrices
-    arma::cx_dmat* U;
-    arma::cx_dmat* J;
+    arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
+    arma::dmat                  V_1p_1;             //<- Its transpose
 
-// Usefull things :
-    arma::cx_dmat halfDiag;
-
+    arma::cx_dmat               halfDiag;           //<- Diagonal matrix of 0.5
     void derivative(const arma::cx_dmat& nu, const arma::cx_dmat& nd, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
 
 

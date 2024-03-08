@@ -137,6 +137,20 @@ double samePointThreshold = 0.001 * a;
     return pos;
 }
 
+bool isIn(string word, vector<string>& wordList)
+{
+    bool isInB = false;
+    vector<string>::iterator itWord = wordList.begin();
+    while ( (!isInB) && (itWord != wordList.end()) )
+    {
+        if (*itWord == word)  isInB = true;
+        itWord ++;
+    }
+
+    return isInB;
+}
+
+
 int main(int argc, char* argv[])
 {
 
@@ -153,6 +167,9 @@ int main(int argc, char* argv[])
     string geometry = "";
     string IC = "ic_sw";
 
+// Possible values
+    vector<string> possibleGeometry = {"grid", "graphene"};
+    vector<string> possibleIC = {"ic_sw", "ic_cw"};
 
     bool readGeomParam = false;                     //<- are we reading the geometry parameters
     vector<double> geomParam = vector<double>();    //<- list of geometry parameters stored in double
@@ -175,12 +192,12 @@ int main(int argc, char* argv[])
         {
             geomParam.push_back(argDouble);         //<- we store the number in the goemetry parameter vector
         }
-        else if ((argv[iArg] == string("grid")) || (argv[iArg] == string("graphene")))  //<- else, if the word is among the geometry types
+        else if (isIn(string(argv[iArg]), possibleGeometry)) //((argv[iArg] == string("grid")) || (argv[iArg] == string("graphene")))  //<- else, if the word is among the geometry types
         {
             geometry = argv[iArg];                  //<- we note the geometry
             readGeomParam = true;                   //<- We stand ready to read the geometry parameters
         } 
-        else if ((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
+        else if (isIn(string(argv[iArg]), possibleIC)) //((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
         {
             IC = argv[iArg] ;                       //<- we note the initial condition
             readGeomParam = false;                  //<- We stop reading geometry parameters

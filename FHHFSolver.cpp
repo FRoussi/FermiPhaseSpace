@@ -36,6 +36,7 @@ void FHHFSolver::initiateSolver()
 {
 
     FHSystem::FHInitialConditionType initCondition = fhSystem->getInitialCondition();
+    integrator = HFIntegrator::RungeKutta4_38;
 
     unsigned int nSites = fhSystem->getnSites();
 
@@ -62,26 +63,28 @@ void FHHFSolver::initiateSolver()
         nPartD = fhSystem->getDownSpinParticleNumber();
 
         arma::dvec eigVal;
-        arma::dmat v_1p;
 
         arma::dmat Jreal = arma::real(*J);
 
-        //arma::eig_sym(eigVal, v_1p, Jreal);
+        arma::eig_sym(eigVal, V_1p, Jreal);
 
-        //arma::dmat v_1p_1 = v_1p.t();
+        arma::dmat V_1p_1 = V_1p.t();
 
-        arma::cx_dmat Mku_0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-        arma::cx_dmat Mkd_0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        arma::cx_dmat Mku0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        arma::cx_dmat Mkd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
         for (unsigned int k=0; k<nPartU ; k++)
         {
-            Mku_0(k,k) = 1; 
+            Mku0(k,k) = 1; 
         }
 
         for (unsigned int k=0; k<nPartD ; k++)
         {
-            Mkd_0(k,k) = 1; 
+            Mkd0(k,k) = 1; 
         }
+
+        Nu0 =  V_1p * Mku0 * V_1p_1;
+        Nd0 =  V_1p * Mkd0 * V_1p_1;
 
 
         printf("Test 4 - Initial Density matrix : \n");
@@ -252,9 +255,14 @@ void FHHFSolver::runSimulation( )
         Nu.slice(t) = Nut;
         Nd.slice(t) = Ndt;
 
+
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
-            step_RK4_38(dt/nStepsPerTimePoint);
+            if      (integrator==HFIntegrator::RungeKutta1)     step_RK1(dt/nStepsPerTimePoint);
+            else if (integrator==HFIntegrator::RungeKutta2)     step_RK2(dt/nStepsPerTimePoint);
+            else if (integrator==HFIntegrator::RungeKutta4)     step_RK4(dt/nStepsPerTimePoint);
+            else if (integrator==HFIntegrator::RungeKutta4_38)  step_RK4_38(dt/nStepsPerTimePoint);
+            else if (integrator==HFIntegrator::RungeKutta45)    step_RK45(dt/nStepsPerTimePoint);
         }
  
     }
@@ -263,21 +271,32 @@ void FHHFSolver::runSimulation( )
 // Computing other values :
     arma::cx_dmat Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EU =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EtH =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec nPartU =  arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec nPartD =  arma::drowvec(nTimePoints, arma::fill::zeros);
     for (unsigned int t = 0;  t<nTimePoints; t++)
     {
-        arma::cx_dvec diagNu = Nu.slice(t).diag();
-        arma::cx_dvec diagNd = Nd.slice(t).diag();
-        Niiu.col(t) = diagNu;
-        Niid.col(t) = diagNd;
-        nPartU(t) = std::real(arma::accu(diagNu));
-        nPartD(t) = std::real(arma::accu(diagNd));
 
-        EtH(t) =  arma::accu(*J % Nu.slice(t)) + arma::accu(*J % Nd.slice(t));
-        EU(t) = (arma::cdot(diagNu, *U * diagNd) + arma::cdot(diagNd,  *U * diagNu)) / arma::cx_double(2,0);
+        Nut = Nu.slice(t);
+        Ndt = Nd.slice(t);
+        Niiu.col(t) = Nut.diag();
+        Niid.col(t) = Ndt.diag();
+        nPartU(t) = std::real(arma::trace(Nut));
+        nPartD(t) = std::real(arma::trace(Ndt));
+
+        EtH(t) =  arma::accu(*J % Nut) + arma::accu(*J % Ndt);
+        EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+
+        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
+        {
+            arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
+            arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
+            Mkku.col(t) = Mu.diag();
+            Mkkd.col(t) = Md.diag();
+        }
 
     }
 

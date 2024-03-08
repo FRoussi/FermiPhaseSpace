@@ -84,6 +84,17 @@ FHSystem::FHSystem(int x, int y, int z)
 
 FHSystem::FHSystem(std::string fileName, std::string folderName)
 {
+
+    enum WhatToRead
+    {
+        nothing,
+        positions,
+        diagonalIC_UpSpin,
+        diagonalIC_DownSpin,
+        numberOfParticles_UpSpin,
+        numberOfParticles_DownSpin
+    };
+
     systemName = fileName;
     systemFolder = folderName;
     std::string fileAdressName = fileName; 
@@ -97,18 +108,11 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     {
         printf("== Reading %s \n", fileName.c_str());
 
-        // 0 : nothing
-        // 1 : positions
-        // 2 : diagonal initial conditions, up spin
-        // 3 : diagonal initial conditions, down spin
-        // 4 : number of particles, up spin
-        // 5 : number of particles, down spin
-        unsigned int whatToRead = 0;    
 
+        WhatToRead whatToR =  WhatToRead::nothing;  
 
         int nDim = -1;
 
-        std::string         initialConditionType;
         std::vector<std::vector<double>> pos =   std::vector<std::vector<double>>();
         std::vector<unsigned int> initCond_up =   std::vector<unsigned int>();
         std::vector<unsigned int> initCond_down =   std::vector<unsigned int>();
@@ -120,21 +124,21 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         {
            if (line == "#POSITIONS")
            {
-                whatToRead = 1;
+                whatToR = WhatToRead::positions;
            }
            else if (line == "#INITIALCONDITIONS_GIVENDIAGONAL")
            {
-                initialConditionType = "givenDiagonal";
-                whatToRead = 2;
+                initialCondition = FHInitialConditionType::givenDiagonal;
+                whatToR = WhatToRead::diagonalIC_UpSpin;
            }
            else if (line == "#INITIALCONDITIONS_QUENCHED")
            {
-                initialConditionType = "quenched";
-                whatToRead = 4;
+                initialCondition = FHInitialConditionType::quenched;
+                whatToR = WhatToRead::numberOfParticles_UpSpin;
            }
-           else switch (whatToRead)
+           else switch (whatToR)
            {
-           case 1:  // Read positions
+           case WhatToRead::positions :  // Read positions
             {
                 std::stringstream ss(line);
                 std::string coord;
@@ -164,7 +168,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 }
                 break;
             }
-           case 2:  // Read  up spin particles
+           case WhatToRead::diagonalIC_UpSpin :  // Read  up spin particles
            {
                 std::stringstream ss(line);
                 std::string siteN;
@@ -175,10 +179,10 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                     initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
                     particlesNumber[0]++;
                 }
-                whatToRead = 3;                      //<- At the end, the up-spin particles positions have been read.
+                whatToR = WhatToRead::diagonalIC_DownSpin;                      //<- At the end, the up-spin particles positions have been read.
                 break;
             }
-            case 3:                   //<- Else, if the down-spin particles positions have not been read yet
+            case WhatToRead::diagonalIC_DownSpin :                   //<- Else, if the down-spin particles positions have not been read yet
             {
                 std::stringstream ss(line);
                 std::string siteN;
@@ -188,27 +192,27 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                     initCond_down.push_back(std::stoi(siteN)); 
                     particlesNumber[1]++;
                 }
-                whatToRead = 0; 
+                whatToR = WhatToRead::nothing; 
                 break;
             }
-            case 4:
+            case WhatToRead::numberOfParticles_UpSpin :
             {
                 std::stringstream ss(line);
                 std::string nPart;
 
                 std::getline(ss, nPart, ' ');
                 particlesNumber[0] = std::stoi(nPart);
-                whatToRead = 5;
+                whatToR = WhatToRead::numberOfParticles_DownSpin;
             }
             break;
-            case 5:
+            case WhatToRead::numberOfParticles_DownSpin :
             {
                 std::stringstream ss(line);
                 std::string nPart;
 
                 std::getline(ss, nPart, ' ');
                 particlesNumber[1] = std::stoi(nPart);
-                whatToRead = 0;
+                whatToR = WhatToRead::nothing;
             }
             break;
 
@@ -228,7 +232,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         }
 
 
-    if (initialConditionType == std::string("givenDiagonal"))
+    if (initialCondition == FHInitialConditionType::givenDiagonal)
     {
             std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
             initCond[0] = initCond_up;
@@ -236,9 +240,9 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
             initiateSystem(sitePos, initCond);
     }
-    else if (initialConditionType == std::string("quenched"))
+    else if (initialCondition == FHInitialConditionType::quenched)
     {
-        initiateSystem(sitePos, initialConditionType, particlesNumber);
+        initiateSystem(sitePos, initialCondition, particlesNumber);
     }
 
 
@@ -359,7 +363,10 @@ std::vector<bool> FHSystem::getInitialCondition_downSpin()
     return initConditions_downSpin;
 }
 
-
+/// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
+/// @param positions Matrix of site position
+/// @param diagonalInitConditions vectors of sites on which there is a up-spin/down-spin particle
+/// @return void
 void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& diagonalInitConditions )
 {
 
@@ -386,7 +393,13 @@ void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std
 
 }
 
-void FHSystem::initiateSystem(const arma::dmat& positions, const std::string initCondition, std::vector<unsigned int> partNumber )
+
+/// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
+/// @param positions Matrix of site position
+/// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
+/// @param partNumner vector of the numbers of up-spin, down-spin particle
+/// @return void
+void FHSystem::initiateSystem(const arma::dmat& positions, FHInitialConditionType initCondType, std::vector<unsigned int> partNumber )
 {
 
     sitePositions = positions;
@@ -399,6 +412,8 @@ void FHSystem::initiateSystem(const arma::dmat& positions, const std::string ini
 
 }
 
+/// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
+/// @return void
 void FHSystem::computeMatrices()
 {
 

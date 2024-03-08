@@ -17,6 +17,21 @@ public:
         quenched
     };
 
+    enum FHInteractionType {
+        onSiteConstant,
+        onSiteBySiteType,
+        onSiteGivenDiagonal,
+        distanceFunction,
+        matrixGiven
+    };
+
+    enum FHTunnelingType {
+        nearestNeighbourConstant,
+        nearestNeighbourBySiteType,
+        tunnelingDistanceFunction,
+        tunnelingMatrixGiven
+    };
+
     FHSystem();
     FHSystem(int x);
     FHSystem(int x, int y, int z);
@@ -59,7 +74,7 @@ private:
     arma::cx_dmat                   UMatrix;
     arma::cx_dmat                   JMatrix;
 
-    FHInitialConditionType           initialCondition;
+    FHInitialConditionType          initialCondition;
     std::vector<bool>               initConditions_upSpin;
     std::vector<bool>               initConditions_downSpin;
 
@@ -67,7 +82,7 @@ private:
     std::string                     systemFolder;
 
     void        initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
-    void        initiateSystem(const arma::dmat& positions, const std::string initialCondition, std::vector<unsigned int> partNumber );
+    void        initiateSystem(const arma::dmat& positions, FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
     void        computeMatrices();
 
 

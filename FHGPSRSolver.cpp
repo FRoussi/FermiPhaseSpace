@@ -11,6 +11,9 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
     J = fhSystem->getJMatrixPointer();
 
     sqrtU =  arma::sqrt(*U);
+
+    driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38;
+    diffusionIntegrator = GPSRDiffusionIntegrator::numerical_rsvd;
 }
 
 void FHGPSRSolver::setResultFile(std::string wN, std::string fN)
@@ -44,6 +47,8 @@ void FHGPSRSolver::setGPSRParameters(unsigned int nT)
 /// @brief Initiate the GPSR solver, compute the initial density matrix probability. 
 void FHGPSRSolver::initiateSolver()
 {
+
+
 
     rhou0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     rhod0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -280,6 +285,7 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
 
     unsigned int sizeD = D.n_rows;
     unsigned int sizeD_2 = sizeD/2;
+    bool successSVD = false;
 
     if (D.has_nan() || D.has_inf())
     {
@@ -300,7 +306,14 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
         //bool SVDsuccess = arma::svd(U, s, V, D1);
 
         unsigned int nSites = static_cast<unsigned int>(std::sqrt(sizeD_2));
-        bool SVDsuccess = rsvd(U,s,V,D1,2*nSites);
+        if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_svd)
+        {
+            successSVD = svd(U,s,V,D1);
+        }
+        else if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_rsvd)
+        {
+            successSVD = rsvd(U,s,V,D1, 2*nSites);
+        }
 
         arma::dmat sqrtS = arma::diagmat(arma::sqrt(s)); 
 
@@ -340,12 +353,13 @@ void FHGPSRSolver::step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
         arma::cx_dmat drhod_Diff = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
         // Step from the drift part : 
-        step_Drift_RK4_38(rhou, rhod, dt, drhou_Drift, drhod_Drift);
+        if (driftIntegrator == GPSRDriftIntegrator::RungeKutta2)            step_Drift_RK2(rhou, rhod, dt, drhou_Drift, drhod_Drift);
+        else if (driftIntegrator == GPSRDriftIntegrator::RungeKutta4_38)    step_Drift_RK4_38(rhou, rhod, dt, drhou_Drift, drhod_Drift);
 
         // Step from the diffusion part : 
         double U0 = std::real( fhSystem->getInteractionEnergy(0,0));
-        //step_Diffusion(rhou, rhod, U0, dt, drhou_Diff, drhod_Diff);
-        step_Diffusion_svd(rhou, rhod, U0, dt, drhou_Diff, drhod_Diff);
+        if (diffusionIntegrator==GPSRDiffusionIntegrator::analytical)   step_Diffusion(rhou, rhod, U0, dt, drhou_Diff, drhod_Diff);
+        else step_Diffusion_svd(rhou, rhod, U0, dt, drhou_Diff, drhod_Diff);
 
         rhou = rhou + drhou_Drift + drhou_Diff;
         rhod = rhod + drhod_Drift + drhod_Diff;
