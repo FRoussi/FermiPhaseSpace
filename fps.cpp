@@ -35,6 +35,17 @@ int main(int argc, char* argv[])
         std::cout << "== Work file : " << work << std::endl;
     }
 
+   enum task
+   {
+      nothing,
+      readSystemFile,
+      readEnergyParameters,
+      compute_ED,
+      compute_FH,
+      compute_fTWA,
+      compute_GPSR
+   };
+
 
    std::string workFolder = "systemsFolder";
    std::string instructionsFileName = work;
@@ -56,50 +67,50 @@ int main(int argc, char* argv[])
    instructionsFile.close();
    std::cout << "---------------------------" << std::endl;
 
-   int taskNumber = -1;
+   task TODO = task::nothing;
    bool systemLoaded = false;
    bool energyParametersLoaded = false;
    while(std::getline(instructionsStream, line))
    {
       if (line == "#SYSTEM_FILE")
-         taskNumber = 0;
+        TODO = task::readSystemFile;
       else if (line == "#ENERGY_PARAMETERS")
       {
          if (systemLoaded)
-            taskNumber = 1;   
+            TODO = task::readEnergyParameters;   
          else
             std::cout << "Not reading energy parameters because no system loaded." << std::endl;
       }          
       else if (line == "#ED")
       {
          if (systemLoaded && energyParametersLoaded)
-            taskNumber = 2;
+            TODO = task::compute_ED;
          else
             std::cout << "Not reading ED instructions because something not loaded." << std::endl;      
       } 
       else if (line == "#HF")
       {
          if (systemLoaded && energyParametersLoaded)
-            taskNumber = 3;
+            TODO = task::compute_FH;
          else
             std::cout << "Not reading HF instructions because something not loaded." << std::endl;      
       } 
       else if (line == "#fTWA")
       {
          if (systemLoaded && energyParametersLoaded)
-            taskNumber = 4;
+            TODO = task::compute_fTWA;
          else
             std::cout << "Not reading fTWA instructions because something not loaded." << std::endl;      
       } 
       else if (line == "#GPSR")
       {
          if (systemLoaded && energyParametersLoaded)
-            taskNumber = 5;
+            TODO = task::compute_GPSR;
          else
             std::cout << "Not reading GPSR instructions because something not loaded." << std::endl;      
       }   
 
-      else if (taskNumber == 0)
+      else if (TODO == task::readSystemFile)
       {
          systemFileName = line;
          fhSystem = FHSystem(systemFileName, workFolder);
@@ -108,7 +119,7 @@ int main(int argc, char* argv[])
          //std::cout << "Initial conditions spin up   : [" << fhSystem.getInitialCondition_upSpin()[0] << fhSystem.getInitialCondition_upSpin()[1] << "]"<< std::endl;
          //std::cout << "Initial conditions spin down : [" << fhSystem.getInitialCondition_downSpin()[0] << fhSystem.getInitialCondition_downSpin()[1] << "]"<< std::endl;
       }
-      else if (taskNumber == 1)
+      else if (TODO == task::readEnergyParameters)
       {
          lineStream = std::stringstream(line);
          while(std::getline(lineStream, word, ' '))
@@ -119,7 +130,7 @@ int main(int argc, char* argv[])
          energyParametersLoaded = true;
          std::cout << "Energy parameters loaded, U=" << nrjParameters[0] << ", J=" << nrjParameters[1] << std::endl;
       }
-      else if (taskNumber == 2)
+      else if (TODO == task::compute_ED)
       {
          lineStream = std::stringstream(line);
          std::vector<double> edParameters;
@@ -133,7 +144,7 @@ int main(int argc, char* argv[])
          edSolver.setTimeParameters(edParameters[0], edParameters[1], edParameters[2]);
          edSolver.runSimulation();
       }
-      else if (taskNumber == 3)
+      else if (TODO == task::compute_FH)
       {
          lineStream = std::stringstream(line);
          std::vector<double> hfParameters;
@@ -147,7 +158,7 @@ int main(int argc, char* argv[])
          hfSolver.setTimeParameters(hfParameters[0], hfParameters[1], hfParameters[2]);
          hfSolver.runSimulation();
       }
-      else if (taskNumber == 4)
+      else if (TODO == task::compute_fTWA)
       {
          lineStream = std::stringstream(line);
          std::vector<double> ftwaParameters;
@@ -162,7 +173,7 @@ int main(int argc, char* argv[])
          ftwaSolver.setfTWAParameters(ftwaParameters[3]);
          ftwaSolver.runSimulation();
       }
-      else if (taskNumber == 5)
+      else if (TODO == task::compute_GPSR)
       {
          lineStream = std::stringstream(line);
          std::vector<double> gpsrParameters;
