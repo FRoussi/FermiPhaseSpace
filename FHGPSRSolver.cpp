@@ -8,7 +8,7 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
 
 
     U = fhSystem->getUMatrixPointer();
-    J = fhSystem->getJMatrixPointer();
+    tM = fhSystem->gettMatrixPointer();
 
     sqrtU =  arma::sqrt(*U);
 
@@ -69,8 +69,8 @@ void FHGPSRSolver::initiateSolver()
 /// @return void
 void FHGPSRSolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
-    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * rhod.diag());
-    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * rhou.diag());
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * rhod.diag());
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * rhou.diag());
 
     drhou_dt = - jj * (rhou * DeltaUp - DeltaUp * rhou) ;
     drhod_dt = - jj * (rhod * DeltaDo - DeltaDo * rhod) ;
@@ -415,7 +415,7 @@ void FHGPSRSolver::runSimulation( )
             rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();
 
             EU_loc(t) = EU_loc(t) + (arma::dot(rhou.diag(), *U * rhod.diag() ) + arma::dot(rhod.diag(), *U * rhou.diag() )) / arma::cx_double(2,0);
-            EtH_loc(t) = EtH_loc(t) + arma::accu((rhou + rhod) % *J);
+            EtH_loc(t) = EtH_loc(t) + arma::accu((rhou + rhod) % *tM);
 
             
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s++)

@@ -162,18 +162,46 @@ int main(int argc, char* argv[])
     string fileName = "newSystem";
     string fileFolder = "systemsFolder";
 
+    // Possible values
+    vector<string> possibleGeometry = {"grid", "graphene", "line"};
+    enum geometry{
+        grid,
+        graphene,
+        line
+    };
+
+    vector<string> possibleIC = {"ic_sw", "ic_cw", "ic_quenched"};
+    enum IC{
+        spinWave,
+        chargeWave,
+        quenched
+    };
+
+    vector<string> possibleNRJParameters = {"HF", "tJ"};
+    enum NRJ{
+        HF,
+        tJ
+    };
+
 // Default values
-    vector<vector<double>> pos = makeGrid(2,1,1,1);
-    string geometry = "";
-    string IC = "ic_sw";
+    geometry geom = geometry::grid;                     
+    vector<vector<double>> pos = makeGrid(2,1,1,1);     //<- default site system
 
-// Possible values
-    vector<string> possibleGeometry = {"grid", "graphene"};
-    vector<string> possibleIC = {"ic_sw", "ic_cw"};
+    IC initC = IC::spinWave;                            //<- default initial condition
 
-    bool readGeomParam = false;                     //<- are we reading the geometry parameters
+    NRJ en = NRJ::HF;
+    vector<double> energyParam = {1,1};                 //<- default energy parameters
+
+
+
+    enum whatToRead{                                //<- what are we reading next
+        nothing,
+        geometryParameters,
+        energyParameters
+    }    ;                  
     vector<double> geomParam = vector<double>();    //<- list of geometry parameters stored in double
     double argDouble = 0;                           //<- the current entry in double
+    whatToRead wtr = whatToRead::nothing;
     bool isANumber = true;                          //<- is the current entry a number
 
     for (int iArg = 1; iArg < argc ; iArg++)        //<- for each entry
@@ -188,23 +216,27 @@ int main(int argc, char* argv[])
             isANumber = false;
         }
 
-        if (isANumber && readGeomParam)             //<- if it's a number and we are readinf the geometruy parameters
+        if (isANumber && (wtr == whatToRead::geometryParameters))   //<- if it's a number and we are reading the geometry parameters
         {
-            geomParam.push_back(argDouble);         //<- we store the number in the goemetry parameter vector
+            geomParam.push_back(argDouble);                         //<- we store the number in the goemetry parameter vector
         }
-        else if (isIn(string(argv[iArg]), possibleGeometry)) //((argv[iArg] == string("grid")) || (argv[iArg] == string("graphene")))  //<- else, if the word is among the geometry types
+        else if (isIn(string(argv[iArg]), possibleGeometry))        //<- else, if the word is among the geometry types
         {
-            geometry = argv[iArg];                  //<- we note the geometry
-            readGeomParam = true;                   //<- We stand ready to read the geometry parameters
+            if (string(argv[iArg]) == possibleGeometry[0])  geom = geometry::grid;       //<- we note the geometry
+            if (string(argv[iArg]) == possibleGeometry[1])  geom = geometry::graphene; 
+            if (string(argv[iArg]) == possibleGeometry[2])  geom = geometry::line;  
+            wtr = whatToRead::geometryParameters;                   //<- We stand ready to read the geometry parameters
         } 
         else if (isIn(string(argv[iArg]), possibleIC)) //((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
         {
-            IC = argv[iArg] ;                       //<- we note the initial condition
-            readGeomParam = false;                  //<- We stop reading geometry parameters
+            if (string(argv[iArg]) == possibleIC[0])  initC = IC::spinWave; 
+            if (string(argv[iArg]) == possibleIC[1])  initC = IC::chargeWave;           
+            if (string(argv[iArg]) == possibleIC[2])  initC = IC::quenched;       //<- we note the initial condition
+            wtr = whatToRead::nothing;                  //<- We stop reading geometry parameters
         }
         else 
         {
-             readGeomParam = false;                 //<- Else we don't stand ready for anything
+             wtr = whatToRead::nothing;                 //<- Else we don't stand ready for anything
              if (iArg==1)                           //<- and if it's the first argumentm that's the name of the file
              {
                 fileName = argv[1];
@@ -218,41 +250,42 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
 {
     geomParam.push_back(1.);
 }
-
-    if (geometry == "grid")
+    switch (geom)
     {
+    case geometry::grid:
         pos = makeGrid( static_cast<int>(geomParam[0]), static_cast<int>(geomParam[1]), static_cast<int>(geomParam[2]), geomParam[3]);
-    }
-    if (geometry == "graphene")
-    {
+        break;
+    case geometry::graphene :
         pos = makeHoneyCombs(static_cast<int>(geomParam[0]),geomParam[1]);
+        break;
     }
+
 
 // Computation of the Initial condition
 vector<unsigned int> IC_UP = vector<unsigned int>();
 vector<unsigned int> IC_DOWN = vector<unsigned int>();
-if (IC == "ic_sw")
-{
-    for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
+    switch (initC)
     {
+    case IC::spinWave :
+        for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
+        {
             IC_UP.push_back(uppos);
-    }
-    for (unsigned int downpos = 1; downpos < pos.size(); downpos+=2)
-    {
+        }
+        for (unsigned int downpos = 1; downpos < pos.size(); downpos+=2)
+        {
             IC_DOWN.push_back(downpos);
-    }
-}
-else if (IC == "ic_cw")
-{
-    for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
-    {
+        }
+        break;
+    case IC::chargeWave :
+        for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
+        {
             IC_UP.push_back(uppos);
-    }
-    for (unsigned int downpos = 0; downpos < pos.size(); downpos+=2)
-    {
+        }
+        for (unsigned int downpos = 0; downpos < pos.size(); downpos+=2)
+        {
             IC_DOWN.push_back(downpos);
+        }
     }
-}
 
 
 
@@ -265,32 +298,52 @@ string fileAdress = fileFolder + "/" + fileName;
    
     if (streamSystem.is_open())
     {
-       streamSystem << "#POSITIONS" << endl;
-        for (vector<vector<double>>::iterator itpos = pos.begin(); itpos !=pos.end(); itpos++)
+        // POSITIONS OF SITES
+        switch (geom)
         {
-           for(vector<double>::iterator itpoint = itpos->begin() ; itpoint != itpos->end(); itpoint++)
-           {
-                streamSystem << (*itpoint) << "\t";
-           }
-            streamSystem << endl;
+        case geometry::line:
+            streamSystem << "#LINE" << endl;
+            streamSystem << geomParam[0] << endl;
+            break;       
+        default:
+            streamSystem << "#POSITIONS" << endl;
+            for (vector<vector<double>>::iterator itpos = pos.begin(); itpos !=pos.end(); itpos++)
+            {
+                for(vector<double>::iterator itpoint = itpos->begin() ; itpoint != itpos->end(); itpoint++)
+                {
+                    streamSystem << (*itpoint) << "\t";
+                }
+                streamSystem << endl;
+               
+            }
+            break;
         }
 
-
-        streamSystem << "#INITIALCONDITIONS_GIVENDIAGONAL" << endl;
-        for (vector<unsigned int>::iterator itpos = IC_UP.begin(); itpos !=IC_UP.end(); itpos++)
+        // INITIAL CONDITIONS
+        switch (initC)
         {
-            streamSystem << (*itpos) << "\t";
+            case IC::quenched:
+                streamSystem << "#INITIALCONDITIONS_QUENCHED" << endl;
+                break;
+            default:   
+                streamSystem << "#INITIALCONDITIONS_GIVENDIAGONAL" << endl;
+                for (vector<unsigned int>::iterator itpos = IC_UP.begin(); itpos !=IC_UP.end(); itpos++)
+                {
+                    streamSystem << (*itpos) << "\t";
+                }
+                streamSystem << endl;
+                for (vector<unsigned int>::iterator itpos = IC_DOWN.begin(); itpos !=IC_DOWN.end(); itpos++)
+                {
+                    streamSystem << (*itpos) << "\t";
+                }
+                streamSystem << endl;              
         }
-        streamSystem << endl;
-        for (vector<unsigned int>::iterator itpos = IC_DOWN.begin(); itpos !=IC_DOWN.end(); itpos++)
-        {
-            streamSystem << (*itpos) << "\t";
-        }
-        streamSystem << endl;
-        
 
-        streamSystem.close();
+        // ENERGY PARAMETERS
+
+    streamSystem.close();
     }
+    
     else
     {
         cout << "Stream not open." << endl;

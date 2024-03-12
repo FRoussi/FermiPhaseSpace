@@ -85,6 +85,13 @@ FHSystem::FHSystem(int x, int y, int z)
 FHSystem::FHSystem(std::string fileName, std::string folderName)
 {
 
+    enum troolean
+    {
+        vrai,
+        faux,
+        dontknow
+    };
+
     enum WhatToRead
     {
         nothing,
@@ -112,7 +119,10 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         WhatToRead whatToR =  WhatToRead::nothing;  
 
         int nDim = -1;
+        troolean haveOrbitalNames = troolean::dontknow;
 
+        std::vector<unsigned int>       orbitalTypes = std::vector<unsigned int>();
+        std::vector<std::string>       orbitalNames = std::vector<std::string>();
         std::vector<std::vector<double>> pos =   std::vector<std::vector<double>>();
         std::vector<unsigned int> initCond_up =   std::vector<unsigned int>();
         std::vector<unsigned int> initCond_down =   std::vector<unsigned int>();
@@ -265,21 +275,21 @@ void FHSystem::setInteraction_OnSite(double U0)
     UMatrix = U0 * arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::eye);
 }
 
-void FHSystem::setTunneling_BetweenNeighbours(double J)
+void FHSystem::setTunneling_BetweenNeighbours(double t)
 {
-    JMatrix = arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::zeros);
+    tMatrix = arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::zeros);
     for (unsigned int i = 0; i< sitePositions.n_cols; i++)
     {
         for (unsigned int j = 0; j< sitePositions.n_cols; j++)
         {
             if (neighbourMatrix[i][j])
             {
-                JMatrix(i,j) = J;
+                tMatrix(i,j) = t;
             }
         }
     }
     printf("J-Matrix : \n");
-    JMatrix.print();
+    tMatrix.print();
 }
 
 unsigned int FHSystem::getnSites()
@@ -330,6 +340,11 @@ std::complex<double> FHSystem::getInteractionEnergy(int i, int j)
 
 std::complex<double> FHSystem::getTunnelingEnergy(int i, int j)
 {
+    return tMatrix(i,j);
+}
+
+std::complex<double> FHSystem::getExchangeCouplingEnergy(int i, int j)
+{
     return JMatrix(i,j);
 }
 
@@ -341,6 +356,11 @@ arma::cx_dmat* FHSystem::getUMatrixPointer()
 arma::cx_dmat* FHSystem::getJMatrixPointer()
 {
     return &JMatrix;
+}
+
+arma::cx_dmat* FHSystem::gettMatrixPointer()
+{
+    return &tMatrix;
 }
 
 std::string FHSystem::getName()
@@ -421,6 +441,7 @@ void FHSystem::computeMatrices()
 
     distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
     neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
+    sameSiteMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
     
     for (int i=0; i<nSites; i++)
     {
@@ -433,17 +454,31 @@ void FHSystem::computeMatrices()
             }
             dist = sqrt(dist);
             distanceMatrix(i, j) = dist;
+            if (abs(dist)< 0.0001)
+            {
+                sameSiteMatrix[i][j] = true;
+            }
             if (abs(dist - 1)< 0.0001)
             {
                 neighbourMatrix[i][j] = true;
             }
-            else
-            {
-                neighbourMatrix[i][j] = false;
-            }
         }
     }
 }
+
+
+/*bool FHSystem::isIn(T word, vector<T>& wordList)
+{
+    bool isInB = false;
+    vector<string>::iterator itWord = wordList.begin();
+    while ( (!isInB) && (itWord != wordList.end()) )
+    {
+        if (*itWord == word)  isInB = true;
+        itWord ++;
+    }
+
+    return isInB;
+}*/
 
 
 

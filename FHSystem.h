@@ -25,6 +25,14 @@ public:
         matrixGiven
     };
 
+    enum tJExchangeCouplingType {
+        onSiteConstant,
+        onSiteBySiteType,
+        onSiteGivenDiagonal,
+        distanceFunction,
+        matrixGiven
+    };
+
     enum FHTunnelingType {
         nearestNeighbourConstant,
         nearestNeighbourBySiteType,
@@ -50,8 +58,10 @@ public:
     bool                    areNeighbour(int i, int j);
     std::complex<double>    getInteractionEnergy(int i, int j);
     std::complex<double>    getTunnelingEnergy(int i, int j);
+    std::complex<double>    getExchangeCouplingEnergy(int i, int j);
     arma::cx_dmat*          getUMatrixPointer();
     arma::cx_dmat*          getJMatrixPointer();
+    arma::cx_dmat*          gettMatrixPointer();
 
     std::string             getName();
     std::string             getFolder();
@@ -64,15 +74,19 @@ public:
 private:
     
     arma::dmat                      sitePositions;
+    arma::uvec                      orbitalTypes;
+    std::vector<std::string>        orbitalNames;
 
     unsigned int                    upSpinParticleNumber;
     unsigned int                    downSpinParticleNumber;
 
     arma::dmat                      distanceMatrix;
     std::vector<std::vector<bool>>  neighbourMatrix;
+    std::vector<std::vector<bool>>  sameSiteMatrix;
 
     arma::cx_dmat                   UMatrix;
     arma::cx_dmat                   JMatrix;
+    arma::cx_dmat                   tMatrix;
 
     FHInitialConditionType          initialCondition;
     std::vector<bool>               initConditions_upSpin;
@@ -84,6 +98,10 @@ private:
     void        initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
     void        initiateSystem(const arma::dmat& positions, FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
     void        computeMatrices();
+
+
+
+//    bool isIn(std::string w, std::vector<std::string> v);
 
 
 };

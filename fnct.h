@@ -6,7 +6,7 @@
 #include <armadillo>
 
 
-#define M_PI 3.14159265358979323846
+
 
 arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
 

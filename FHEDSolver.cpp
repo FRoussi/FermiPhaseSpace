@@ -140,16 +140,16 @@ void FHEDSolver::buildHamiltonian_U()
 
 ///@brief Compute the system's Hamiltonian tunneling part
 ///@return void
-void FHEDSolver::buildHamiltonian_J()
+void FHEDSolver::buildHamiltonian_tM()
 {
-    H_J = arma::sp_cx_dmat(basisSize, basisSize);
+    H_t = arma::sp_cx_dmat(basisSize, basisSize);
     for (unsigned int iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {
         for (unsigned int jSite = 0; jSite < fhSystem->getnSites(); jSite++)
         {
             if (fhSystem->getTunnelingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
-                H_J = H_J + fhSystem->getTunnelingEnergy(iSite, jSite) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]);
+                H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]);
             }
         }
     }
@@ -162,9 +162,9 @@ void FHEDSolver::buildHamiltonian_J()
 void FHEDSolver::buildHamiltonian()
 {
     buildHamiltonian_U();
-    buildHamiltonian_J();
+    buildHamiltonian_tM();
 
-    H = H_U + H_J;
+    H = H_U + H_t;
 
     //printf("Test 2 - small system Hamiltonian : \n");
     //H.print_dense();
@@ -412,7 +412,7 @@ void FHEDSolver::runSimulation()
             niid(iSite,t) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][iSite] * psi)));
         }     
         EU[t] = static_cast<double>(std::real(arma::cdot(psi, H_U * psi)));
-        EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_J * psi)));
+        EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_t * psi)));
         E[t] = EU[t] + EtH[t];
 
         step(this->dt);

@@ -11,7 +11,7 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS)
     halfDiag = arma::cx_dmat(haldDiagReal, zeroMat);
 
     U = fhSystem->getUMatrixPointer();
-    J = fhSystem->getJMatrixPointer();
+    tM = fhSystem->gettMatrixPointer();
 }
 
 void FHfTWASolver::setResultFile(std::string wN, std::string fN)
@@ -89,7 +89,7 @@ void FHfTWASolver::initiateSolver()
         nPartD = fhSystem->getDownSpinParticleNumber();
         
         arma::dvec eigVal;
-        arma::dmat Jreal = arma::real(*J);
+        arma::dmat Jreal = arma::real(*tM);
         arma::eig_sym(eigVal, V_1p, Jreal);
         arma::dmat V_1p_1 = V_1p.t();
 
@@ -220,7 +220,7 @@ void FHfTWASolver::runSimulation( )
             Nu_loc =  rhou + halfDiagMatrix;
             Nd_loc =  rhod + halfDiagMatrix;
             EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-            EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *J);
+            EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
 
             // We do 'nStepsPerTimePoint' simulation steps
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
@@ -307,8 +307,8 @@ void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rh
 
     arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou.n_rows, arma::fill::ones); 
 
-    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * (rhod.diag() + half));
-    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * (rhou.diag() + half));
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * (rhod.diag() + half));
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * (rhou.diag() + half));
 
     drhou_dt = - jj * ( rhou * DeltaUp - DeltaUp * rhou) ;
     drhod_dt = - jj * ( rhod * DeltaDo - DeltaDo * rhod) ;

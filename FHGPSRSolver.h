@@ -102,7 +102,7 @@ private:
 
 // Link to Energy matrices
   arma::cx_dmat*                    U;
-  arma::cx_dmat*                    J;
+  arma::cx_dmat*                    tM;
 
 // Usefull things :
   arma::cx_dmat                     sqrtU;

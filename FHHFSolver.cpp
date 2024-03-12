@@ -5,7 +5,7 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
 {
     fhSystem = fhS;
     U = fhSystem->getUMatrixPointer();
-    J = fhSystem->getJMatrixPointer();
+    tM = fhSystem->gettMatrixPointer();
 }
 
 
@@ -64,7 +64,7 @@ void FHHFSolver::initiateSolver()
 
         arma::dvec eigVal;
 
-        arma::dmat Jreal = arma::real(*J);
+        arma::dmat Jreal = arma::real(*tM);
 
         arma::eig_sym(eigVal, V_1p, Jreal);
 
@@ -227,8 +227,8 @@ void FHHFSolver::step_RK45(double dt)
 void FHHFSolver::derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt)
 {
 
-    arma::cx_dmat DeltaUp = *J + arma::diagmat(*U * ndt.diag());
-    arma::cx_dmat DeltaDo = *J + arma::diagmat(*U * nut.diag());
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag());
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag());
 
     dnut_dt = - jj * ( nut * DeltaUp - DeltaUp * nut) ;
     dndt_dt = - jj * ( ndt * DeltaDo - DeltaDo * ndt) ;
@@ -287,7 +287,7 @@ void FHHFSolver::runSimulation( )
         nPartU(t) = std::real(arma::trace(Nut));
         nPartD(t) = std::real(arma::trace(Ndt));
 
-        EtH(t) =  arma::accu(*J % Nut) + arma::accu(*J % Ndt);
+        EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
         EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
 
         if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
