@@ -1,29 +1,28 @@
 #pragma once
 
+#include <bitset>
+//#include <climits>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <armadillo>
 //#include <cmath>
 
-#include "utilitaries.h"
+#include "fnctbitset.h"
 #include "fnct.h"
 #include "FHSystem.h"
-
-
-
 #include "ResultWriter.h"
+
 
 
 
 std::vector<std::vector<bool>> getCombinations(unsigned int n, unsigned int p, unsigned int max_n);
 unsigned int nChoosep(unsigned int n, unsigned int p);
-std::vector<bool> positionToBinary(std::vector<unsigned int>&, unsigned int nSites);
-std::vector<unsigned int> binaryToPosition(std::vector<bool>&);
 
-unsigned int countSimilarities(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int& lastIndexWrong1, unsigned int& lastIndexWrong2);
-bool canHopHalf(std::vector<bool>& phiH1, std::vector<bool>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
-unsigned int getParticleNumberBetween(std::vector<bool>& posP, unsigned int from, unsigned int to);
+
+
+bool canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
+unsigned int getParticleNumberBetween(std::bitset<MAX_BITS>& posP, unsigned int from, unsigned int to);
 
 
 class tJEDSolver  	
@@ -34,7 +33,7 @@ public:
     void setResultFile(std::string workName, std::string folderNameName);
     void setTimeParameters(double t_max, double dt, unsigned int nPerTS);
 
-    void initiateSolver();
+    bool initiateSolver();
 
     void buildHamiltonian();
     //void numberOperator();
@@ -65,18 +64,18 @@ private:
     unsigned int basisSizeSpinDown;                                 //<- Size of the basis of down-spin fermions (nPartD among nSites)
     unsigned int basisSize;                                         //<- Size of the Hilbert space basis  (basisSizeSpinUp X basisSizeSpinDown)
     std::vector<std::vector<unsigned int>> basisArray;              
-    std::vector<std::vector<bool>> c_pu;
-    std::vector<std::vector<bool>> c_pd;
+    std::vector<std::bitset<MAX_BITS>> c_pu;
+    std::vector<std::bitset<MAX_BITS>> c_pd;
 // Initial conditions :
-    std::vector<bool> posPartU;
-    std::vector<bool> posPartD;
+    std::bitset<MAX_BITS> posPartU;
+    std::bitset<MAX_BITS> posPartD;
     arma::cx_dvec psi_0;                                            //<- Initial wave function
 
 // Current Wave function :
     arma::cx_dvec psi;                                              //<- Current wave function
 // operators :
     arma::sp_cx_dmat H_U;
-    arma::sp_cx_dmat H_J;
+    arma::sp_cx_dmat H_t;
     arma::sp_cx_dmat H;
 
     //arma::cx_dmat Hdense;
@@ -85,14 +84,14 @@ private:
     std::vector<std::vector<arma::sp_cx_dmat>> NijuSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijdSet;
 
-    unsigned int getBasisIndex(std::vector<bool>& posPU, std::vector<bool>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
+    unsigned int getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BITS>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
 
 
     std::complex<double> U_os_psil(unsigned int phi_l);                                     //<- Compute the interation energy of the basis vector 'phi_l'
 
 
     void buildHamiltonian_U();                                                              //<- Build and store the operator "Interaction part of the Hamiltonian"
-    void buildHamiltonian_J();                                                              //<- Build and store the operator "Tunneling part of the Hamiltonian"
+    void buildHamiltonian_tM();                                                              //<- Build and store the operator "Tunneling part of the Hamiltonian"
     void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
     arma::sp_cx_dmat numberOperatorSpinUp(unsigned int iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
     arma::sp_cx_dmat numberOperatorSpinDown(unsigned int iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".

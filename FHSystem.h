@@ -26,11 +26,7 @@ public:
     };
 
     enum tJExchangeCouplingType {
-        onSiteConstant,
-        onSiteBySiteType,
-        onSiteGivenDiagonal,
-        distanceFunction,
-        matrixGiven
+        tJNearestNeighbourConstant
     };
 
     enum FHTunnelingType {
