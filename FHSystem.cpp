@@ -87,8 +87,8 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
     enum troolean
     {
-        vrai,
-        faux,
+        yes,
+        no,
         dontknow
     };
 
@@ -119,7 +119,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         WhatToRead whatToR =  WhatToRead::nothing;  
 
         int nDim = -1;
-        troolean haveOrbitalNames = troolean::dontknow;
+        troolean orbitalHaveNames = troolean::dontknow;
 
         std::vector<unsigned int>       orbitalTypes = std::vector<unsigned int>();
         std::vector<std::string>       orbitalNames = std::vector<std::string>();
@@ -150,9 +150,31 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
            {
            case WhatToRead::positions :  // Read positions
             {
+
+                if (orbitalHaveNames == troolean::dontknow)
+                {
+                    std::stringstream st(line);
+                    std::string coordt;
+                    orbitalHaveNames = troolean::no;
+                    std::getline (st, coordt, ' ');
+                    try {
+                        std::stod(coordt);
+                    }catch(const std::invalid_argument& e)  {
+                        std::cout << "Orbitals have names !" << std::endl;
+                        orbitalHaveNames = troolean::yes;
+                    }
+
+                }
+
                 std::stringstream ss(line);
                 std::string coord;
                 std::vector<double> coordinates = std::vector<double>();
+
+                if (orbitalHaveNames == troolean::yes)
+                {
+                    std::getline (ss, coord, ' ');
+                    orbitalNames.push_back(coord);
+                }
 
                 while (std::getline (ss, coord, ' ')) 
                 {
@@ -241,6 +263,11 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
             }
         }
 
+    if (orbitalHaveNames == troolean::yes)
+    {
+        
+    }
+
 
     if (initialCondition == FHInitialConditionType::givenDiagonal)
     {
@@ -269,12 +296,15 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 }
 
 
-
+/// @brief setter - on-site interaction energy
+/// @param U0 on-site interaction energy
 void FHSystem::setInteraction_OnSite(double U0)
 {
     UMatrix = U0 * arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::eye);
 }
 
+/// @brief setter - nearest neighbout tunneling interaction energy
+/// @param t tunneling interaction energy
 void FHSystem::setTunneling_BetweenNeighbours(double t)
 {
     tMatrix = arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::zeros);
@@ -292,11 +322,17 @@ void FHSystem::setTunneling_BetweenNeighbours(double t)
     tMatrix.print();
 }
 
+/// @brief getter - number of sites
+/// @return number of sites
 unsigned int FHSystem::getnSites()
 {
     return sitePositions.n_cols;
 }
 
+/// @brief getter - coordinate of a site
+/// @param dim coordinate dimension
+/// @param pos site number
+/// @return coordinate of site 'pos'in dimension 'dim'
 double FHSystem::getCoordinate(int dim, int pos)
 { 
     if ((dim < sitePositions.n_rows) && (pos < sitePositions.n_cols))
@@ -309,19 +345,26 @@ double FHSystem::getCoordinate(int dim, int pos)
     }
 }
 
- FHSystem::FHInitialConditionType     FHSystem::getInitialCondition()
+/// @brief  getter - initial condition type
+/// @return initial condition type
+FHSystem::FHInitialConditionType     FHSystem::getInitialCondition()
 {
     return initialCondition;
 }
 
-    unsigned int            FHSystem::getUpSpinParticleNumber()
-    {
-        return upSpinParticleNumber;
-    }
-    unsigned int            FHSystem::getDownSpinParticleNumber()
-    {
-        return downSpinParticleNumber;
-    }
+/// @brief getter - number of spin-up particles
+/// @return number of spin-up particles
+unsigned int            FHSystem::getUpSpinParticleNumber()
+{
+    return upSpinParticleNumber;
+}
+
+/// @brief getter - number of spin-down particles
+/// @return number of spin-down particle
+unsigned int            FHSystem::getDownSpinParticleNumber()
+{
+    return downSpinParticleNumber;
+}
 
 double FHSystem::getDistance(int i, int j)
 {

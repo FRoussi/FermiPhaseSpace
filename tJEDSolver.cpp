@@ -49,7 +49,7 @@ bool tJEDSolver::initiateSolver()
     this->basisSizeSpinUp = nChoosep(fhSystem->getnSites(), nPartU);
     this->basisSizeSpinDown = nChoosep(fhSystem->getnSites() - nPartU, nPartD);
     this->basisSize = basisSizeSpinUp * basisSizeSpinDown;
-    this->basisArray = std::vector<std::vector<uint>>(2, std::vector<uint>(basisSize, 0)); // 1 basis vector = 1 combination of up-spin position and 1 combination of down-spin position
+    this->basisArray = std::vector<std::array<std::bitset<MAX_BITS>,2>>(basisSize); // 1 basis vector = 1 combination of up-spin position and 1 combination of down-spin position
     
     std::vector<std::vector<bool>> c_puVec = getCombinations(this->fhSystem->getnSites(), this->nPartU, this->fhSystem->getnSites());
     c_puVec.shrink_to_fit();
@@ -61,15 +61,15 @@ bool tJEDSolver::initiateSolver()
     fusionSortVector(c_pu);
     
 
-    std::vector<std::vector<bool>> c_pdVec = getCombinations(this->fhSystem->getnSites(), this->nPartD, this->fhSystem->getnSites());
+    std::vector<std::vector<bool>> c_pdVec = getCombinations(this->fhSystem->getnSites() - this->nPartU, this->nPartD, this->fhSystem->getnSites());
     c_pdVec.shrink_to_fit();
-    this->c_pd = std::vector<std::bitset<MAX_BITS>>(basisSizeSpinDown);
+    this->c_pd_reduced = std::vector<std::bitset<MAX_BITS>>(basisSizeSpinDown);
     for (uint it = 0 ; it<basisSizeSpinDown; it++)
     {
-        c_pd[it] = bitsetFromVector(c_pdVec[it]);
+        c_pd_reduced[it] = bitsetFromVector(c_pdVec[it]);
     }
 
-    fusionSortVector(c_pd);
+    fusionSortVector(c_pd_reduced);
 
 
     uint countor = 0;
@@ -77,8 +77,8 @@ bool tJEDSolver::initiateSolver()
     {
         for (uint k = 0; k < basisSizeSpinUp; k++)
         {
-            basisArray[0][countor] = l;         //<- up-spin particle combinations of position
-            basisArray[1][countor] = k;         //<- down-spin particle combinations of position
+            basisArray[countor][0] = c_pu[l];         //<- up-spin particle combinations of position
+            basisArray[countor][1] = expandBitSetUnderConstraint(c_pd_reduced[k], c_pu[l], fhSystem->getnSites() - nPartU);         //<- down-spin particle combinations of position
             countor += 1;
         }
     }
@@ -235,17 +235,22 @@ arma::sp_cx_dmat tJEDSolver::numberOperatorSpinDown(uint iSite)
 
     if (nPartD != 0)
     {
-        for (uint ld = 0; ld < basisSizeSpinDown; ld++)
+        for (uint lu = 0; lu < basisSizeSpinUp; lu++)
         {
-            if (c_pd[ld][iSite])
+            if (!c_pu[lu][iSite])               //<- if the site i is void of up-spin particle, maybe there is a down spin one
             {
-                for (uint lu = 0; lu < basisSizeSpinDown; lu++)
+                uint upSpinBasisPos = lu * basisSizeSpinDown;
+                for (uint ld = 0; ld < basisSizeSpinDown; ld++)
                 {
-                    locations(0, index) = ld + basisSizeSpinDown * lu;
-                    locations(1, index) = ld + basisSizeSpinDown * lu;
-                    values(index) = 1;
-                    index++;
+                    if (basisArray[upSpinBasisPos + ld][1][iSite])  //<- if there is a down spin particle in site i
+                    {
+                        locations(0, index) = ld + upSpinBasisPos;
+                        locations(1, index) = ld + upSpinBasisPos;
+                        values(index) = 1;
+                        index++;
+                    }
                 }
+
             }
         }
     }
@@ -265,25 +270,34 @@ arma::sp_cx_dmat tJEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 
     uint index = 0;
 
-    for (uint lu = 0; lu < basisSizeSpinUp; lu++)
+    for (uint lu = 0; lu < basisSizeSpinUp; lu++)           //<- for every half basis vector (up-spin), for the starting vector
     {
         if (c_pu[lu][iSite] && (!c_pu[lu][jSite]))          // <- has the particle the possiblity to tunnel from iSite to jSite ?
         {
             std::bitset<MAX_BITS> c_pu_hoppdone = c_pu[lu];     // <- if yes, we write the new configuration in 'c_pu_hoppdone'
-            c_pu_hoppdone[iSite] = false;
-            c_pu_hoppdone[jSite] = true;
-            for (uint mu = 0; mu < basisSizeSpinUp; mu++)
+            c_pu_hoppdone.reset(iSite);
+            c_pu_hoppdone.set(jSite);
+            for (uint mu = 0; mu < basisSizeSpinUp; mu++)   //<- for every half basis vector (up-spin), for the ending vector
             {
                 if (c_pu_hoppdone == c_pu[mu])              // <-we look for the basis function index of the new configuration, mu
                 {
-                    for (uint ld = 0; ld < basisSizeSpinDown; ld++) // <- we note it in the whole base, with the down spin particle part equals
+                    for (uint ld = 0; ld < basisSizeSpinDown; ld++) // <- for every other half basis vector (down-spin), for the starting vector
                     {
-                        locations(0,index) = basisSizeSpinDown * lu  + ld;      
-                        locations(1,index) = basisSizeSpinDown * mu  + ld;
-                        values(index) = pow(-1, getParticleNumberBetween(c_pu[lu], iSite, jSite));
-                        index ++;
-                    }
+                        if ((!basisArray[basisSizeSpinDown * lu  + ld][1][iSite]) && (!basisArray[basisSizeSpinDown * lu  + ld][1][jSite])) //<- We check the sites iSites and jSites are empty
+                        {
+                            for (uint md = 0; md < basisSizeSpinDown; md++) // <- for every other half basis vector (down-spin), for the ending vector
+                            {
+                                if (basisArray[basisSizeSpinDown * lu  + ld][1] == basisArray[basisSizeSpinDown * mu  + md][1]) //<- if the down-spin part of the vector are equal, it's a match 
+                                {
+                                    locations(0,index) = basisSizeSpinDown * lu  + ld;      
+                                    locations(1,index) = basisSizeSpinDown * mu  + md;
+                                    values(index) = pow(-1, getParticleNumberBetween(c_pu[lu], iSite, jSite));
+                                    index ++;
+                                }
 
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -299,31 +313,86 @@ arma::sp_cx_dmat tJEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 ///@return The operator "$\\hat{n}_{ij\\downarrow}$"
 arma::sp_cx_dmat tJEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
 {
-     uint halfMatSizeDown = floor(basisSize * basisSizeSpinDown / 2);
+    uint halfMatSizeDown = floor(basisSize * basisSizeSpinDown / 2);
     arma::umat locations = arma::umat(2, halfMatSizeDown, arma::fill::zeros);
     arma::cx_drowvec values = arma::cx_drowvec(halfMatSizeDown, arma::fill::zeros);
 
     uint index = 0;
 
-    for (uint ld = 0; ld < basisSizeSpinDown; ld++)
+    for (uint lu = 0; lu < basisSizeSpinUp; lu++)
     {
-        if (c_pd[ld][iSite] && (!c_pd[ld][jSite]))          // <- has the particle the possiblity to tunnel from iSite to jSite ?
+        if ((!basisArray[basisSizeSpinDown * lu][0][iSite]) && (!basisArray[basisSizeSpinDown * lu ][0][jSite]))
         {
-            std::bitset<MAX_BITS> c_pd_hoppdone = c_pd[ld];     // <- if yes, we write the new configuration in 'c_pd_hoppdone'
-            c_pd_hoppdone.reset(iSite);                         //<- jSite to false / 0
-            c_pd_hoppdone.set(jSite);                           //<- iSite to true / 1
-            for (uint md = 0; md < basisSizeSpinDown; md++)
+            for (uint mu = 0; mu < basisSizeSpinUp; mu++)
             {
-                if (c_pd_hoppdone == c_pd[md])               // <-we look for the basis function index of the new configuration, md
+                if ((!basisArray[basisSizeSpinDown * mu][0][iSite]) && (!basisArray[basisSizeSpinDown * mu ][0][jSite]))
                 {
-                    for (uint lu = 0; lu < basisSizeSpinUp; lu++) // <- we note it in the whole base, with the up spin particle part equals
+                    for (uint ld = 0; ld < basisSizeSpinDown; ld++)
                     {
-                        locations(0,index) = basisSizeSpinDown * lu  + ld;
-                        locations(1,index) = basisSizeSpinDown * lu  + md;
-                        values(index) = pow(-1, getParticleNumberBetween(c_pd[ld], iSite, jSite));
-                        index ++;
+                        if ((basisArray[basisSizeSpinDown * lu + ld][1][iSite]) && (!basisArray[basisSizeSpinDown * lu +ld][1][jSite]))
+                        {
+                            std::bitset<MAX_BITS> c_pd_hoppdone = basisArray[basisSizeSpinDown * lu + ld][1];     // <- if yes, we write the new configuration in 'c_pd_hoppdone'
+                            c_pd_hoppdone.reset(iSite);                         //<- jSite to false / 0
+                            c_pd_hoppdone.set(jSite);                           //<- iSite to true / 1
+                            for (uint md = 0; md < basisSizeSpinDown; md++)
+                            {
+                                if(c_pd_hoppdone == basisArray[basisSizeSpinDown * mu + md][1])
+                                {
+                                    locations(0,index) = basisSizeSpinDown * lu  + ld;
+                                    locations(1,index) = basisSizeSpinDown * mu  + md;
+                                    values(index) = pow(-1, getParticleNumberBetween(basisArray[basisSizeSpinDown * lu + ld][1], iSite, jSite));
+                                    index ++;
+                                }
+                            }
+                        }
                     }
+                }
+            }
+        }
+    }
+    return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
+}
 
+
+arma::sp_cx_dmat tJEDSolver::exchangeOperatorSpinUp(unsigned int iSite, unsigned int jSite)
+{
+    uint halfMatSizeUp = floor(basisSize * basisSizeSpinUp / 2);
+    arma::umat locations = arma::umat(2, halfMatSizeUp, arma::fill::zeros);
+    arma::cx_drowvec values = arma::cx_drowvec(halfMatSizeUp, arma::fill::zeros);
+
+    uint index = 0;
+
+    for (uint lu = 0; lu < basisSizeSpinUp; lu++)           //<- for every half basis vector (up-spin), for the starting vector
+    {
+        if (c_pu[lu][iSite] && (!c_pu[lu][jSite]))          // <- has the particle the possiblity to tunnel from iSite to jSite ?
+        {
+            std::bitset<MAX_BITS> c_pu_hoppdone = c_pu[lu];     // <- if yes, we write the new configuration in 'c_pu_hoppdone'
+            c_pu_hoppdone.reset(iSite);
+            c_pu_hoppdone.set(jSite);
+            for (uint mu = 0; mu < basisSizeSpinUp; mu++)   //<- for every half basis vector (up-spin), for the ending vector
+            {
+                if (c_pu_hoppdone == c_pu[mu])              // <-we look for the basis function index of the new configuration, mu
+                {
+                    for (uint ld = 0; ld < basisSizeSpinDown; ld++) // <- for every other half basis vector (down-spin), for the starting vector
+                    {
+                        if ((!basisArray[basisSizeSpinDown * lu  + ld][1][iSite]) && (basisArray[basisSizeSpinDown * lu  + ld][1][jSite])) //<- We check there is a possible jump between jSites and iSites
+                        {
+                            std::bitset<MAX_BITS> c_pd_hoppdone = basisArray[basisSizeSpinDown * lu  + ld][1];     // <- if yes, we write the new configuration in 'c_pd_hoppdone'
+                            c_pd_hoppdone.reset(jSite);
+                            c_pd_hoppdone.set(iSite);
+                            for (uint md = 0; md < basisSizeSpinDown; md++) // <- for every other half basis vector (down-spin), for the ending vector
+                            {
+                                if (c_pd_hoppdone == basisArray[basisSizeSpinDown * mu  + md][1]) //<- if the down-spin part of the vector are equal, it's a match 
+                                {
+                                    locations(0,index) = basisSizeSpinDown * lu  + ld;      
+                                    locations(1,index) = basisSizeSpinDown * mu  + md;
+                                    values(index) = pow(-1, getParticleNumberBetween(c_pu[lu], iSite, jSite) + getParticleNumberBetween(basisArray[basisSizeSpinDown * lu  + ld][1], iSite, jSite));
+                                    index ++;
+                                }
+
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -343,7 +412,7 @@ uint tJEDSolver::getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BIT
     bool index1Found = false;
     while (!index1Found && lu < this->basisSizeSpinUp)
     {
-        if (posPU == c_pu[lu])
+        if (posPU == basisArray[lu * basisSizeSpinDown][0])
             index1Found = true;
         else
             lu++;
@@ -352,9 +421,9 @@ uint tJEDSolver::getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BIT
     bool index2Found = false;
     while (!index2Found && ld < this->basisSizeSpinDown)
     {
-        if (posPD == c_pd[ld])
+        if (posPD == basisArray[lu * basisSizeSpinDown + ld][1])
             index2Found = true;
-        else
+        else 
             ld++;
     }
     if (index1Found && index2Found)
@@ -374,8 +443,8 @@ uint tJEDSolver::getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BIT
 ///@return Opposite-spin interaction energy of basis wave-function phi_l 
 std::complex<double> tJEDSolver::U_os_psil(uint phi_l)
 {
-    std::bitset<MAX_BITS> *posPU = &c_pu[basisArray[0][phi_l]];
-    std::bitset<MAX_BITS> *posPD = &c_pd[basisArray[1][phi_l]];
+    std::bitset<MAX_BITS> *posPU = &basisArray[phi_l][0];
+    std::bitset<MAX_BITS> *posPD = &basisArray[phi_l][1];
 
     std::complex<double> u = 0;
     for (uint i_u = 0; i_u < fhSystem->getnSites(); i_u++)
@@ -586,24 +655,3 @@ bool canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, uint
 }
 
 
-/// @brief Count the number of particles in a wave-function basis vector between 2 sites
-/// @param posP empty/filled vector
-/// @param from index of 1st site
-/// @param to index of 2nd site
-/// @return Number of particles between 'from' and 'to'
-uint getParticleNumberBetween(std::bitset<MAX_BITS>& posP, uint from, uint to)
-{
-    uint nPart = 0;
-    if ((from < MAX_BITS) && (to < MAX_BITS))
-    {
-        uint f = std::min(from, to);
-        uint t = std::max(from, to);
-        for (uint p = f + 1; p < t; p++)
-        {
-            if (posP[p])
-                nPart++;
-        }
-    }
-
-    return nPart;
-}

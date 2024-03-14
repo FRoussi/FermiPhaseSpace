@@ -194,3 +194,29 @@ uint getParticleNumberBetween(std::bitset<MAX_BITS>& posP, uint from, uint to)
 
     return nPart;
 }
+
+
+
+
+
+bitset<MAX_BITS> expandBitSetUnderConstraint(bitset<MAX_BITS> reducedBS, bitset<MAX_BITS> constraintBS, uint sizeReducedBS)
+{
+    bitset<MAX_BITS> bs = bitset<MAX_BITS>();
+    uint countorBS = 0;
+    uint countorReducedBS = 0;
+    while ((countorBS < MAX_BITS) && (countorReducedBS < sizeReducedBS))
+    {
+        if (constraintBS[countorBS])
+        {
+            countorBS ++;
+        }
+        else
+        {
+            bs[countorBS] = reducedBS[countorReducedBS];
+            countorBS++;
+            countorReducedBS++;
+        }
+    } 
+
+    return bs;
+}

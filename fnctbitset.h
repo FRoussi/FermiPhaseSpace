@@ -26,4 +26,6 @@ uint countDoublons(bitset<MAX_BITS>& phiH1, bitset<MAX_BITS>& phiH2);
 
 uint countSimilarities(bitset<MAX_BITS>& phiH1, bitset<MAX_BITS>& phiH2, uint nSites, uint& lastIndexWrong1, uint& lastIndexWrong2);
 
+bitset<MAX_BITS> expandBitSetUnderConstraint(bitset<MAX_BITS> reducedBS, bitset<MAX_BITS> constraintBS, uint sizeReducedBS = MAX_BITS);
+
 

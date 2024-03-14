@@ -22,7 +22,6 @@ unsigned int nChoosep(unsigned int n, unsigned int p);
 
 
 bool canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
-unsigned int getParticleNumberBetween(std::bitset<MAX_BITS>& posP, unsigned int from, unsigned int to);
 
 
 class tJEDSolver  	
@@ -63,9 +62,9 @@ private:
     unsigned int basisSizeSpinUp;                                   //<- Size of the basis of up-spin fermions (nPartU among nSites)
     unsigned int basisSizeSpinDown;                                 //<- Size of the basis of down-spin fermions (nPartD among nSites)
     unsigned int basisSize;                                         //<- Size of the Hilbert space basis  (basisSizeSpinUp X basisSizeSpinDown)
-    std::vector<std::vector<unsigned int>> basisArray;              
+    std::vector<std::array<std::bitset<MAX_BITS>,2>> basisArray;              
     std::vector<std::bitset<MAX_BITS>> c_pu;
-    std::vector<std::bitset<MAX_BITS>> c_pd;
+    std::vector<std::bitset<MAX_BITS>> c_pd_reduced;
 // Initial conditions :
     std::bitset<MAX_BITS> posPartU;
     std::bitset<MAX_BITS> posPartD;
@@ -97,6 +96,7 @@ private:
     arma::sp_cx_dmat numberOperatorSpinDown(unsigned int iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
     arma::sp_cx_dmat tunnelingOperatorSpinUp(unsigned int iSite, unsigned int jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
     arma::sp_cx_dmat tunnelingOperatorSpinDown(unsigned int iSite, unsigned int jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
+    arma::sp_cx_dmat exchangeOperatorSpinUp(unsigned int iSite, unsigned int jSite);       //<- Build the operator "Exchange of up-spin and spin-down particles between sites 'iSite' and 'jSite'".
 
 };
 

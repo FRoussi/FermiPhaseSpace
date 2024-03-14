@@ -62,7 +62,7 @@ private:
     unsigned int basisSizeSpinUp;                                   //<- Size of the basis of up-spin fermions (nPartU among nSites)
     unsigned int basisSizeSpinDown;                                 //<- Size of the basis of down-spin fermions (nPartD among nSites)
     unsigned int basisSize;                                         //<- Size of the Hilbert space basis  (basisSizeSpinUp X basisSizeSpinDown)
-    std::vector<std::vector<unsigned int>> basisArray;              
+    std::vector<std::array<std::bitset<MAX_BITS>,2>> basisArray;              
     std::vector<std::bitset<MAX_BITS>> c_pu;
     std::vector<std::bitset<MAX_BITS>> c_pd;
 // Initial conditions :

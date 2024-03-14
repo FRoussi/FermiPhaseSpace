@@ -36,7 +36,7 @@ void FHEDSolver::initiateSolver()
     this->basisSizeSpinUp = nChoosep(fhSystem->getnSites(), nPartU);
     this->basisSizeSpinDown = nChoosep(fhSystem->getnSites(), nPartD);
     this->basisSize = basisSizeSpinUp * basisSizeSpinDown;
-    this->basisArray = std::vector<std::vector<uint>>(2, std::vector<uint>(basisSize, 0)); // 1 basis vector = 1 combination of up-spin position and 1 combination of down-spin position
+    this->basisArray = std::vector<std::array<std::bitset<MAX_BITS>, 2>>(basisSize); // 1 basis vector = 1 combination of up-spin position and 1 combination of down-spin position
     
     std::vector<std::vector<bool>> c_puVec = getCombinations(this->fhSystem->getnSites(), this->nPartU, this->fhSystem->getnSites());
     c_puVec.shrink_to_fit();
@@ -64,8 +64,8 @@ void FHEDSolver::initiateSolver()
     {
         for (uint k = 0; k < basisSizeSpinUp; k++)
         {
-            basisArray[0][countor] = l;         //<- up-spin particle combinations of position
-            basisArray[1][countor] = k;         //<- down-spin particle combinations of position
+            basisArray[countor][0] = c_pu[l];         //<- up-spin particle combinations of position
+            basisArray[countor][1] = c_pd[k];         //<- down-spin particle combinations of position
             countor += 1;
         }
     }
@@ -226,7 +226,7 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
         {
             if (c_pd[ld][iSite])
             {
-                for (uint lu = 0; lu < basisSizeSpinDown; lu++)
+                for (uint lu = 0; lu < basisSizeSpinUp; lu++)
                 {
                     locations(0, index) = ld + basisSizeSpinDown * lu;
                     locations(1, index) = ld + basisSizeSpinDown * lu;
@@ -361,8 +361,8 @@ uint FHEDSolver::getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BIT
 ///@return Opposite-spin interaction energy of basis wave-function phi_l 
 std::complex<double> FHEDSolver::U_os_psil(uint phi_l)
 {
-    std::bitset<MAX_BITS> *posPU = &c_pu[basisArray[0][phi_l]];
-    std::bitset<MAX_BITS> *posPD = &c_pd[basisArray[1][phi_l]];
+    std::bitset<MAX_BITS> *posPU = &basisArray[phi_l][0];
+    std::bitset<MAX_BITS> *posPD = &basisArray[phi_l][1];
 
     std::complex<double> u = 0;
     for (uint i_u = 0; i_u < fhSystem->getnSites(); i_u++)
