@@ -1,4 +1,3 @@
-#pragma once
 
 #include <iostream>
 #include <string>
@@ -15,15 +14,32 @@
 /// @return true if w is in v
 template <typename T>       bool isIn(T w, std::vector<T>& v)
 {
-    std::find(v.begin(), v.end(), w) != v.end();
-    /*
+
         bool isInB = false;
-        vector<T>::iterator itWord = wordList.begin();
-        while ( (!isInB) && (itWord != wordList.end()) )
+        unsigned int index = 0;
+        while ( (!isInB) && (index < v.size()) )
         {
-            if (*itWord == word)  isInB = true;
-            itWord ++;
+            if (v[index] == w)  isInB = true;
+            index ++;
         }
 
-        return isInB;*/
+        return isInB;
+}
+
+/// @brief Check if a vector contains an element.
+/// @param w the element to look for
+/// @param v the vector of possibilities
+/// @param firstIndex index of the first found element
+/// @return true if w is in v
+template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex)
+{
+    bool isInB = false;
+    unsigned int index = 0;
+    while ( (!isInB) && (index < v.size()) )
+    {
+        if (v[index] == w)  isInB = true;
+        index ++;
+    }
+    firstIndex = index-1;
+    return isInB;
 }

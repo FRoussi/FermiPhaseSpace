@@ -5,6 +5,8 @@
 #include <vector>
 #include <math.h>
 
+#include "FHSystem.h"
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -39,6 +41,12 @@ void getNextIndex(unsigned int& i, unsigned int& j)
 
 }
 
+/// @brief Makes a simple 3D-grid of sites 
+/// @param nx number of sites in the X dimension
+/// @param ny number of sites in the Y dimension
+/// @param nz number of sites in the Z dimension
+/// @param a distance between nearest neighbours
+/// @return a vector of site positions
 vector<vector<double>> makeGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
 {
     
@@ -65,7 +73,10 @@ vector<vector<double>> makeGrid(unsigned int nx, unsigned int ny, unsigned int n
 
 
 
-
+/// @brief Makes a graphene-shaped site vector
+/// @param nCombs number of combds in the graphene sheet
+/// @param a distance between nearest neighbours
+/// @return a vector of site positions
 vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
 {
 
@@ -137,6 +148,10 @@ double samePointThreshold = 0.001 * a;
     return pos;
 }
 
+/// @brief 
+/// @param word 
+/// @param vector 
+/// @return 
 bool isIn(string word, vector<string>& wordList)
 {
     bool isInB = false;
@@ -150,6 +165,8 @@ bool isIn(string word, vector<string>& wordList)
     return isInB;
 }
 
+
+// MAIN
 
 int main(int argc, char* argv[])
 {
@@ -288,70 +305,18 @@ vector<unsigned int> IC_DOWN = vector<unsigned int>();
     }
 
 
+// MAKING OF THE FHSystem
+    arma::dmat sitePosition = arma::dmat(pos.size(), pos[0].size());
+    std::vector<std::vector<uint>> IC = {IC_UP, IC_DOWN};
+
+    FHSystem newSystem = FHSystem();
+    newSystem.initiateSystem(sitePosition, IC);
 
 
-// Writing of everything on the file :
-string fileAdress = fileFolder + "/" + fileName;
-
-
-   ofstream streamSystem(fileAdress);
-   
-    if (streamSystem.is_open())
-    {
-        // POSITIONS OF SITES
-        switch (geom)
-        {
-        case geometry::line:
-            streamSystem << "#LINE" << endl;
-            streamSystem << geomParam[0] << endl;
-            break;       
-        default:
-            streamSystem << "#POSITIONS" << endl;
-            for (vector<vector<double>>::iterator itpos = pos.begin(); itpos !=pos.end(); itpos++)
-            {
-                for(vector<double>::iterator itpoint = itpos->begin() ; itpoint != itpos->end(); itpoint++)
-                {
-                    streamSystem << (*itpoint) << "\t";
-                }
-                streamSystem << endl;
-               
-            }
-            break;
-        }
-
-        // INITIAL CONDITIONS
-        switch (initC)
-        {
-            case IC::quenched:
-                streamSystem << "#INITIALCONDITIONS_QUENCHED" << endl;
-                break;
-            default:   
-                streamSystem << "#INITIALCONDITIONS_GIVENDIAGONAL" << endl;
-                for (vector<unsigned int>::iterator itpos = IC_UP.begin(); itpos !=IC_UP.end(); itpos++)
-                {
-                    streamSystem << (*itpos) << "\t";
-                }
-                streamSystem << endl;
-                for (vector<unsigned int>::iterator itpos = IC_DOWN.begin(); itpos !=IC_DOWN.end(); itpos++)
-                {
-                    streamSystem << (*itpos) << "\t";
-                }
-                streamSystem << endl;              
-        }
-
-        // ENERGY PARAMETERS
-
-    streamSystem.close();
-    }
-    
-    else
-    {
-        cout << "Stream not open." << endl;
-    }
+    newSystem.writeFHSystem(fileFolder);
 
 
     cout << fileName << " system created with " << pos.size() << " sites and " << IC_UP.size() + IC_DOWN.size() << " particles." << endl;  
-
 
 
     return 0;

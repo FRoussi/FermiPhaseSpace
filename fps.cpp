@@ -190,8 +190,6 @@ int main(int argc, char* argv[])
       }
    }
 
-
-
    std::cout <<"Final entry. Looks good." << " \n";
 
    return 0;

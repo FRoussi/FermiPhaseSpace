@@ -1,7 +1,5 @@
 #include "FHSystem.h"
-#include <cmath>
-#include <iostream>
-#include <fstream>
+
 
 FHSystem::FHSystem()
 {
@@ -115,18 +113,17 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     {
         printf("== Reading %s \n", fileName.c_str());
 
-
         WhatToRead whatToR =  WhatToRead::nothing;  
 
         int nDim = -1;
         troolean orbitalHaveNames = troolean::dontknow;
 
-        std::vector<unsigned int>       orbitalTypes = std::vector<unsigned int>();
-        std::vector<std::string>       orbitalNames = std::vector<std::string>();
-        std::vector<std::vector<double>> pos =   std::vector<std::vector<double>>();
-        std::vector<unsigned int> initCond_up =   std::vector<unsigned int>();
-        std::vector<unsigned int> initCond_down =   std::vector<unsigned int>();
-        std::vector<unsigned int> particlesNumber(2, 0);
+        std::vector<unsigned int>           orbitalTypes    = std::vector<unsigned int>();
+        std::vector<std::string>            orbitalNames    = std::vector<std::string>();
+        std::vector<std::vector<double>>    pos             = std::vector<std::vector<double>>();
+        std::vector<unsigned int>           initCond_up     = std::vector<unsigned int>();
+        std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
+        std::vector<unsigned int>           particlesNumber(2, 0);
         
 
         std::string line;
@@ -163,7 +160,6 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                         std::cout << "Orbitals have names !" << std::endl;
                         orbitalHaveNames = troolean::yes;
                     }
-
                 }
 
                 std::stringstream ss(line);
@@ -254,18 +250,32 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
         systFile.close();
 
-        arma::dmat sitePos = arma::dmat(nDim, pos.size());
+        arma::dmat sitePos = arma::dmat(pos.size(), nDim);
         for(unsigned int itPos = 0; itPos < pos.size(); itPos ++)
         {
             for (unsigned int itCoor = 0; itCoor<nDim; itCoor ++)
             {
-                sitePos(itCoor, itPos) = pos[itPos][itCoor];
+                sitePos(itPos, itCoor) = pos[itPos][itCoor];
             }
         }
 
     if (orbitalHaveNames == troolean::yes)
     {
-        
+        std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
+        uint numberOfNames = 0;
+        uint index = 0;
+        for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
+        {
+            if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
+            {
+                orbitalTypes[nameInt] = index;
+            }
+            else
+            {
+                orbitalNameTypes.push_back(orbitalNames[nameInt]);
+                orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
+            }
+        }
     }
 
 
@@ -296,37 +306,28 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 }
 
 
-/// @brief setter - on-site interaction energy
-/// @param U0 on-site interaction energy
-void FHSystem::setInteraction_OnSite(double U0)
-{
-    UMatrix = U0 * arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::eye);
-}
 
-/// @brief setter - nearest neighbout tunneling interaction energy
-/// @param t tunneling interaction energy
-void FHSystem::setTunneling_BetweenNeighbours(double t)
-{
-    tMatrix = arma::cx_dmat(sitePositions.n_cols, sitePositions.n_cols, arma::fill::zeros);
-    for (unsigned int i = 0; i< sitePositions.n_cols; i++)
-    {
-        for (unsigned int j = 0; j< sitePositions.n_cols; j++)
-        {
-            if (neighbourMatrix[i][j])
-            {
-                tMatrix(i,j) = t;
-            }
-        }
-    }
-    printf("J-Matrix : \n");
-    tMatrix.print();
-}
 
 /// @brief getter - number of sites
 /// @return number of sites
-unsigned int FHSystem::getnSites()
+unsigned int        FHSystem::getnSites()
 {
-    return sitePositions.n_cols;
+    return sitePositions.n_rows;
+}
+
+
+bool                 FHSystem::sitesHaveNames()
+{
+        return (siteTypes.n_rows == sitePositions.n_rows);
+}
+
+arma::drowvec     FHSystem::getSitePosition(int site)
+{
+    return sitePositions.row(site);
+}
+std::string             FHSystem::getSiteName(int site)
+{
+    return siteTypeNames[siteTypes[site]];
 }
 
 /// @brief getter - coordinate of a site
@@ -335,9 +336,9 @@ unsigned int FHSystem::getnSites()
 /// @return coordinate of site 'pos'in dimension 'dim'
 double FHSystem::getCoordinate(int dim, int pos)
 { 
-    if ((dim < sitePositions.n_rows) && (pos < sitePositions.n_cols))
+    if ((dim < sitePositions.n_cols) && (pos < sitePositions.n_rows))
     {
-        return sitePositions(dim, pos);
+        return sitePositions(pos, dim);
     } 
     else
     {
@@ -426,6 +427,51 @@ std::vector<bool> FHSystem::getInitialCondition_downSpin()
     return initConditions_downSpin;
 }
 
+
+// SETTERS
+
+/// @brief setter - on-site interaction energy
+/// @param U0 on-site interaction energy
+void FHSystem::setInteraction_OnSite(double U0)
+{
+    UMatrix = U0 * arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::eye);
+}
+
+/// @brief setter - nearest neighbout tunneling interaction energy
+/// @param t tunneling interaction energy
+void FHSystem::setTunneling_BetweenNeighbours(double t)
+{
+    tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+    for (unsigned int i = 0; i< sitePositions.n_rows; i++)
+    {
+        for (unsigned int j = 0; j< sitePositions.n_rows; j++)
+        {
+            if (neighbourMatrix[i][j])
+            {
+                tMatrix(i,j) = t;
+            }
+        }
+    }
+    printf("J-Matrix : \n");
+    tMatrix.print();
+}
+
+void                    FHSystem::setName(std::string name)    
+{
+    systemName = name;
+}
+bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
+{
+    siteTypes = sTypes;
+    return sitesHaveNames();
+}
+void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
+{
+    siteTypeNames = typeNames;
+}
+
+
+
 /// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
 /// @param positions Matrix of site position
 /// @param diagonalInitConditions vectors of sites on which there is a up-spin/down-spin particle
@@ -440,8 +486,8 @@ void FHSystem::initiateSystem(const arma::dmat& positions, const std::vector<std
     upSpinParticleNumber = diagonalInitConditions[0].size();
     downSpinParticleNumber = diagonalInitConditions[1].size();
 
-    initConditions_upSpin = std::vector<bool>(sitePositions.n_cols);
-    initConditions_downSpin = std::vector<bool>(sitePositions.n_cols);
+    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows);
+    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows);
 
 
 
@@ -467,7 +513,7 @@ void FHSystem::initiateSystem(const arma::dmat& positions, FHInitialConditionTyp
 
     sitePositions = positions;
 
-    initialCondition = FHSystem::FHInitialConditionType::quenched;
+    initialCondition = initCondType;
 
     upSpinParticleNumber = partNumber[0];
     downSpinParticleNumber = partNumber[1];
@@ -480,7 +526,7 @@ void FHSystem::initiateSystem(const arma::dmat& positions, FHInitialConditionTyp
 void FHSystem::computeMatrices()
 {
 
-    unsigned int nSites = sitePositions.n_cols;
+    unsigned int nSites = sitePositions.n_rows;
 
     distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
     neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
@@ -491,9 +537,9 @@ void FHSystem::computeMatrices()
         for (int j=0; j<nSites; j++)
         {
             double dist = 0;
-            for (int d = 0; d<sitePositions.n_rows; d++ )
+            for (int d = 0; d<sitePositions.n_cols; d++ )
             {
-                dist = dist + pow(sitePositions(d, j) - sitePositions(d, i), 2);
+                dist = dist + pow(sitePositions(j, d) - sitePositions(i, d), 2);
             }
             dist = sqrt(dist);
             distanceMatrix(i, j) = dist;
@@ -510,19 +556,76 @@ void FHSystem::computeMatrices()
 }
 
 
-/*bool FHSystem::isIn(T word, vector<T>& wordList)
+
+
+/// @brief Write an ASCII version of the Fermi-Hubbard System
+/// @param folderName emplacement of the folder
+void     FHSystem::writeFHSystem(std::string folderName)
 {
-    bool isInB = false;
-    vector<string>::iterator itWord = wordList.begin();
-    while ( (!isInB) && (itWord != wordList.end()) )
+    // Writing of everything on the file :
+std::string fileAdress =  systemName;
+if (folderName != "")
+{
+    fileAdress = folderName + "/" + systemName;
+}
+
+   std::ofstream streamSystem(fileAdress);
+   
+    if (streamSystem.is_open())
     {
-        if (*itWord == word)  isInB = true;
-        itWord ++;
+        // POSITIONS OF SITES
+        bool sitesHaveTags = sitesHaveNames();
+
+        streamSystem << "#POSITIONS" << std::endl;
+        for (uint itpos = 0; itpos < sitePositions.n_rows; itpos++)
+        {
+            if (sitesHaveTags)
+            {
+                streamSystem << siteTypeNames[siteTypes[itpos]] << "\t" ;
+            }
+            for(uint itdim = 0 ; itdim < sitePositions.n_cols; itdim++)
+            {
+                streamSystem << sitePositions(itpos, itdim) << "\t";
+            }
+            streamSystem << std::endl;
+               
+        }
+
+        // INITIAL CONDITIONS
+        switch (initialCondition)
+        {
+            case FHInitialConditionType::quenched:
+                streamSystem << "#INITIALCONDITIONS_QUENCHED" << std::endl;
+                break;
+            case FHInitialConditionType::givenDiagonal:   
+                streamSystem << "#INITIALCONDITIONS_GIVENDIAGONAL" << std::endl;
+                for (uint itposUp = 0; itposUp < initConditions_upSpin.size(); itposUp++)
+                {
+                    if (initConditions_upSpin[itposUp])
+                    {
+                        streamSystem << itposUp << "\t";
+                    }
+                }
+                streamSystem << std::endl;
+                for (uint itposDown = 0; itposDown < initConditions_downSpin.size(); itposDown++)
+                {
+                    if (initConditions_downSpin[itposDown])
+                    {
+                        streamSystem << itposDown << "\t";
+                    }
+                }
+                streamSystem << std::endl;       
+        }
+
+        // ENERGY PARAMETERS
+
+        streamSystem.close();
+    }  
+    else
+    {
+        std::cout << "Stream not open." << std::endl;
     }
-
-    return isInB;
-}*/
-
+}
 
 
 FHSystem::~FHSystem()

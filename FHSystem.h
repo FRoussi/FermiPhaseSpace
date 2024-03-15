@@ -2,6 +2,13 @@
 
 #include <vector>
 #include <armadillo>
+#include <cmath>
+#include <iostream>
+#include <fstream>
+
+#include "utilitaries.h"
+
+
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
 
@@ -36,18 +43,23 @@ public:
         tunnelingMatrixGiven
     };
 
+// CONSTRUCTORS
+
     FHSystem();
     FHSystem(int x);
     FHSystem(int x, int y, int z);
     FHSystem(std::string fileName, std::string folderName = "");
 
-    void                    setInteraction_OnSite(double U);
-    void                    setTunneling_BetweenNeighbours(double J);
+
+// GETTERS
 
     unsigned int            getnSites();
     FHInitialConditionType  getInitialCondition();
     unsigned int            getUpSpinParticleNumber();
     unsigned int            getDownSpinParticleNumber();
+    bool                    sitesHaveNames();
+    arma::drowvec           getSitePosition(int site);
+    std::string             getSiteName(int site);
     double                  getCoordinate(int dim, int pos);
 
     double                  getDistance(int i, int j);
@@ -65,13 +77,28 @@ public:
     std::vector<bool>       getInitialCondition_upSpin();
     std::vector<bool>       getInitialCondition_downSpin();
 
+// SETTERS
+
+    void                    setInteraction_OnSite(double U);
+    void                    setTunneling_BetweenNeighbours(double J);
+    void                    setName(std::string name);
+    bool                    setSiteTypes(arma::uvec sTypes);
+    void                    setSiteTypeNames(std::vector<std::string> typeNames);                
+
+
+
+    void                    writeFHSystem(std::string folderName = "");
+
+    void        initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
+    void        initiateSystem(const arma::dmat& positions, FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
+
     ~FHSystem();
 
 private:
     
     arma::dmat                      sitePositions;
-    arma::uvec                      orbitalTypes;
-    std::vector<std::string>        orbitalNames;
+    arma::uvec                      siteTypes;
+    std::vector<std::string>        siteTypeNames;
 
     unsigned int                    upSpinParticleNumber;
     unsigned int                    downSpinParticleNumber;
@@ -91,8 +118,7 @@ private:
     std::string                     systemName;
     std::string                     systemFolder;
 
-    void        initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
-    void        initiateSystem(const arma::dmat& positions, FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
+
     void        computeMatrices();
 
 
