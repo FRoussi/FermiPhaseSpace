@@ -82,6 +82,7 @@ private:
 
     arma::cx_dmat*              U;                  //<- Link to Interaction matrix
     arma::cx_dmat*              tM;                  //<- Link to Tunneling matrix
+    arma::cx_dmat*              J;                  //<- Link to Exchange coupling matrix
 
     arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
     arma::dmat                  V_1p_1;             //<- Its transpose

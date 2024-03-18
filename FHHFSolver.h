@@ -68,6 +68,7 @@ private:
 
     arma::cx_dmat*          U;                     // Link to Energy matrices
     arma::cx_dmat*          tM;
+    arma::cx_dmat*          J;
 
     arma::cx_dmat           Nu0;                  //<- Initial density matrices 
     arma::cx_dmat           Nd0;

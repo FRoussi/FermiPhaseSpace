@@ -89,6 +89,8 @@ void FHEDSolver::buildPairOperators()
     uint nSites = fhSystem->getnSites();
     NijuSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
     NijdSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
+
+// Filling the 2nd dimention of the vector-vector and computing the number operators
     for (uint i = 0; i < nSites; i++)
     {
         NijuSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
@@ -98,11 +100,12 @@ void FHEDSolver::buildPairOperators()
         NijdSet[i][i] = numberOperatorSpinDown(i);
     }
 
+
     for (uint i = 0; i < nSites; i++)
     {
         for (uint j = i + 1; j < nSites; j++)
         {
-            if (fhSystem->areNeighbour(i, j))
+            if ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0)))
             {
                 NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
                 NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
@@ -134,17 +137,7 @@ void FHEDSolver::buildHamiltonian_U()
             }
         }
     }
-/*
-    arma::umat locations = arma::umat(2, basisSize, arma::fill::zeros);
-    arma::cx_drowvec values = arma::cx_drowvec(basisSize, arma::fill::zeros);
-    for (uint l = 0; l < basisSize; l++)
-    {
-        values[l] = U_os_psil(l);
-        locations(0, l) = l;
-        locations(1, l) = l;
-    }
-    H_U = arma::sp_cx_dmat(locations, values, basisSize, basisSize);
-    */
+
 }
 
 
@@ -159,11 +152,28 @@ void FHEDSolver::buildHamiltonian_tM()
         {
             if (fhSystem->getTunnelingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
-                H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]);
+                H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]) ; //<- Up-spin AND down-spin !!!
             }
         }
     }
 
+}
+
+///@brief Compute the system's Hamiltonian tunneling part
+///@return void
+void FHEDSolver::buildHamiltonian_J()
+{
+    H_J = arma::sp_cx_dmat(basisSize, basisSize);
+    for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
+    {
+        for (uint jSite = 0; jSite < fhSystem->getnSites(); jSite++)
+        {
+            if (fhSystem->getExchangeCouplingEnergy(iSite, jSite) != arma::cx_double(0,0))
+            {
+                H_J = H_J + fhSystem->getExchangeCouplingEnergy(iSite, jSite) * arma::cx_double(0.5,0) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]).t() * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]) ;
+            }
+        }
+    }
 }
 
 
@@ -173,8 +183,9 @@ void FHEDSolver::buildHamiltonian()
 {
     buildHamiltonian_U();
     buildHamiltonian_tM();
+    buildHamiltonian_J();
 
-    H = H_U + H_t;
+    H = H_U + H_t + H_J;
 
     //printf("Test 2 - small system Hamiltonian : \n");
     //H.print_dense();

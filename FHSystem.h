@@ -24,19 +24,33 @@ public:
         quenched
     };
 
-    enum FHInteractionType {
-        onSiteConstant,
-        onSiteBySiteType,
-        onSiteGivenDiagonal,
-        distanceFunction,
-        matrixGiven
+    enum FHOppositeSpinInteractionType {
+        Unone,
+        UonSiteConstant,
+        UonSiteBySiteType,
+        UonSiteGivenDiagonal,
+        UdistanceFunction,
+        UmatrixGiven
+    };
+
+    enum FHSameSpinInteractionType {
+        Vnone,
+        VonSiteConstant,
+        VonSiteBySiteType,
+        VonSiteGivenDiagonal,
+        VdistanceFunction,
+        VmatrixGiven
     };
 
     enum tJExchangeCouplingType {
-        tJNearestNeighbourConstant
+        tJJnone,
+        tJNearestNeighbourConstant,
+        tJMatrixGiven,
+        tJBySiteType
     };
 
     enum FHTunnelingType {
+        tHnone,
         nearestNeighbourConstant,
         nearestNeighbourBySiteType,
         tunnelingDistanceFunction,
@@ -65,11 +79,15 @@ public:
     double                  getDistance(int i, int j);
     bool                    areNeighbour(int i, int j);
     std::complex<double>    getInteractionEnergy(int i, int j);
+    std::complex<double>    getSameSpinInteractionEnergy(int i, int j);
     std::complex<double>    getTunnelingEnergy(int i, int j);
     std::complex<double>    getExchangeCouplingEnergy(int i, int j);
+    std::complex<double>    getExternalPotential(int i, double t);
     arma::cx_dmat*          getUMatrixPointer();
+    arma::cx_dmat*          getVMatrixPointer();
     arma::cx_dmat*          getJMatrixPointer();
     arma::cx_dmat*          gettMatrixPointer();
+    arma::cx_dvec*          getExtPotPointer();
 
     std::string             getName();
     std::string             getFolder();
@@ -80,17 +98,18 @@ public:
 // SETTERS
 
     void                    setInteraction_OnSite(double U);
-    void                    setTunneling_BetweenNeighbours(double J);
+    void                    setTunneling_BetweenNeighbours(double tH);
+    void                    setExchangeCoupling(double J);
     void                    setName(std::string name);
     bool                    setSiteTypes(arma::uvec sTypes);
-    void                    setSiteTypeNames(std::vector<std::string> typeNames);                
-
+    void                    setSiteTypeNames(std::vector<std::string> typeNames);         
+    void                    setPositions(const arma::dmat& positions);
+    void                    setInitialConditions(const std::vector<std::vector<unsigned int>>& initConditions);
+    void                    setInitialConditions(FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
 
 
     void                    writeFHSystem(std::string folderName = "");
 
-    void        initiateSystem(const arma::dmat& positions, const std::vector<std::vector<unsigned int>>& initConditions );
-    void        initiateSystem(const arma::dmat& positions, FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
 
     ~FHSystem();
 
@@ -107,10 +126,19 @@ private:
     std::vector<std::vector<bool>>  neighbourMatrix;
     std::vector<std::vector<bool>>  sameSiteMatrix;
 
+// ENERGY
+    FHOppositeSpinInteractionType   UInteractionType;
+    FHSameSpinInteractionType       VInteractionType;
+    tJExchangeCouplingType          tJExCType;
+    FHTunnelingType                 tunnelingType;
+
     arma::cx_dmat                   UMatrix;
+    arma::cx_dmat                   VMatrix;
     arma::cx_dmat                   JMatrix;
     arma::cx_dmat                   tMatrix;
+    arma::cx_dvec                   externalPotential;
 
+// INITIAL CONDITIONS
     FHInitialConditionType          initialCondition;
     std::vector<bool>               initConditions_upSpin;
     std::vector<bool>               initConditions_downSpin;
@@ -119,11 +147,9 @@ private:
     std::string                     systemFolder;
 
 
-    void        computeMatrices();
-
+    void                            computeMatrices();
 
 
 //    bool isIn(std::string w, std::vector<std::string> v);
-
 
 };

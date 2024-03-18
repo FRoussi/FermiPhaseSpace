@@ -47,6 +47,8 @@ public:
 
 
     arma::cx_dmat       diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
+    arma::cx_dmat       quarterDiffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
+    arma::cx_dmat       diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat UMat);
 
     arma::cx_dmat       sqrtDecomposition(arma::cx_dmat& D);
     

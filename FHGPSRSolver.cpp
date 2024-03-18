@@ -277,6 +277,66 @@ arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arm
 
 }
 
+arma::cx_dmat       FHGPSRSolver::quarterDiffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0)
+{
+      unsigned int nSites = rhou.n_rows;
+    unsigned int sizeMat = nSites * nSites ;
+
+    std::complex<double> cst = std::sqrt(0.5 * jj * U0 ) ;
+
+    arma::cx_dmat rhou_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhou;
+    arma::cx_dmat rhod_H = arma::cx_dmat(nSites, nSites, arma::fill::eye) - rhod;
+
+    arma::cx_dmat B1u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B2u = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B1d = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+    arma::cx_dmat B2d = arma::cx_dmat(sizeMat, nSites, arma::fill::zeros);
+
+    for (unsigned int l = 0 ; l < nSites ; l++)
+    {
+        for (unsigned int k = 0 ; k < nSites ; k++)
+        {
+            unsigned int lineIndex = l * nSites + k;
+            for (unsigned int p = 0 ; p < nSites ; p++)
+            {
+                B1u(lineIndex, p) =  rhou(p,l)* rhou_H(k,p)  ;
+                B2u(lineIndex, p) = jj * rhou_H(p,l)*rhou(k,p) ;
+                      
+                B1d(lineIndex, p) =  rhod(p,l)*rhod_H(k,p)  ;
+                B2d(lineIndex, p) = jj * rhod_H(p,l)*rhod(k,p) ;
+            }
+        }
+    }
+        
+
+    // Bu = | B1u  iB1u  B2u   iB2u  | :
+    arma::cx_dmat Bu = arma::cx_dmat(sizeMat, 4*nSites);
+    Bu.submat(0,   0,          sizeMat-1,  nSites-1)   = cst * B1u;
+    Bu.submat(0,   nSites,     sizeMat-1,  2*nSites-1) = cst * jj * B1u;
+    Bu.submat(0,   2*nSites,   sizeMat-1,  3*nSites-1) = cst * B2u;
+    Bu.submat(0,   3*nSites,   sizeMat-1,  4*nSites-1) = cst * jj*B2u;
+    // Bd = | B1d -iB1d  B2d  -iB2d  | :
+    arma::cx_dmat Bd = arma::cx_dmat(sizeMat, 4*nSites);
+    Bd.submat(0,   0,          sizeMat-1,  nSites-1)   = cst * B1d;
+    Bd.submat(0,   nSites,     sizeMat-1,  2*nSites-1) = - cst * jj * B1d;
+    Bd.submat(0,   2*nSites,   sizeMat-1,  3*nSites-1) = cst * B2d;
+    Bd.submat(0,   3*nSites,   sizeMat-1,  4*nSites-1) = - cst * jj *B2d;
+
+   // std::cout << "size B = " << arma::size(B) << std::endl;
+
+    return Bu * Bd.st();
+
+}
+
+
+arma::cx_dmat       FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat UMat)
+{   
+    uint nSites = rhou.n_cols;
+    uint sizeMat = nSites * nSites ;
+    return arma::cx_dmat(2 * sizeMat, 2 * sizeMat, arma::fill::zeros);
+
+}
+
 /// @brief Decomposition of a diffusion matrice into its diffusion rate
 /// @param D the diffusion matrix to decompose 
 /// @return B a square root of D, BB' = D
