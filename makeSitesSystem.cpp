@@ -310,7 +310,8 @@ vector<unsigned int> IC_DOWN = vector<unsigned int>();
     std::vector<std::vector<uint>> IC = {IC_UP, IC_DOWN};
 
     FHSystem newSystem = FHSystem();
-    newSystem.initiateSystem(sitePosition, IC);
+    newSystem.setPositions(sitePosition);
+    newSystem.setInitialConditions(IC);
 
 
     newSystem.writeFHSystem(fileFolder);
