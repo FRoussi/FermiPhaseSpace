@@ -6,8 +6,8 @@ FHSystem::FHSystem()
 
     arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
 
-    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(0,0);
-    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(0,0);
+    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>();
+    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>();
 
     std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
     initCond[0] = initCond_up;
@@ -17,10 +17,11 @@ FHSystem::FHSystem()
     setInitialConditions(initCond);
     computeMatrices();
 
+    initiateEmptyEnergyMatrices();
+
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
-    VInteractionType = FHSameSpinInteractionType::Vnone;
-    tJExCType = tJExchangeCouplingType::tJJnone;
+
 }
 
 FHSystem::FHSystem(int x)
@@ -49,10 +50,11 @@ FHSystem::FHSystem(int x)
     setInitialConditions(initCond);
     computeMatrices();
 
+    initiateEmptyEnergyMatrices();
+
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
-    VInteractionType = FHSameSpinInteractionType::Vnone;
-    tJExCType = tJExchangeCouplingType::tJJnone;
+
 
 }
 
@@ -93,10 +95,10 @@ FHSystem::FHSystem(int x, int y, int z)
     computeMatrices();
 
 
+    initiateEmptyEnergyMatrices();
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
-    VInteractionType = FHSameSpinInteractionType::Vnone;
-    tJExCType = tJExchangeCouplingType::tJJnone;
+
 
 }
 
@@ -117,8 +119,9 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         energyParameter_U_constant,
         energyParameter_U_bySite,
         energyParameter_U_bySiteType,
-        energyParameter_U_matrixGiven,
-        energyParameter_tH,
+        energyParameter_U_GivenMatrix,
+        energyParameter_tH_NNConstant,
+        energyParameter_tH_GivenMatrix,
         energyParameter_J,
         diagonalIC_UpSpin,
         diagonalIC_DownSpin,
@@ -148,6 +151,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
         int nDim = -1;
         troolean orbitalHaveNames = troolean::dontknow;
+        bool positionsReady = false;
 
         std::vector<unsigned int>           orbitalTypes    = std::vector<unsigned int>();
         std::vector<std::string>            orbitalNames    = std::vector<std::string>();
@@ -156,9 +160,9 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
         std::vector<unsigned int>           particlesNumber(2, 0);
 
-        std::vector<double> Uvector = std::vector<double>();
+
         std::vector<double> tHvector = std::vector<double>();
-        std::vector<double> tHvector = std::vector<double>();
+        std::vector<double> Jvector = std::vector<double>();
 
         std::string line;
         while (std::getline(systFile, line))
@@ -195,8 +199,13 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
            }
            else if (line == "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS")
            {
-                whatToR = WhatToRead::energyParameter_tH;
+                whatToR = WhatToRead::energyParameter_tH_NNConstant;
                 tunnelingType = FHTunnelingType::nearestNeighbourConstant; 
+           }
+           else if (line == "#ENERGYPARAMETER_tH_GIVENMATRIX")
+           {
+                whatToR = WhatToRead::energyParameter_tH_GivenMatrix;
+                tunnelingType = FHTunnelingType::tunnelingGivenMatrix;
            }
             else if (line == "#ENERGYPARAMETER_J")
            {
@@ -253,6 +262,33 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                         return;
                     }
                 }
+
+
+                arma::dmat sitePos = armaMatfromVectorsVector(pos);
+
+                setPositions(sitePos);
+
+                if (orbitalHaveNames == troolean::yes)
+                {
+                    std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
+                    uint numberOfNames = 0;
+                    uint index = 0;
+                    for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
+                    {
+                        if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
+                        {
+                            orbitalTypes[nameInt] = index;
+                        }
+                        else
+                        {
+                            orbitalNameTypes.push_back(orbitalNames[nameInt]);
+                            orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
+                        }
+                    }
+                }
+
+                initiateEmptyEnergyMatrices();
+                positionsReady = true;
                 break;
             }
             case WhatToRead::energyParameter_U_constant :
@@ -260,17 +296,22 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 std::stringstream ss(line);
                 std::string U_string;
                 std::getline (ss, U_string, ' ');
-                Uvector.push_back(std::stod(U_string));          
+                double U0 = std::stod(U_string);
+                
+                setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
+                setInteraction_OnSite(U0);
                 break;
             }
             case WhatToRead::energyParameter_U_bySite :
             {
                 std::stringstream ss(line);
                 std::string U_string;
+                std::vector<double> Uvector = std::vector<double>();
                 while (std::getline (ss, U_string, ' ')) 
                 {
                      Uvector.push_back(std::stod(U_string));
                 }     
+                setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteGivenDiagonal);
                 break;
             }
             case WhatToRead::energyParameter_U_bySiteType :
@@ -282,10 +323,15 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 std::getline (ss, site_name, ' ');
                 std::getline (ss, U_value, ' ');
                 std::vector<std::string>::iterator itName = std::find(orbitalNames.begin(), orbitalNames.end(), site_name);
+                std::vector<double> Uvector = std::vector<double>(orbitalNames.size());
                 Uvector[itName - orbitalNames.begin()] = std::stod(U_value);          
                 break;
             }
-            case WhatToRead::energyParameter_tH :
+            case WhatToRead::energyParameter_U_GivenMatrix :
+            {
+
+            }
+            case WhatToRead::energyParameter_tH_NNConstant :
             {
                 break;
             }
@@ -300,20 +346,20 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 
                 while (std::getline(ss, siteN, ' '))            //<- We read the line word by word
                 {
-                        //std::cout << "Reading initial positions of up-spin particles, siteN = " << siteN << std::endl;
+                    //std::cout << "Reading initial positions of up-spin particles, siteN = " << siteN << std::endl;
                     initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
                     particlesNumber[0]++;
                 }
-                whatToR = WhatToRead::diagonalIC_DownSpin;                      //<- At the end, the up-spin particles positions have been read.
+                whatToR = WhatToRead::diagonalIC_DownSpin;      //<- At the end, the up-spin particles positions have been read.
                 break;
             }
-            case WhatToRead::diagonalIC_DownSpin :                   //<- Else, if the down-spin particles positions have not been read yet
+            case WhatToRead::diagonalIC_DownSpin :              //<- Else, if the down-spin particles positions have not been read yet
             {
                 std::stringstream ss(line);
                 std::string siteN;
                 while (std::getline(ss, siteN, ' ')) 
                 {
-                       // std::cout << "Reading initial positions of down-spin particles, siteN = " << siteN << std::endl;
+                    // std::cout << "Reading initial positions of down-spin particles, siteN = " << siteN << std::endl;
                     initCond_down.push_back(std::stoi(siteN)); 
                     particlesNumber[1]++;
                 }
@@ -347,35 +393,6 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
         systFile.close();
 
-        arma::dmat sitePos = arma::dmat(pos.size(), nDim);
-        for(unsigned int itPos = 0; itPos < pos.size(); itPos ++)
-        {
-            for (unsigned int itCoor = 0; itCoor<nDim; itCoor ++)
-            {
-                sitePos(itPos, itCoor) = pos[itPos][itCoor];
-            }
-        }
-
-        setPositions(sitePos);
-
-    if (orbitalHaveNames == troolean::yes)
-    {
-        std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
-        uint numberOfNames = 0;
-        uint index = 0;
-        for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
-        {
-            if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
-            {
-                orbitalTypes[nameInt] = index;
-            }
-            else
-            {
-                orbitalNameTypes.push_back(orbitalNames[nameInt]);
-                orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
-            }
-        }
-    }
 
 
     if (initialCondition == FHInitialConditionType::givenDiagonal)
@@ -409,22 +426,22 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
 /// @brief getter - number of sites
 /// @return number of sites
-unsigned int        FHSystem::getnSites()
+unsigned int                                FHSystem::getnSites()
 {
     return sitePositions.n_rows;
 }
 
-
-bool                 FHSystem::sitesHaveNames()
+bool                                        FHSystem::sitesHaveNames()
 {
         return (siteTypes.n_rows == sitePositions.n_rows);
 }
 
-arma::drowvec     FHSystem::getSitePosition(int site)
+arma::drowvec                               FHSystem::getSitePosition(int site)
 {
     return sitePositions.row(site);
 }
-std::string             FHSystem::getSiteName(int site)
+
+std::string                                 FHSystem::getSiteName(int site)
 {
     return siteTypeNames[siteTypes[site]];
 }
@@ -433,7 +450,7 @@ std::string             FHSystem::getSiteName(int site)
 /// @param dim coordinate dimension
 /// @param pos site number
 /// @return coordinate of site 'pos'in dimension 'dim'
-double FHSystem::getCoordinate(int dim, int pos)
+double                                      FHSystem::getCoordinate(int dim, int pos)
 { 
     if ((dim < sitePositions.n_cols) && (pos < sitePositions.n_rows))
     {
@@ -447,96 +464,116 @@ double FHSystem::getCoordinate(int dim, int pos)
 
 /// @brief  getter - initial condition type
 /// @return initial condition type
-FHSystem::FHInitialConditionType     FHSystem::getInitialCondition()
+FHSystem::FHInitialConditionType            FHSystem::getInitialCondition()
 {
     return initialCondition;
 }
 
 /// @brief getter - number of spin-up particles
 /// @return number of spin-up particles
-unsigned int            FHSystem::getUpSpinParticleNumber()
+unsigned int                                FHSystem::getUpSpinParticleNumber()
 {
     return upSpinParticleNumber;
 }
 
 /// @brief getter - number of spin-down particles
 /// @return number of spin-down particle
-unsigned int            FHSystem::getDownSpinParticleNumber()
+unsigned int                                FHSystem::getDownSpinParticleNumber()
 {
     return downSpinParticleNumber;
 }
 
-double FHSystem::getDistance(int i, int j)
+FHSystem::FHOppositeSpinInteractionType     FHSystem::getOppositeSpinInteractionType()
+{
+    return UInteractionType;
+}
+
+FHSystem::FHTunnelingType                   FHSystem::getTunnelingType() 
+{
+    return tunnelingType;
+}
+
+FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType() 
+{
+    return VInteractionType;
+}
+
+FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType() 
+{
+    return tJExCType;
+}
+
+double                                      FHSystem::getDistance(int i, int j)
 {
     return distanceMatrix(i,j);
 }
 
-bool FHSystem::areNeighbour(int i, int j)
+bool                                        FHSystem::areNeighbour(int i, int j)
 {
     return neighbourMatrix[i][j];
 }
 
-std::complex<double> FHSystem::getInteractionEnergy(int i, int j)
+std::complex<double>                        FHSystem::getInteractionEnergy(int i, int j)
 {
     return UMatrix(i,j);
 }
 
-std::complex<double>    FHSystem::getSameSpinInteractionEnergy(int i, int j)
+std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)
 {
     return VMatrix(i,j);
 }
 
-std::complex<double> FHSystem::getTunnelingEnergy(int i, int j)
+std::complex<double>                        FHSystem::getTunnelingEnergy(int i, int j)
 {
     return tMatrix(i,j);
 }
 
-std::complex<double> FHSystem::getExchangeCouplingEnergy(int i, int j)
+std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)
 {
     return JMatrix(i,j);
 }
 
-std::complex<double> FHSystem::getExternalPotential(int i, double t)
+std::complex<double>                        FHSystem::getExternalPotential(int i, double t)
 {
     return std::complex<double>(0);
 }
 
-arma::cx_dmat* FHSystem::getUMatrixPointer()
+arma::cx_dmat*                              FHSystem::getUMatrixPointer()
 {
     return &UMatrix;
 }
 
-arma::cx_dmat* FHSystem::getJMatrixPointer()
+arma::cx_dmat*                              FHSystem::getJMatrixPointer()
 {
     return &JMatrix;
 }
 
-arma::cx_dmat* FHSystem::gettMatrixPointer()
+arma::cx_dmat*                              FHSystem::gettMatrixPointer()
 {
     return &tMatrix;
 }
 
-arma::cx_dvec* FHSystem::getExtPotPointer()
+arma::cx_dvec*                              FHSystem::getExtPotPointer()
 {
     return &externalPotential;
 }
 
-std::string FHSystem::getName()
+std::string                                 FHSystem::getName()
 {
     return systemName;
 }
 
-std::string FHSystem::getFolder()
+std::string                                 FHSystem::getFolder()
 {
     return systemFolder;
 }
 
-std::vector<bool> FHSystem::getInitialCondition_upSpin()
+std::vector<bool>                           FHSystem::getInitialCondition_upSpin()
 {
     return initConditions_upSpin;
 }
 
-std::vector<bool> FHSystem::getInitialCondition_downSpin()
+std::vector<bool>                           FHSystem::getInitialCondition_downSpin()
 {
     return initConditions_downSpin;
 }
@@ -575,15 +612,37 @@ void                    FHSystem::setExchangeCoupling(double J)
     JMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
 }
 
+void                    FHSystem::setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType UType)
+{
+    UInteractionType = UType;
+}
+
+void                    FHSystem::setTunnelingType(FHSystem::FHTunnelingType tType)
+{
+    tunnelingType = tType;
+}
+
+void                    FHSystem::setSameSpinInteractionType(FHSystem::FHSameSpinInteractionType VType)
+{
+    VInteractionType = VType;
+}
+
+void                    FHSystem::setExchangeCouplingEnergyType(FHSystem::tJExchangeCouplingType JType)
+{
+    tJExCType = JType;
+}
+
 void                    FHSystem::setName(std::string name)    
 {
     systemName = name;
 }
+
 bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
 {
     siteTypes = sTypes;
     return sitesHaveNames();
 }
+
 void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
 {
     siteTypeNames = typeNames;
@@ -592,6 +651,7 @@ void                    FHSystem::setSiteTypeNames(std::vector<std::string> type
 void                    FHSystem::setPositions(const arma::dmat& positions)
 {
     sitePositions = positions;
+    computeMatrices();
 }
 
 /// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
@@ -671,7 +731,20 @@ void FHSystem::computeMatrices()
 }
 
 
+void FHSystem::initiateEmptyEnergyMatrices()
+{
+    UInteractionType = FHOppositeSpinInteractionType::Unone;
+    tunnelingType = FHTunnelingType::tHnone;
+    VInteractionType = FHSameSpinInteractionType::Vnone;
+    tJExCType = tJExchangeCouplingType::tJJnone;
 
+    uint nSites = sitePositions.n_rows;
+
+    UMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    VMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    JMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    tMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+}
 
 /// @brief Write an ASCII version of the Fermi-Hubbard System
 /// @param folderName emplacement of the folder
@@ -679,16 +752,20 @@ void     FHSystem::writeFHSystem(std::string folderName)
 {
     // Writing of everything on the file :
 std::string fileAdress =  systemName;
+
+std::cout << "In system, system name : "<< systemName << std::endl;
 if (folderName != "")
 {
     fileAdress = folderName + "/" + systemName;
 }
 
    std::ofstream streamSystem(fileAdress);
+
+   std::cout << "In system, file adress : "<< fileAdress << std::endl;
    
     if (streamSystem.is_open())
     {
-        // POSITIONS OF SITES
+// I- POSITIONS OF SITES
         bool sitesHaveTags = sitesHaveNames();
 
         streamSystem << "#POSITIONS" << std::endl;
@@ -706,33 +783,108 @@ if (folderName != "")
                
         }
 
-        // ENERGY PARAMETERS
-
-        if (UInteractionType == FHOppositeSpinInteractionType::UonSiteConstant)
+// II - ENERGY PARAMETERS
+    // II-1 OPPOSITE SPIN INTERACTION
+    switch(UInteractionType)
+    {
+        case FHOppositeSpinInteractionType::Unone :
+        {
+            break;
+        }
+        case FHOppositeSpinInteractionType::UonSiteConstant:
         {
             streamSystem << "#ENERGYPARAMETER_U_CONSTANT" << std::endl;
-            streamSystem << UMatrix(0,0) << std::endl;
+            streamSystem << UMatrix(0,0).real() << std::endl;
+            break;
         }
-
-        else if (UInteractionType == FHOppositeSpinInteractionType::UonSiteGivenDiagonal)
+        case FHOppositeSpinInteractionType::UonSiteGivenDiagonal:
         {
             streamSystem << "#ENERGYPARAMETER_U_BYSITE" << std::endl;
             for(uint iSite = 0; iSite<sitePositions.n_rows; iSite++)
             {
-                streamSystem << UMatrix(iSite, iSite) << "\t";
+                streamSystem << UMatrix(iSite, iSite).real() << "\t";
             }
             streamSystem << std::endl;
+            break;
         }
+        case FHOppositeSpinInteractionType::UonSiteBySiteType:
+        {
+            streamSystem << "#ENERGYPARAMETER_U_BYSITETYPE" << std::endl;
+            for(uint iSiteType = 0; iSiteType < siteTypeNames.size(); iSiteType++)
+            {
+                arma::uvec indSite = find(siteTypes = iSiteType, 1);
+                if (indSite.size() !=0)
+                {
+                   streamSystem << siteTypeNames[iSiteType]<< "\t" << UMatrix(indSite(0)).real() << std::endl;
+                }            
+            }
+            streamSystem << std::endl;
+            break;
+        }
+        case FHOppositeSpinInteractionType::UGivenMatrix:
+        {
+            streamSystem << "#ENERGYPARAMETER_U_GIVENMATRIX" << std::endl;
+            for(uint itU1 = 0; itU1 < UMatrix.n_rows; itU1++)
+            {
+                for(uint itU2 = 0; itU2 < UMatrix.n_cols; itU2++)
+                {       
+                    streamSystem << std::real(UMatrix(itU1, itU2)) << "\t";
+                }
+                streamSystem << std::endl;
+            }
+            break;
+        }
+        default :
+        {
+            break;
+        }
+    }
 
 
-        if (tunnelingType == FHTunnelingType::nearestNeighbourConstant)
+
+    // II-2 TUNNELING
+    switch(tunnelingType)
+    {
+        case FHTunnelingType::tHnone:
+        {
+            break;
+        }
+        case FHTunnelingType::nearestNeighbourConstant:
         {
             streamSystem << "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS" << std::endl;
-            streamSystem << UMatrix(0,0) << std::endl;
+            arma::uvec q1 = find(tMatrix,1);
+            //std::cout << q1 << std::endl;
+            if (q1.n_rows !=0)
+            {
+                double th = std::real( tMatrix(q1(0)) );
+                streamSystem << th << std::endl;
+            }
+            else
+            {
+                 streamSystem << 1 << std::endl;
+            }
         }
+        case FHTunnelingType::tunnelingGivenMatrix:
+        {
+            streamSystem << "#ENERGYPARAMETER_tH_GIVENMATRIX" << std::endl;
+            for(uint itt1 = 0; itt1 < tMatrix.n_rows; itt1++)
+            {
+                for(uint itt2 = 0; itt2 < tMatrix.n_cols; itt2++)
+                {       
+                    streamSystem << std::real(tMatrix(itt1, itt2)) << "\t";
+                }
+                streamSystem << std::endl;
+            }
+        }
+        default :
+        {
+            break;
+        }
+    }
 
 
-        // INITIAL CONDITIONS
+
+// III - INITIAL CONDITIONS
         switch (initialCondition)
         {
             case FHInitialConditionType::quenched:
@@ -758,7 +910,6 @@ if (folderName != "")
                 streamSystem << std::endl;       
         }
 
-        // ENERGY PARAMETERS
 
         streamSystem.close();
     }  

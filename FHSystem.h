@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "fnctarma.h"
 #include "utilitaries.h"
 
 
@@ -30,7 +31,7 @@ public:
         UonSiteBySiteType,
         UonSiteGivenDiagonal,
         UdistanceFunction,
-        UmatrixGiven
+        UGivenMatrix
     };
 
     enum FHSameSpinInteractionType {
@@ -39,13 +40,13 @@ public:
         VonSiteBySiteType,
         VonSiteGivenDiagonal,
         VdistanceFunction,
-        VmatrixGiven
+        VGivenMatrix
     };
 
     enum tJExchangeCouplingType {
         tJJnone,
         tJNearestNeighbourConstant,
-        tJMatrixGiven,
+        tJGivenMatrix,
         tJBySiteType
     };
 
@@ -54,7 +55,7 @@ public:
         nearestNeighbourConstant,
         nearestNeighbourBySiteType,
         tunnelingDistanceFunction,
-        tunnelingMatrixGiven
+        tunnelingGivenMatrix
     };
 
 // CONSTRUCTORS
@@ -76,6 +77,11 @@ public:
     std::string             getSiteName(int site);
     double                  getCoordinate(int dim, int pos);
 
+
+    FHOppositeSpinInteractionType      getOppositeSpinInteractionType();
+    FHTunnelingType                    getTunnelingType();
+    FHSameSpinInteractionType          getSameSpinInteractionType();
+    tJExchangeCouplingType             getExchangeCouplingEnergyType();
     double                  getDistance(int i, int j);
     bool                    areNeighbour(int i, int j);
     std::complex<double>    getInteractionEnergy(int i, int j);
@@ -100,6 +106,10 @@ public:
     void                    setInteraction_OnSite(double U);
     void                    setTunneling_BetweenNeighbours(double tH);
     void                    setExchangeCoupling(double J);
+    void                    setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
+    void                    setTunnelingType(FHTunnelingType tType);
+    void                    setSameSpinInteractionType(FHSameSpinInteractionType VType);
+    void                    setExchangeCouplingEnergyType(tJExchangeCouplingType JType);
     void                    setName(std::string name);
     bool                    setSiteTypes(arma::uvec sTypes);
     void                    setSiteTypeNames(std::vector<std::string> typeNames);         
@@ -109,6 +119,8 @@ public:
 
 
     void                    writeFHSystem(std::string folderName = "");
+
+    void initiateEmptyEnergyMatrices();
 
 
     ~FHSystem();

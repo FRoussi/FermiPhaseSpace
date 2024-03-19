@@ -39,7 +39,6 @@ int main(int argc, char* argv[])
    {
       nothing,
       readSystemFile,
-      readEnergyParameters,
       compute_ED,
       compute_FH,
       compute_fTWA,
@@ -69,42 +68,34 @@ int main(int argc, char* argv[])
 
    task TODO = task::nothing;
    bool systemLoaded = false;
-   bool energyParametersLoaded = false;
    while(std::getline(instructionsStream, line))
    {
       if (line == "#SYSTEM_FILE")
-        TODO = task::readSystemFile;
-      else if (line == "#ENERGY_PARAMETERS")
-      {
-         if (systemLoaded)
-            TODO = task::readEnergyParameters;   
-         else
-            std::cout << "Not reading energy parameters because no system loaded." << std::endl;
-      }          
+        TODO = task::readSystemFile;        
       else if (line == "#ED")
       {
-         if (systemLoaded && energyParametersLoaded)
+         if (systemLoaded )
             TODO = task::compute_ED;
          else
             std::cout << "Not reading ED instructions because something not loaded." << std::endl;      
       } 
       else if (line == "#HF")
       {
-         if (systemLoaded && energyParametersLoaded)
+         if (systemLoaded )
             TODO = task::compute_FH;
          else
             std::cout << "Not reading HF instructions because something not loaded." << std::endl;      
       } 
       else if (line == "#fTWA")
       {
-         if (systemLoaded && energyParametersLoaded)
+         if (systemLoaded)
             TODO = task::compute_fTWA;
          else
             std::cout << "Not reading fTWA instructions because something not loaded." << std::endl;      
       } 
       else if (line == "#GPSR")
       {
-         if (systemLoaded && energyParametersLoaded)
+         if (systemLoaded )
             TODO = task::compute_GPSR;
          else
             std::cout << "Not reading GPSR instructions because something not loaded." << std::endl;      
@@ -118,18 +109,9 @@ int main(int argc, char* argv[])
          std::cout << "System loaded" << std::endl;
          //std::cout << "Initial conditions spin up   : [" << fhSystem.getInitialCondition_upSpin()[0] << fhSystem.getInitialCondition_upSpin()[1] << "]"<< std::endl;
          //std::cout << "Initial conditions spin down : [" << fhSystem.getInitialCondition_downSpin()[0] << fhSystem.getInitialCondition_downSpin()[1] << "]"<< std::endl;
-      }
-      else if (TODO == task::readEnergyParameters)
-      {
-         lineStream = std::stringstream(line);
-         while(std::getline(lineStream, word, ' '))
-            nrjParameters.push_back(std::stod(word));
          
-         fhSystem.setInteraction_OnSite(nrjParameters[0]);
-         fhSystem.setTunneling_BetweenNeighbours(nrjParameters[1]);
-         energyParametersLoaded = true;
-         std::cout << "Energy parameters loaded, U=" << nrjParameters[0] << ", J=" << nrjParameters[1] << std::endl;
       }
+
       else if (TODO == task::compute_ED)
       {
          lineStream = std::stringstream(line);
@@ -139,10 +121,15 @@ int main(int argc, char* argv[])
          
          printf("-- ED dynamic \n");
          FHEDSolver edSolver = FHEDSolver(&fhSystem);
+         std::cout << "Step1" << std::endl;
          edSolver.setResultFile(work + "_ED", workFolder);
+         std::cout << "Step2" << std::endl;
          edSolver.initiateSolver();
+         std::cout << "Step3" << std::endl;
          edSolver.setTimeParameters(edParameters[0], edParameters[1], edParameters[2]);
+         std::cout << "Step4" << std::endl;
          edSolver.runSimulation();
+         std::cout << "Step5" << std::endl;
       }
       else if (TODO == task::compute_FH)
       {

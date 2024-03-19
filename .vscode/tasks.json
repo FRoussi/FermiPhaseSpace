@@ -1,0 +1,59 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "g++ build all files and run",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",              
+                "${workspaceFolder}/fnct.cpp",
+                "${workspaceFolder}/fnctbitset.cpp",        
+                "${workspaceFolder}/fnctarma.cpp",    
+                "${workspaceFolder}/FHSystem.cpp",
+                "${workspaceFolder}/ResultWriter.cpp",
+                "${workspaceFolder}/FHEDSolver.cpp",
+                "${workspaceFolder}/FHfTWASolver.cpp",
+                "${workspaceFolder}/FHGPSRSolver.cpp",
+                "${workspaceFolder}/FHHFSolver.cpp",
+                "${workspaceFolder}/fps.cpp",
+                "-o",
+                "${fileDirname}/fps",
+                "-larmadillo",
+                "-fopenmp"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group":  "build",
+            "detail": "Global compile and run. compiler: /usr/bin/g++, openmp."
+        },
+        {
+            "type": "cppbuild",
+            "label": "g++ build the system maker",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${workspaceFolder}/fnctarma.cpp",  
+                "${workspaceFolder}/FHSystem.cpp",
+                "${workspaceFolder}/makeSitesSystem.cpp",
+                "-o",
+                "${fileDirname}/makeSitesSystem",
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group":"build",
+            "detail": "Compile the system maker: /usr/bin/g++."
+        }
+        
+    ]
+}

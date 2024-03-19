@@ -51,6 +51,8 @@ void FHEDSolver::initiateSolver()
     std::vector<std::vector<bool>> c_pdVec = getCombinations(this->fhSystem->getnSites(), this->nPartD, this->fhSystem->getnSites());
     c_pdVec.shrink_to_fit();
     this->c_pd = std::vector<std::bitset<MAX_BITS>>(basisSizeSpinDown);
+
+
     for (uint it = 0 ; it<basisSizeSpinDown; it++)
     {
         c_pd[it] = bitsetFromVector(c_pdVec[it]);
@@ -62,7 +64,7 @@ void FHEDSolver::initiateSolver()
     uint countor = 0;
     for (uint l = 0; l < basisSizeSpinUp; l++)
     {
-        for (uint k = 0; k < basisSizeSpinUp; k++)
+        for (uint k = 0; k < basisSizeSpinDown; k++)
         {
             basisArray[countor][0] = c_pu[l];         //<- up-spin particle combinations of position
             basisArray[countor][1] = c_pd[k];         //<- down-spin particle combinations of position
@@ -76,9 +78,12 @@ void FHEDSolver::initiateSolver()
 
     this->psi = this->psi_0;                    //< The current wave-function becomes the initial one.
 
+
     buildPairOperators();                       //<- Usefull pair operators
     buildHamiltonian();                         //<- Hamiltonian
 
+
+    arma::cx_dmat(H).print() ;
 }
 
 
@@ -98,6 +103,8 @@ void FHEDSolver::buildPairOperators()
 
         NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijdSet[i][i] = numberOperatorSpinDown(i);
+
+        NijuSet[i][i].print_dense();
     }
 
 
@@ -105,12 +112,15 @@ void FHEDSolver::buildPairOperators()
     {
         for (uint j = i + 1; j < nSites; j++)
         {
+            std::cout << "tH " << i << " " << j << " = " << fhSystem->getTunnelingEnergy(i, j) << std::endl;
             if ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0)))
             {
+
                 NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
                 NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
                 NijuSet[j][i] = NijuSet[i][j].t();
                 NijdSet[j][i] = NijdSet[i][j].t();
+                NijuSet[i][j].print_dense();
             }
         }
     }

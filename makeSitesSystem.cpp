@@ -5,6 +5,7 @@
 #include <vector>
 #include <math.h>
 
+#include "fnctarma.h"
 #include "FHSystem.h"
 
 using std::cout;
@@ -166,6 +167,8 @@ bool isIn(string word, vector<string>& wordList)
 }
 
 
+
+
 // MAIN
 
 int main(int argc, char* argv[])
@@ -215,7 +218,7 @@ int main(int argc, char* argv[])
         nothing,
         geometryParameters,
         energyParameters
-    }    ;                  
+    };                  
     vector<double> geomParam = vector<double>();    //<- list of geometry parameters stored in double
     double argDouble = 0;                           //<- the current entry in double
     whatToRead wtr = whatToRead::nothing;
@@ -306,13 +309,24 @@ vector<unsigned int> IC_DOWN = vector<unsigned int>();
 
 
 // MAKING OF THE FHSystem
-    arma::dmat sitePosition = arma::dmat(pos.size(), pos[0].size());
+    arma::dmat sitePosition = armaMatfromVectorsVector(pos);
+    //cout << "Position : " << endl << sitePosition << endl; 
+
     std::vector<std::vector<uint>> IC = {IC_UP, IC_DOWN};
 
     FHSystem newSystem = FHSystem();
-    newSystem.setPositions(sitePosition);
-    newSystem.setInitialConditions(IC);
+    newSystem.setName(fileName);                                                                        //<- Name
+    newSystem.setPositions(sitePosition);                                                               //<- Position
+    newSystem.setTunnelingType(FHSystem::FHTunnelingType::nearestNeighbourConstant);                    //<- Energy
+    newSystem.setTunneling_BetweenNeighbours(energyParam[0]);
+    newSystem.setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType::UonSiteConstant);
+    newSystem.setInteraction_OnSite(energyParam[1]);
 
+
+    newSystem.setInitialConditions(IC);                                                                 //<- Initial conditions
+  
+
+    //cout << "file folder : " <<  fileFolder << endl; 
 
     newSystem.writeFHSystem(fileFolder);
 
