@@ -89,11 +89,11 @@ public:
     std::complex<double>    getTunnelingEnergy(int i, int j);
     std::complex<double>    getExchangeCouplingEnergy(int i, int j);
     std::complex<double>    getExternalPotential(int i, double t);
-    arma::cx_dmat*          getUMatrixPointer();
-    arma::cx_dmat*          getVMatrixPointer();
-    arma::cx_dmat*          getJMatrixPointer();
-    arma::cx_dmat*          gettMatrixPointer();
-    arma::cx_dvec*          getExtPotPointer();
+    const arma::cx_dmat*          getUMatrixPointer();
+    const arma::cx_dmat*          getVMatrixPointer();
+    const arma::cx_dmat*          getJMatrixPointer();
+    const arma::cx_dmat*          gettMatrixPointer();
+    const arma::cx_dvec*          getExtPotPointer();
 
     std::string             getName();
     std::string             getFolder();

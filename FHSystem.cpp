@@ -575,22 +575,27 @@ std::complex<double>                        FHSystem::getExternalPotential(int i
     return std::complex<double>(0);
 }
 
-arma::cx_dmat*                              FHSystem::getUMatrixPointer()
+const arma::cx_dmat*                        FHSystem::getUMatrixPointer()
 {
     return &UMatrix;
 }
 
-arma::cx_dmat*                              FHSystem::getJMatrixPointer()
+const arma::cx_dmat*                        FHSystem::getVMatrixPointer()
+{
+    return &VMatrix; 
+}
+
+const arma::cx_dmat*                        FHSystem::getJMatrixPointer()
 {
     return &JMatrix;
 }
 
-arma::cx_dmat*                              FHSystem::gettMatrixPointer()
+const arma::cx_dmat*                        FHSystem::gettMatrixPointer()
 {
     return &tMatrix;
 }
 
-arma::cx_dvec*                              FHSystem::getExtPotPointer()
+const arma::cx_dvec*                        FHSystem::getExtPotPointer()
 {
     return &externalPotential;
 }
