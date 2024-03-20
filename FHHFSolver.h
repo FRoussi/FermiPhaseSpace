@@ -51,6 +51,9 @@ private:
     std::string             workName;           //<- A name for the work, for the results file
     std::string             folderName;         //<- A name for the work folder, for the results file
 
+// other things to compute
+    bool computeMomenta;  
+
 // Time parameter
     double                  tMax;
     double                  dt;

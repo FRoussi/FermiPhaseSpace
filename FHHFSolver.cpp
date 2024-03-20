@@ -6,6 +6,7 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     fhSystem = fhS;
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
+    computeMomenta = false;
 }
 
 
@@ -87,6 +88,7 @@ void FHHFSolver::initiateSolver()
         Nd0 =  V_1p * Mkd0 * V_1p_1;
 
 
+        computeMomenta = true;
         printf("Test 4 - Initial Density matrix : \n");
         Nu0.print();
     }
@@ -290,7 +292,7 @@ void FHHFSolver::runSimulation( )
         EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
         EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
 
-        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
+        if (computeMomenta)
         {
             arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
             arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
@@ -321,6 +323,18 @@ void FHHFSolver::runSimulation( )
         for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
         {
             results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
+        }
+        if (computeMomenta)
+        {
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mkku.row(iSite));
+            }
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mkkd.row(iSite));
+            }
+
         }
         results.writeLineInReal("EU", EU);
         results.writeLineInReal("EtH", EtH);
