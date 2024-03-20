@@ -320,8 +320,8 @@ vector<unsigned int> IC_DOWN = vector<unsigned int>();
     newSystem.setTunnelingType(FHSystem::FHTunnelingType::nearestNeighbourConstant);                    //<- Energy
     newSystem.setTunneling_BetweenNeighbours(energyParam[0]);
     newSystem.setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType::UonSiteConstant);
-    newSystem.setInteraction_OnSite(energyParam[1]);
-
+    newSystem.setUInteraction_OnSite(energyParam[1]);
+    
 
     newSystem.setInitialConditions(IC);                                                                 //<- Initial conditions
   

@@ -103,9 +103,12 @@ public:
 
 // SETTERS
 
-    void                    setInteraction_OnSite(double U);
-    void                    setTunneling_BetweenNeighbours(double tH);
-    void                    setExchangeCoupling(double J);
+    void                    setUInteraction_OnSite(double U0, bool add = false);
+    void                    setUInteraction_GivenDiagonal(arma::dvec& U, bool add = false);
+    void                    setUInteraction_GivenMatrix(arma::dmat& U, bool add = false);
+    void                    setTunneling_BetweenNeighbours(double tH1, bool add = false);
+    void                    setTunneling_GivenMatrix(arma::dmat tH, bool add = false);
+    void                    setExchangeCoupling(double J, bool add = false);
     void                    setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
     void                    setTunnelingType(FHTunnelingType tType);
     void                    setSameSpinInteractionType(FHSameSpinInteractionType VType);

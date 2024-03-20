@@ -160,9 +160,10 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
         std::vector<unsigned int>           particlesNumber(2, 0);
 
-
-        std::vector<double> tHvector = std::vector<double>();
         std::vector<double> Jvector = std::vector<double>();
+         std::vector<std::vector<double>> tHMatrix = std::vector<std::vector<double>>();
+        std::vector<std::vector<double>> UMatrix = std::vector<std::vector<double>>();
+
 
         std::string line;
         while (std::getline(systFile, line))
@@ -193,7 +194,6 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
            }
            else if (line == "#ENERGYPARAMETER_U_BYSITETYPE")
            {
-                Uvector = std::vector<double>(orbitalNames.size());
                 whatToR = WhatToRead::energyParameter_U_bySiteType;
                 UInteractionType = FHOppositeSpinInteractionType::UonSiteBySiteType;
            }
@@ -299,7 +299,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 double U0 = std::stod(U_string);
                 
                 setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
-                setInteraction_OnSite(U0);
+                setUInteraction_OnSite(U0);
                 break;
             }
             case WhatToRead::energyParameter_U_bySite :
@@ -311,7 +311,9 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 {
                      Uvector.push_back(std::stod(U_string));
                 }     
+                arma::dvec Udiag = arma::dvec(Uvector);
                 setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteGivenDiagonal);
+                setUInteraction_GivenDiagonal(Udiag);
                 break;
             }
             case WhatToRead::energyParameter_U_bySiteType :
@@ -329,10 +331,45 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
             }
             case WhatToRead::energyParameter_U_GivenMatrix :
             {
-
+                std::stringstream ss(line);
+                std::string U_string;
+                std::vector<double> Uvector = std::vector<double>();
+                while (std::getline (ss, U_string, ' ')) 
+                {
+                     Uvector.push_back(std::stod(U_string));
+                }
+                UMatrix.push_back(Uvector);
+                if (UMatrix.size() == pos.size())
+                {
+                    arma::dmat UM = armaMatfromVectorsVector(UMatrix);
+                    setUInteraction_GivenMatrix(UM);
+                }    
+                break;
             }
             case WhatToRead::energyParameter_tH_NNConstant :
             {
+                std::stringstream ss(line);
+                std::string t_string;
+                std::getline (ss, t_string, ' ');
+                double tH1 = std::stod(t_string);
+                setTunneling_BetweenNeighbours(tH1);
+                break;
+            }
+            case WhatToRead::energyParameter_tH_GivenMatrix :
+            {
+                std::stringstream ss(line);
+                std::string t_string;
+                std::vector<double> tHvector = std::vector<double>();
+                while (std::getline (ss, t_string, ' ')) 
+                {
+                     tHvector.push_back(std::stod(t_string));
+                }
+                tHMatrix.push_back(tHvector);
+                if (tHMatrix.size() == pos.size())
+                {
+                    arma::dmat tHM = armaMatfromVectorsVector(tHMatrix);
+                    setTunneling_GivenMatrix(tHM);
+                }    
                 break;
             }
             case WhatToRead::energyParameter_J :
@@ -583,23 +620,77 @@ std::vector<bool>                           FHSystem::getInitialCondition_downSp
 
 /// @brief setter - on-site interaction energy
 /// @param U0 on-site interaction energy
-void FHSystem::setInteraction_OnSite(double U0)
+void FHSystem::setUInteraction_OnSite(double U0, bool add)
 {
-    UMatrix = U0 * arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::eye);
+    if (add)
+    {
+        UMatrix += U0 * arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::eye);
+    }
+    else
+    {
+        UMatrix = U0 * arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::eye);
+    }
+
+}
+
+/// @brief setter - On-site interaction energy
+/// @param U Vector of on-site interaction energy
+void                    FHSystem::setUInteraction_GivenDiagonal(arma::dvec& U, bool add)
+{
+    if (U.n_rows == sitePositions.n_rows) 
+    {
+        if (add)
+        {
+            UMatrix += arma::cx_dmat(arma::diagmat(U), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
+        else
+        {
+            UMatrix = arma::cx_dmat(arma::diagmat(U), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }      
+    }
+    else
+    {
+        std::cout << "Wrong size for the U interaction matrix." << std::endl;
+    }
+}
+
+/// @brief setter - Matrix interaction energy
+/// @param U Matrix interaction energy
+void FHSystem::setUInteraction_GivenMatrix(arma::dmat& U, bool add)
+{
+    if ((U.n_rows == sitePositions.n_rows) && (U.n_cols == sitePositions.n_rows))
+    {
+        if (add)
+        {
+            UMatrix += arma::cx_dmat(U, arma::dmat(U.n_rows, U.n_cols, arma::fill::zeros));
+        }
+        else
+        {
+            UMatrix = arma::cx_dmat(U, arma::dmat(U.n_rows, U.n_cols, arma::fill::zeros));
+        }
+    }
+    else
+    {
+        std::cout << "Wrong size for the U interaction matrix." << std::endl;
+    }
+
 }
 
 /// @brief setter - nearest neighbout tunneling interaction energy
 /// @param t tunneling interaction energy
-void FHSystem::setTunneling_BetweenNeighbours(double t)
+void FHSystem::setTunneling_BetweenNeighbours(double t, bool add)
 {
-    tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+    if (!add)
+    {
+        tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+    }
     for (unsigned int i = 0; i< sitePositions.n_rows; i++)
     {
         for (unsigned int j = 0; j< sitePositions.n_rows; j++)
         {
             if (neighbourMatrix[i][j])
             {
-                tMatrix(i,j) = t;
+                tMatrix(i,j) += t;
             }
         }
     }
@@ -607,7 +698,28 @@ void FHSystem::setTunneling_BetweenNeighbours(double t)
     tMatrix.print();
 }
 
-void                    FHSystem::setExchangeCoupling(double J)
+/// @brief setter - matrix tunneling interaction energy
+/// @param tH tunneling interaction energy by pair of sites
+void                    FHSystem::setTunneling_GivenMatrix(arma::dmat tH, bool add)
+{
+    if ((tH.n_rows == sitePositions.n_rows) && (tH.n_cols == sitePositions.n_rows))
+    {
+        if (add)
+        {
+            tMatrix += arma::cx_dmat(tH, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
+        else
+        {
+            tMatrix = arma::cx_dmat(tH, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
+    }
+    else
+    {
+        std::cout << "Wrong size for the tunneling matrix." << std::endl;
+    }
+}
+
+void                    FHSystem::setExchangeCoupling(double J, bool add)
 {
     JMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
 }

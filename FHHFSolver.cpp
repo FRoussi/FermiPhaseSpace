@@ -68,7 +68,7 @@ void FHHFSolver::initiateSolver()
 
         arma::eig_sym(eigVal, V_1p, Jreal);
 
-        arma::dmat V_1p_1 = V_1p.t();
+        V_1p_1 = V_1p.t();
 
         arma::cx_dmat Mku0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
         arma::cx_dmat Mkd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);

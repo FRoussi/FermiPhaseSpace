@@ -82,8 +82,6 @@ void FHEDSolver::initiateSolver()
     buildPairOperators();                       //<- Usefull pair operators
     buildHamiltonian();                         //<- Hamiltonian
 
-
-    arma::cx_dmat(H).print() ;
 }
 
 
@@ -104,7 +102,6 @@ void FHEDSolver::buildPairOperators()
         NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijdSet[i][i] = numberOperatorSpinDown(i);
 
-        NijuSet[i][i].print_dense();
     }
 
 
@@ -112,7 +109,7 @@ void FHEDSolver::buildPairOperators()
     {
         for (uint j = i + 1; j < nSites; j++)
         {
-            std::cout << "tH " << i << " " << j << " = " << fhSystem->getTunnelingEnergy(i, j) << std::endl;
+
             if ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0)))
             {
 
@@ -120,7 +117,7 @@ void FHEDSolver::buildPairOperators()
                 NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
                 NijuSet[j][i] = NijuSet[i][j].t();
                 NijdSet[j][i] = NijdSet[i][j].t();
-                NijuSet[i][j].print_dense();
+
             }
         }
     }

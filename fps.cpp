@@ -121,15 +121,11 @@ int main(int argc, char* argv[])
          
          printf("-- ED dynamic \n");
          FHEDSolver edSolver = FHEDSolver(&fhSystem);
-         std::cout << "Step1" << std::endl;
          edSolver.setResultFile(work + "_ED", workFolder);
-         std::cout << "Step2" << std::endl;
          edSolver.initiateSolver();
-         std::cout << "Step3" << std::endl;
          edSolver.setTimeParameters(edParameters[0], edParameters[1], edParameters[2]);
-         std::cout << "Step4" << std::endl;
          edSolver.runSimulation();
-         std::cout << "Step5" << std::endl;
+
       }
       else if (TODO == task::compute_FH)
       {
