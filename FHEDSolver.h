@@ -31,6 +31,7 @@ public:
 
     void setResultFile(std::string workName, std::string folderNameName);
     void setTimeParameters(double t_max, double dt, unsigned int nPerTS);
+    void setComputeMomenta(bool yn);
 
     void initiateSolver();
 
@@ -50,6 +51,8 @@ private:
     bool writeResults;
     std::string workName;                                           //<- A name for the work, for the results file
     std::string folderName;                                         //<- A name for the work folder, for the results file
+
+
 
 // Time parameter
     double tMax;                                                    //<- Maximum time extend of the simulation 
@@ -83,6 +86,12 @@ private:
     //std::vector<arma::sp_cx_dmat> NiidSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijuSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijdSet;
+
+    //Momentum space :
+    bool computeMomenta;
+    uint nOfMomentumStates;
+    arma::dmat momentaVec;
+    arma::dvec momentaNRJ;
 
     unsigned int getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BITS>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
 

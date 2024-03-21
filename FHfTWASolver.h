@@ -35,6 +35,8 @@ public:
 
     const arma::cx_double jj = arma::cx_double(0,1);
 
+    void setComputeMomenta(bool yn);
+
     ~FHfTWASolver();
 
 private:
@@ -48,6 +50,8 @@ private:
     bool writeResults;
     std::string workName;                                           //<- A name for the work, for the results file
     std::string folderName;                                         //<- A name for the work folder, for the results file
+
+    bool computeMomenta;
 
 // fTWA parameters :
     unsigned int nTraj;
@@ -80,9 +84,9 @@ private:
     arma::dmat                  sqrtNoiseVarianceMatrixU;
     arma::dmat                  sqrtNoiseVarianceMatrixD;
 
-    arma::cx_dmat*              U;                  //<- Link to Interaction matrix
-    arma::cx_dmat*              tM;                  //<- Link to Tunneling matrix
-    arma::cx_dmat*              J;                  //<- Link to Exchange coupling matrix
+    const arma::cx_dmat*              U;                  //<- Link to Interaction matrix
+    const arma::cx_dmat*              tM;                  //<- Link to Tunneling matrix
+    const arma::cx_dmat*              J;                  //<- Link to Exchange coupling matrix
 
     arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
     arma::dmat                  V_1p_1;             //<- Its transpose

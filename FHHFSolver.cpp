@@ -6,6 +6,10 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     fhSystem = fhS;
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
+    J = fhSystem->getJMatrixPointer();
+    V = fhSystem->getVMatrixPointer();
+    extPot = fhSystem->getExtPotPointer();
+    
     computeMomenta = false;
 }
 
@@ -63,13 +67,7 @@ void FHHFSolver::initiateSolver()
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
 
-        arma::dvec eigVal;
-
-        arma::dmat Jreal = arma::real(*tM);
-
-        arma::eig_sym(eigVal, V_1p, Jreal);
-
-        V_1p_1 = V_1p.t();
+        setComputeMomenta(true);
 
         arma::cx_dmat Mku0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
         arma::cx_dmat Mkd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -87,8 +85,6 @@ void FHHFSolver::initiateSolver()
         Nu0 =  V_1p * Mku0 * V_1p_1;
         Nd0 =  V_1p * Mkd0 * V_1p_1;
 
-
-        computeMomenta = true;
         printf("Test 4 - Initial Density matrix : \n");
         Nu0.print();
     }
@@ -102,6 +98,17 @@ void FHHFSolver::initiateSolver()
 
 }
 
+void FHHFSolver::setComputeMomenta(bool yn)
+{
+    computeMomenta = yn;
+    if (yn)
+    {
+        arma::dvec eigVal;
+        arma::dmat Jreal = arma::real(*tM);
+        arma::eig_sym(eigVal, V_1p, Jreal);
+        V_1p_1 = V_1p.t();
+    }
+}
 
 /// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
 /// @param dt the time step

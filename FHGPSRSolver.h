@@ -48,9 +48,11 @@ public:
 
     arma::cx_dmat       diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
     arma::cx_dmat       quarterDiffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
+    arma::cx_dmat       diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dvec UMat);
     arma::cx_dmat       diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat UMat);
 
     arma::cx_dmat       sqrtDecomposition(arma::cx_dmat& D);
+    arma::cx_dmat       sqrtDecomposition_fromA(arma::cx_dmat& A);
     
     void                step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
     void                runSimulation();
@@ -103,8 +105,8 @@ private:
 
 
 // Link to Energy matrices
-  arma::cx_dmat*                    U;
-  arma::cx_dmat*                    tM;
+  const arma::cx_dmat*                    U;
+  const arma::cx_dmat*                    tM;
 
 // Usefull things :
   arma::cx_dmat                     sqrtU;

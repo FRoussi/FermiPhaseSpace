@@ -187,18 +187,31 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
     unsigned int nSites = rhou.n_rows;
     unsigned int sizeMat = std::pow(nSites, 2);
 
-    arma::cx_dmat D =diffusionMatrix(rhou, rhod, U0);
-    double D_norm = arma::norm(D,1);
+    arma::cx_dmat B = arma::cx_dmat(2*sizeMat, 1, arma::fill::zeros);
 
-arma::cx_dmat B;
-    if (D_norm < 1.e-7) 
+    if (fhSystem->getOppositeSpinInteractionType() == FHSystem::FHOppositeSpinInteractionType::UonSiteConstant)
     {
-        B = arma::cx_dmat(2*sizeMat, 1, arma::fill::zeros);
+        arma::cx_dmat A =quarterDiffusionMatrix(rhou, rhod, U0);
+        double A_norm = arma::norm(A,1);
+        if (A_norm > 1.e-7) 
+        {
+            B = sqrtDecomposition_fromA(A);
+        }
     }
-    else
+    else if (fhSystem->getOppositeSpinInteractionType() == FHSystem::FHOppositeSpinInteractionType::UonSiteGivenDiagonal)
     {
-        B = sqrtDecomposition(D);
+        arma::cx_dvec Udiag = arma::diagmat(*U);
+        arma::cx_dmat D =diffusionMatrix(rhou, rhod, Udiag);
+        double D_norm = arma::norm(D,1);
+        if (D_norm > 1.e-7) 
+        {
+            B = sqrtDecomposition(D);
+        }
     }
+        
+    
+
+
        
 
     //printf("Bnorm = %f \n", arma::norm(B,1));
@@ -329,6 +342,13 @@ arma::cx_dmat       FHGPSRSolver::quarterDiffusionMatrix(const arma::cx_dmat& rh
 }
 
 
+arma::cx_dmat       FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dvec UMat)
+{
+    uint nSites = rhou.n_cols;
+    uint sizeMat = nSites * nSites ;
+    return arma::cx_dmat(2 * sizeMat, 2 * sizeMat, arma::fill::zeros);
+}
+
 arma::cx_dmat       FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat UMat)
 {   
     uint nSites = rhou.n_cols;
@@ -358,9 +378,9 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
         // D1 = -0.5i A
         arma::cx_dmat D1 = -0.5 * jj * D.submat(0,sizeD_2, sizeD_2-1, sizeD-1);
 
-        arma::cx_dmat U;
+        arma::cx_dmat P;
         arma::dvec s;
-        arma::cx_dmat V;
+        arma::cx_dmat Q;
 
         // D1 = U s V^T
         //bool SVDsuccess = arma::svd(U, s, V, D1);
@@ -368,26 +388,77 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
         unsigned int nSites = static_cast<unsigned int>(std::sqrt(sizeD_2));
         if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_svd)
         {
-            successSVD = svd(U,s,V,D1);
+            successSVD = svd(P,s,Q,D1);
         }
         else if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_rsvd)
         {
-            successSVD = rsvd(U,s,V,D1, 2*nSites);
+            successSVD = rsvd(P,s,Q,D1, 2*nSites);
         }
 
         arma::dmat sqrtS = arma::diagmat(arma::sqrt(s)); 
 
         // B =  | U.sqrtS           i.U.sqrtS  |
         //      | ii.c(V).sqrtS     c(V).sqrtS |
-        arma::cx_dmat B = arma::cx_dmat(2*U.n_rows, 2*U.n_cols, arma::fill::zeros);
-        B.submat(0,          0,           B.n_rows/2-1, B.n_cols/2-1)    = U * sqrtS;
-        B.submat(0,          B.n_cols/2,  B.n_rows/2-1, B.n_cols-1)      = FHGPSRSolver::jj * U * sqrtS;
-        B.submat(B.n_rows/2, 0,           B.n_rows-1,   B.n_cols/2-1)    = FHGPSRSolver::jj * arma::conj(V) * sqrtS;  
-        B.submat(B.n_rows/2, B.n_cols/2,  B.n_rows-1,   B.n_cols-1)      = arma::conj(V) * sqrtS; 
+        arma::cx_dmat B = arma::cx_dmat(2*P.n_rows, 2*P.n_cols, arma::fill::zeros);
+        B.submat(0,          0,           B.n_rows/2-1, B.n_cols/2-1)    = P * sqrtS;
+        B.submat(0,          B.n_cols/2,  B.n_rows/2-1, B.n_cols-1)      = FHGPSRSolver::jj * P * sqrtS;
+        B.submat(B.n_rows/2, 0,           B.n_rows-1,   B.n_cols/2-1)    = FHGPSRSolver::jj * arma::conj(Q) * sqrtS;  
+        B.submat(B.n_rows/2, B.n_cols/2,  B.n_rows-1,   B.n_cols-1)      = arma::conj(Q) * sqrtS; 
 
         return B;
     }
 
+}
+
+/// @brief Decomposition of a symmetric and half-empty diffusion matrice into its diffusion rate
+/// @param A the upper right quarter of the diffusion matrix to decompose 
+/// @return B a square root of D, BB' = D
+arma::cx_dmat FHGPSRSolver::sqrtDecomposition_fromA(arma::cx_dmat& A)
+{
+  unsigned int sizeD_2 = A.n_rows;
+  uint sizeD = sizeD_2 * 2;
+    bool successSVD = false;
+
+    if (A.has_nan() || A.has_inf())
+    {
+        return arma::datum::nan * arma::cx_dmat(sizeD, 1, arma::fill::zeros);
+    }
+    else
+    {
+        // D =  | 0     A |
+        //      | A^T   0 |
+        // D1 = -0.5i A
+        arma::cx_dmat D1 = -0.5 * jj * A;
+
+        arma::cx_dmat P;
+        arma::dvec s;
+        arma::cx_dmat Q;
+
+        // D1 = P s Q^T
+        //bool SVDsuccess = arma::svd(P, s, Q, D1);
+
+        unsigned int nSites = static_cast<unsigned int>(std::sqrt(sizeD_2));
+        if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_svd)
+        {
+            successSVD = svd(P,s,Q,D1);
+        }
+        else if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_rsvd)
+        {
+            successSVD = rsvd(P,s,Q,D1, 2*nSites);
+        }
+
+        arma::dmat sqrtS = arma::diagmat(arma::sqrt(s)); 
+
+        // B =  | U.sqrtS           i.U.sqrtS  |
+        //      | ii.c(V).sqrtS     c(V).sqrtS |
+        arma::cx_dmat B = arma::cx_dmat(2*P.n_rows, 2*P.n_cols, arma::fill::zeros);
+        B.submat(0,          0,           B.n_rows/2-1, B.n_cols/2-1)    = P * sqrtS;
+        B.submat(0,          B.n_cols/2,  B.n_rows/2-1, B.n_cols-1)      = FHGPSRSolver::jj * P * sqrtS;
+        B.submat(B.n_rows/2, 0,           B.n_rows-1,   B.n_cols/2-1)    = FHGPSRSolver::jj * arma::conj(Q) * sqrtS;  
+        B.submat(B.n_rows/2, B.n_cols/2,  B.n_rows-1,   B.n_cols-1)      = arma::conj(Q) * sqrtS; 
+
+        return B;
+    }
 }
 
 

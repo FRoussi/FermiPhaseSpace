@@ -29,6 +29,7 @@ public:
     void setResultFile(std::string workName, std::string folderNameName);
     void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
     void initiateSolver();
+    void setComputeMomenta(bool yn);
 
     void step_RK1(double dt);
     void step_RK2(double dt);
@@ -69,9 +70,11 @@ private:
     unsigned int            nPartU;                 //<- Number of up-spin particles
     unsigned int            nPartD;                 //<- Number of down-spin particles
 
-    arma::cx_dmat*          U;                     // Link to Energy matrices
-    arma::cx_dmat*          tM;
-    arma::cx_dmat*          J;
+    const arma::cx_dmat*          U;                     // Link to Energy matrices
+    const arma::cx_dmat*          tM;
+    const arma::cx_dmat*          J;
+    const arma::cx_dmat*          V;
+    const arma::cx_dmat*          extPot;
 
     arma::cx_dmat           Nu0;                  //<- Initial density matrices 
     arma::cx_dmat           Nd0;

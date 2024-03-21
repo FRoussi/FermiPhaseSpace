@@ -12,6 +12,9 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS)
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
+
+
+    computeMomenta = false;
 }
 
 void FHfTWASolver::setResultFile(std::string wN, std::string fN)
@@ -88,10 +91,7 @@ void FHfTWASolver::initiateSolver()
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
         
-        arma::dvec eigVal;
-        arma::dmat Jreal = arma::real(*tM);
-        arma::eig_sym(eigVal, V_1p, Jreal);
-        arma::dmat V_1p_1 = V_1p.t();
+        setComputeMomenta(true);
 
         diagMu0 = arma::dvec(nSites, arma::fill::zeros);
         diagMd0 = arma::dvec(nSites, arma::fill::zeros);
@@ -124,6 +124,18 @@ void FHfTWASolver::initiateSolver()
 
 }
 
+
+void FHfTWASolver::setComputeMomenta(bool yn)
+{
+    computeMomenta = yn;
+    if (yn)
+    {
+        arma::dvec eigVal;
+        arma::dmat Jreal = arma::real(*tM);
+        arma::eig_sym(eigVal, V_1p, Jreal);
+        V_1p_1 = V_1p.t();
+    }
+}
 
 
 /// @brief Launch simulation and write the results
@@ -231,12 +243,12 @@ void FHfTWASolver::runSimulation( )
         }
 
 
-        
-unsigned int tt = std::floor(nTraj/10);
-    if ((i_traj%tt) == 0)
-    {
-        printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());    
-    }
+        // Little idea of where we are in the computation :
+        unsigned int tt = std::floor(nTraj/10);
+        if ((i_traj%tt) == 0)
+        {
+            std::cout << "Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
+        }
 
     }
 
@@ -254,17 +266,24 @@ unsigned int tt = std::floor(nTraj/10);
 
 }
 
-// of 
-     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
+// Computation of different observables :
+    arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
     arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
+    arma::cx_dmat Mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat Mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+
+
     EU = EU/nTraj_arma;
     EtH = EtH/nTraj_arma;
     
+
+
+    arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
 
     for (unsigned int t = 0; t < nTimePoints; t++)
     {
@@ -272,6 +291,11 @@ unsigned int tt = std::floor(nTraj/10);
         Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
         N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
         N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+        if (computeMomenta)
+        {
+            Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
+            Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+        }
     }
 
     arma::cx_drowvec E = EtH+ EU;
@@ -285,6 +309,21 @@ unsigned int tt = std::floor(nTraj/10);
         for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
         {
             results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+        }
+        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        {
+            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Nd.tube(iSite, iSite));
+        }
+        if (computeMomenta)
+        {
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mkku.row(kMom));
+            }
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mkkd.row(kMom));
+            }
         }
         results.writeLineInReal("EU", EU);
         results.writeLineInReal("EtH", EtH);

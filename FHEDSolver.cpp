@@ -22,6 +22,23 @@ void FHEDSolver::setTimeParameters(double t_max, double d_t, uint nPerTS)
     this->nTimePoints = floor(tMax / dt + 1);
 }
 
+void FHEDSolver::setComputeMomenta(bool yn)
+{
+    computeMomenta = yn;
+    if (yn)
+    {
+        if (basisSize > 1000)
+        {
+            std::cout << "! Caution, The ED basis size is " << basisSize << ", the computation of the momentum space could be long." << std::endl << std::flush;
+        }
+
+        nOfMomentumStates = std::min(basisSize, (uint)10);
+
+        arma::sp_dmat H_t_real = arma::real(H_t);
+        arma::eigs_sym(momentaNRJ, momentaVec, H_t_real, nOfMomentumStates);  
+    }
+}
+
 
 /// @brief Initiate the ED solver, compute the initial wave-function, then the usefull operators.
 ///@return void
@@ -417,8 +434,7 @@ void FHEDSolver::step(double d_t)
 void FHEDSolver::runSimulation()
 {
 
-std::cout << "Start simulation" << std::endl << std::flush;
-
+    std::cout << "Start simulation" << std::endl << std::flush;
 
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
@@ -427,13 +443,19 @@ std::cout << "Start simulation" << std::endl << std::flush;
     arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_dmat mk; 
+
+    if (computeMomenta)
+    {
+        mk = arma::cx_dmat(nOfMomentumStates, nTimePoints, arma::fill::zeros);
+    }
 
     this->psi = this->psi_0;
 
     // Bad filling thing :
     uint tt = nTimePoints/20;
     std::cout << "|                     |" << std::endl;
-    std::cout << "|" ;
+    std::cout << "|" << std::flush;
 
     for (uint t = 0; t < nTimePoints; t++)
     {
@@ -447,13 +469,19 @@ std::cout << "Start simulation" << std::endl << std::flush;
         EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_t * psi)));
         E[t] = EU[t] + EtH[t];
 
+        if (computeMomenta)
+        {
+           mk.col(t) = arma::dot( momentaVec,  psi);
+        }     
+
         step(this->dt);
 
-        if ((t%tt) == 0) {
-            std::cout << "=" << std::flush ;        }
+        if ((t%tt) == 0) {  std::cout << "=" << std::flush ;   }
 
     }
-std::cout << "|" << std::endl; ;
+
+    std::cout << "|" << std::endl << std::flush; 
+
     printf("Test 3 - small system dynamic, n_1u : \n");
     niiu.row(0).print();
     
@@ -471,6 +499,13 @@ std::cout << "|" << std::endl; ;
         for (uint iSite=0; iSite<fhSystem->getnSites(); iSite++)
         {
             results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", niid.row(iSite));
+        }
+        if (computeMomenta)
+        {
+            for (uint kMom = 0; kMom < nOfMomentumStates ; kMom++)
+            {
+                results.writeLineInReal("M_" + std::to_string(kMom), mk.row(kMom));
+            }
         }
         results.writeLine("EU", EU);
         results.writeLine("EtH", EtH);
