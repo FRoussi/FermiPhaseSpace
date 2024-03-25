@@ -640,50 +640,77 @@ void FHSystem::setUInteraction_OnSite(double U0, bool add)
 
 /// @brief setter - On-site interaction energy
 /// @param U Vector of on-site interaction energy
-void                    FHSystem::setUInteraction_GivenDiagonal(arma::dvec& U, bool add)
+void                    FHSystem::setUInteraction_GivenDiagonal(arma::dvec& Ua, bool add)
 {
-    if (U.n_rows == sitePositions.n_rows) 
+    if (Ua.n_rows == sitePositions.n_rows) 
     {
         if (add)
         {
-            UMatrix += arma::cx_dmat(arma::diagmat(U), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            UMatrix += arma::cx_dmat(arma::diagmat(Ua), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
         }
         else
         {
-            UMatrix = arma::cx_dmat(arma::diagmat(U), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            UMatrix = arma::cx_dmat(arma::diagmat(Ua), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
         }      
     }
     else
     {
-        std::cout << "Wrong size for the U interaction matrix." << std::endl;
+        std::cout << "Wrong size for the Ua interaction vector." << std::endl;
     }
 }
 
 /// @brief setter - Matrix interaction energy
-/// @param U Matrix interaction energy
-void FHSystem::setUInteraction_GivenMatrix(arma::dmat& U, bool add)
+/// @param Uab Matrix interaction energy
+void FHSystem::setUInteraction_GivenMatrix(arma::dmat& Uab, bool add)
 {
-    if ((U.n_rows == sitePositions.n_rows) && (U.n_cols == sitePositions.n_rows))
+    if ((Uab.n_rows == sitePositions.n_rows) && (Uab.n_cols == sitePositions.n_rows))
     {
         if (add)
         {
-            UMatrix += arma::cx_dmat(U, arma::dmat(U.n_rows, U.n_cols, arma::fill::zeros));
+            UMatrix += arma::cx_dmat(Uab, arma::dmat(Uab.n_rows, Uab.n_cols, arma::fill::zeros));
         }
         else
         {
-            UMatrix = arma::cx_dmat(U, arma::dmat(U.n_rows, U.n_cols, arma::fill::zeros));
+            UMatrix = arma::cx_dmat(Uab, arma::dmat(Uab.n_rows, Uab.n_cols, arma::fill::zeros));
         }
     }
     else
     {
-        std::cout << "Wrong size for the U interaction matrix." << std::endl;
+        std::cout << "Wrong size for the Uab interaction matrix." << std::endl;
     }
 
 }
 
+
+/// @brief setter - Matrix interaction energy
+/// @param Us Matrix interaction energy by site type
+void                                FHSystem::setUInteraction_BySiteType(arma::dvec& Us, bool add = false)
+{
+    if (Us.n_rows == siteTypeNames.size()) 
+    {
+        arma::dvec Uvec = arma::dvec(sitePositions.n_rows, arma::fill::zeros);
+        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite++)
+        {
+            Uvec[iSite] = Us[siteTypes[iSite]];
+        }
+        if (add)
+        {
+            UMatrix += arma::cx_dvec(arma::diagmat(Uvec), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
+        else
+        {
+            UMatrix = arma::cx_dvec(arma::diagmat(Uvec), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
+    }
+    else
+    {
+        std::cout << "Wrong size for the Us interaction matrix." << std::endl;
+    }
+}
+
 /// @brief setter - nearest neighbout tunneling interaction energy
-/// @param t tunneling interaction energy
-void FHSystem::setTunneling_BetweenNeighbours(double t, bool add)
+/// @param tH1 tunneling interaction energy
+void FHSystem::setTunneling_BetweenNeighbours(double tH1, bool add)
 {
     if (!add)
     {
@@ -695,13 +722,34 @@ void FHSystem::setTunneling_BetweenNeighbours(double t, bool add)
         {
             if (neighbourMatrix[i][j])
             {
-                tMatrix(i,j) += t;
+                tMatrix(i,j) += tH1;
             }
         }
     }
     printf("J-Matrix : \n");
     tMatrix.print();
 }
+
+/// @brief setter - Same site tunneling interaction energy
+/// @param tH0 tunneling interaction energy
+void  FHSystem::setTunneling_SamePosition(double tH0, bool add = false)
+{
+    if (!add)
+    {
+        tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+    }
+    for (unsigned int i = 0; i< sitePositions.n_rows; i++)
+    {
+        for (unsigned int j = 0; j< sitePositions.n_rows; j++)
+        {
+            if (sameSiteMatrix[i][j] && (i!=j))
+            {
+                tMatrix(i,j) += tH0;
+            }
+        }
+    }
+}
+
 
 /// @brief setter - matrix tunneling interaction energy
 /// @param tH tunneling interaction energy by pair of sites
@@ -721,6 +769,34 @@ void                    FHSystem::setTunneling_GivenMatrix(arma::dmat tH, bool a
     else
     {
         std::cout << "Wrong size for the tunneling matrix." << std::endl;
+    }
+}
+
+/// @brief setter - matrix tunneling interaction energy
+/// @param tHs1s2 tunneling interaction energy by pair of site types
+void  FHSystem::setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false)
+{
+    if ((tHs1s2.n_rows == siteTypeNames.size()) && (tHs1s2.n_cols == siteTypeNames.size()))
+    {
+          arma::dvec tHMat = arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite++)
+        {
+            for (uint jSite = 0; jSite < sitePositions.n_rows; jSite++)
+            {
+                if (std::abs(distanceMatrix(iSite, jSite) - d) < 0.0001)
+                {
+                    tHMat(iSite, jSite) = tHs1s2(siteTypes[iSite], siteTypes[jSite]);
+                }
+            }
+        }
+        if (add)
+        {
+            tMatrix += arma::cx_dvec(tHMat, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
+        else
+        {
+            tMatrix = arma::cx_dvec(tHMat, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+        }
     }
 }
 
