@@ -67,34 +67,42 @@ public:
 
 
 // GETTERS
-
+    // site positions
     unsigned int                        getnSites();
+    unsigned int                        getnDimension();
+    arma::drowvec                       getSitePosition(uint iSite);
+    double                              getCoordinate(uint dim, uint pos);
+    // site names
+    bool                                sitesHaveNames();
+    std::string                         getSiteName(uint site);
+    // system symmetry
+    bool                                isSymmetric();
+    arma::dmat                          getSymmetryMatrix();
+
+    double                              computeDistance(uint iSite, uint jSite);
+    double                              getDistance(uint iSite, uint jSite);
+    bool                                areNeighbour(uint iSite, uint jSite);
+
     FHInitialConditionType              getInitialCondition();
     unsigned int                        getUpSpinParticleNumber();
     unsigned int                        getDownSpinParticleNumber();
-    bool                                sitesHaveNames();
-    arma::drowvec                       getSitePosition(int site);
-    std::string                         getSiteName(int site);
-    double                              getCoordinate(int dim, int pos);
-
 
     FHOppositeSpinInteractionType       getOppositeSpinInteractionType();
     FHTunnelingType                     getTunnelingType();
     FHSameSpinInteractionType           getSameSpinInteractionType();
     tJExchangeCouplingType              getExchangeCouplingEnergyType();
-    double                              getDistance(int i, int j);
-    bool                                areNeighbour(int i, int j);
-    std::complex<double>                getInteractionEnergy(int i, int j);
-    std::complex<double>                getSameSpinInteractionEnergy(int i, int j);
-    std::complex<double>                getTunnelingEnergy(int i, int j);
-    std::complex<double>                getExchangeCouplingEnergy(int i, int j);
-    std::complex<double>                getExternalPotential(int i, double t);
+
+    std::complex<double>                getInteractionEnergy(int iSite, int jSite);
+    std::complex<double>                getSameSpinInteractionEnergy(int iSite, int jSite);
+    std::complex<double>                getTunnelingEnergy(int iSite, int jSite);
+    std::complex<double>                getExchangeCouplingEnergy(int iSite, int jSite);
+    std::complex<double>                getExternalPotential(int iSite, double time);
+
     const arma::cx_dmat*                getUMatrixPointer();
     const arma::cx_dmat*                getVMatrixPointer();
     const arma::cx_dmat*                getJMatrixPointer();
     const arma::cx_dmat*                gettMatrixPointer();
-    const arma::cx_dvec*                getExtPotPointer();
-
+    const arma::cx_dmat*                getExtPotPointer();
 
     std::string                         getName();
     std::string                         getFolder();
@@ -102,7 +110,23 @@ public:
     std::vector<bool>                   getInitialCondition_upSpin();
     std::vector<bool>                   getInitialCondition_downSpin();
 
-// SETTERS          
+
+// SETTERS      
+
+    void                                setPositions(const arma::dmat& positions);
+
+    bool                                setSiteTypes(arma::uvec sTypes);
+    void                                setSiteTypeNames(std::vector<std::string> typeNames);  
+
+    void                                setSymmetry(arma::dmat symmetryVectors); 
+
+    void                                setInitialConditions(const std::vector<std::vector<unsigned int>>& initConditions);
+    void                                setInitialConditions(FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
+
+    void                                setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
+    void                                setTunnelingType(FHTunnelingType tType);
+    void                                setSameSpinInteractionType(FHSameSpinInteractionType VType);
+    void                                setExchangeCouplingEnergyType(tJExchangeCouplingType JType);
 
     void                                setUInteraction_OnSite(double U0, bool add = false);
     void                                setUInteraction_GivenDiagonal(arma::dvec& Ua, bool add = false);
@@ -113,20 +137,13 @@ public:
     void                                setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false);
     void                                setTunneling_GivenMatrix(arma::dmat tH, bool add = false);
     void                                setExchangeCoupling(double J, bool add = false);
-    void                                setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
-    void                                setTunnelingType(FHTunnelingType tType);
-    void                                setSameSpinInteractionType(FHSameSpinInteractionType VType);
-    void                                setExchangeCouplingEnergyType(tJExchangeCouplingType JType);
-    void                                setName(std::string name);
-    bool                                setSiteTypes(arma::uvec sTypes);
-    void                                setSiteTypeNames(std::vector<std::string> typeNames);         
-    void                                setPositions(const arma::dmat& positions);
-    void                                setInitialConditions(const std::vector<std::vector<unsigned int>>& initConditions);
-    void                                setInitialConditions(FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
 
+    void                                setName(std::string name);
 
     void                                writeFHSystem(std::string folderName = "");
 
+
+// INITIATION
     void                                initiateEmptyEnergyMatrices();
 
 
@@ -134,10 +151,15 @@ public:
 
 private:
     
+// SITES
     arma::dmat                      sitePositions;
     arma::uvec                      siteTypes;
     std::vector<std::string>        siteTypeNames;
 
+// SYMMETRIES
+    arma::dmat                      symmetryVectors;
+
+// PARTICLES
     unsigned int                    upSpinParticleNumber;
     unsigned int                    downSpinParticleNumber;
 
@@ -155,7 +177,7 @@ private:
     arma::cx_dmat                   VMatrix;
     arma::cx_dmat                   JMatrix;
     arma::cx_dmat                   tMatrix;
-    arma::cx_dvec                   externalPotential;
+    arma::cx_dmat                   externalPotential;
 
 // INITIAL CONDITIONS
     FHInitialConditionType          initialCondition;

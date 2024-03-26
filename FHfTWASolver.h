@@ -24,16 +24,16 @@ public:
 
     FHfTWASolver(FHSystem* fhs);
 
-    void setResultFile(std::string workName, std::string folderNameName);
-    void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
-    void setfTWAParameters(unsigned int nTraj);
-    void initiateSolver();
+    void                        setResultFile(std::string workName, std::string folderNameName);
+    void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
+    void                        setfTWAParameters(unsigned int nTraj);
+    void                        initiateSolver();
 
-    void step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
-    void step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
-    void runSimulation();
+    void                        step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
+    void                        step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
+    void                        runSimulation();
 
-    const arma::cx_double jj = arma::cx_double(0,1);
+    const arma::cx_double       jj = arma::cx_double(0,1);
 
     void setComputeMomenta(bool yn);
 
@@ -41,23 +41,21 @@ public:
 
 private:
 
-
-
 // Fermi Hubbard System  :
-    FHSystem* fhSystem;
+    FHSystem*                   fhSystem;
 
-// results in :
-    bool writeResults;
-    std::string workName;                                           //<- A name for the work, for the results file
-    std::string folderName;                                         //<- A name for the work folder, for the results file
+// results in :         
+    bool                        writeResults;
+    std::string                 workName;              //<- A name for the work, for the results file
+    std::string                 folderName;            //<- A name for the work folder, for the results file
 
-    bool computeMomenta;
+    bool                        computeMomenta;
 
-// fTWA parameters :
-    unsigned int nTraj;
+// fTWA parameters :    
+    unsigned int                nTraj;
 
-    // Integrator
-    fTWAIntegrator integrator;
+    // Integrator   
+    fTWAIntegrator              integrator;
 
 // Time parameter
     double                      tMax;
@@ -84,9 +82,11 @@ private:
     arma::dmat                  sqrtNoiseVarianceMatrixU;
     arma::dmat                  sqrtNoiseVarianceMatrixD;
 
-    const arma::cx_dmat*              U;                  //<- Link to Interaction matrix
-    const arma::cx_dmat*              tM;                  //<- Link to Tunneling matrix
-    const arma::cx_dmat*              J;                  //<- Link to Exchange coupling matrix
+    const arma::cx_dmat*    U;                     // Link to Energy matrices
+    const arma::cx_dmat*    tM;
+    const arma::cx_dmat*    J;
+    const arma::cx_dmat*    V;
+    const arma::cx_dmat*    extPot;
 
     arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
     arma::dmat                  V_1p_1;             //<- Its transpose

@@ -26,19 +26,19 @@ public:
 
     FHHFSolver(FHSystem* fhs);
 
-    void setResultFile(std::string workName, std::string folderNameName);
-    void setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
-    void initiateSolver();
-    void setComputeMomenta(bool yn);
+    void                        setResultFile(std::string workName, std::string folderNameName);
+    void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
+    void                        initiateSolver();
+    void                        setComputeMomenta(bool yn);
 
-    void step_RK1(double dt);
-    void step_RK2(double dt);
-    void step_RK4(double dt);
-    void step_RK4_38(double dt);
-    void step_RK45(double dt);
-    void runSimulation();
+    void                        step_RK1(double dt);
+    void                        step_RK2(double dt);
+    void                        step_RK4(double dt);
+    void                        step_RK4_38(double dt);
+    void                        step_RK45(double dt);
+    void                        runSimulation();
 
-    const arma::cx_double jj = arma::cx_double(0,1);
+    const arma::cx_double       jj = arma::cx_double(0,1);
 
     ~FHHFSolver();
 
@@ -53,7 +53,7 @@ private:
     std::string             folderName;         //<- A name for the work folder, for the results file
 
 // other things to compute
-    bool computeMomenta;  
+    bool                    computeMomenta;  
 
 // Time parameter
     double                  tMax;
@@ -70,11 +70,11 @@ private:
     unsigned int            nPartU;                 //<- Number of up-spin particles
     unsigned int            nPartD;                 //<- Number of down-spin particles
 
-    const arma::cx_dmat*          U;                     // Link to Energy matrices
-    const arma::cx_dmat*          tM;
-    const arma::cx_dmat*          J;
-    const arma::cx_dmat*          V;
-    const arma::cx_dmat*          extPot;
+    const arma::cx_dmat*    U;                     // Link to Energy matrices
+    const arma::cx_dmat*    tM;
+    const arma::cx_dmat*    J;
+    const arma::cx_dmat*    V;
+    const arma::cx_dmat*    extPot;
 
     arma::cx_dmat           Nu0;                  //<- Initial density matrices 
     arma::cx_dmat           Nd0;

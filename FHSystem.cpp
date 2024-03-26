@@ -116,6 +116,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     {
         nothing,
         positions,
+        symmetries,
         energyParameter_U_constant,
         energyParameter_U_bySite,
         energyParameter_U_bySiteType,
@@ -156,6 +157,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
         std::vector<unsigned int>           orbitalTypes    = std::vector<unsigned int>();
         std::vector<std::string>            orbitalNames    = std::vector<std::string>();
         std::vector<std::vector<double>>    pos             = std::vector<std::vector<double>>();
+        std::vector<std::vector<double>>    symVecVec       = std::vector<std::vector<double>>();
         std::vector<unsigned int>           initCond_up     = std::vector<unsigned int>();
         std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
         std::vector<unsigned int>           particlesNumber(2, 0);
@@ -171,6 +173,10 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
            if (line == "#POSITIONS")
            {
                 whatToR = WhatToRead::positions;
+           }
+           else if (line == "#SYMMETRIES")
+           {
+                whatToR = WhatToRead::symmetries;
            }
            else if (line == "#INITIALCONDITIONS_GIVENDIAGONAL")
            {
@@ -290,6 +296,26 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 initiateEmptyEnergyMatrices();
                 positionsReady = true;
                 break;
+            }
+            case WhatToRead::symmetries :
+            {
+                td::stringstream ss(line);
+                std::string coord;
+                std::vector<double> coordinates = std::vector<double>();
+                while (std::getline (ss, coord, ' ')) 
+                {
+                    double d = std::stod(coord);
+                    coordinates.push_back(d);
+                }
+                if (coordinates.size() == nDim)
+                {
+                    symVecVec.push_back(coordinates);
+                }
+                else
+                {
+                    printf("Dimension problem with line \"%s\"", line.c_str());
+                    return;
+                }
             }
             case WhatToRead::energyParameter_U_constant :
             {
@@ -468,30 +494,25 @@ unsigned int                                FHSystem::getnSites()
     return sitePositions.n_rows;
 }
 
-bool                                        FHSystem::sitesHaveNames()
+unsigned int                                FHSystem::getnDimension()
 {
-        return (siteTypes.n_rows == sitePositions.n_rows);
+    return sitePositions.n_cols;
 }
 
-arma::drowvec                               FHSystem::getSitePosition(int site)
+arma::drowvec                               FHSystem::getSitePosition(uint site)
 {
     return sitePositions.row(site);
-}
-
-std::string                                 FHSystem::getSiteName(int site)
-{
-    return siteTypeNames[siteTypes[site]];
 }
 
 /// @brief getter - coordinate of a site
 /// @param dim coordinate dimension
 /// @param pos site number
 /// @return coordinate of site 'pos'in dimension 'dim'
-double                                      FHSystem::getCoordinate(int dim, int pos)
+double                                      FHSystem::getCoordinate(uint dim, uint iSite)
 { 
-    if ((dim < sitePositions.n_cols) && (pos < sitePositions.n_rows))
+    if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
     {
-        return sitePositions(pos, dim);
+        return sitePositions(iSite, dim);
     } 
     else
     {
@@ -499,11 +520,77 @@ double                                      FHSystem::getCoordinate(int dim, int
     }
 }
 
+
+bool                                        FHSystem::sitesHaveNames()
+{
+        return (siteTypes.n_rows == sitePositions.n_rows);
+}
+
+std::string                                 FHSystem::getSiteName(uint site)
+{
+    return siteTypeNames[siteTypes[site]];
+}
+
+
+bool                                        FHSystem::isSymmetric()
+{
+    return (symmetryVectors.n_rows > 0);
+}
+
+arma::dmat                                  FHSystem::getSymmetryMatrix()
+{
+    return symmetryVectors;
+}
+
+
+double                                      FHSystem::computeDistance(uint iSite, uint jSite)
+{
+    arma::drowvec dVec = sitePositions.row(iSite) - sitePositions.row(jSite); 
+    double d = arma::norm(dVec);
+    if (isSymmetric())
+    {
+        uint symmetryNumber3 = pow(symmetryVectors.n_rows,3);                                                   //<- Number of vector to check : nSym^3
+
+        for (uint lCombination = 0; lCombination < symmetryNumber3; lCombination++)                             //<- for every vector to check
+        {
+            arma::drowvec dVecSym = dVec;
+            for (uint kDim = 0; kDim < sitePositions.n_cols ; kDim ++)                                          //<- vecSym = vec + sum_k [-1,0,1] * sym(k) 
+            {
+                dVecSym += ((((uint)std::floor(lCombination/pow(3,kDim))) % 3) - 1) * symmetryVectors.row(kDim);
+            } 
+            d = std::min(d, arma::norm(dVecSym));                                                               //<- We replace if its norm is smaller
+        } 
+    }
+
+    return d;
+}
+
+double                                      FHSystem::getDistance(uint i, uint j)
+{
+    return distanceMatrix(i,j);
+}
+
+bool                                        FHSystem::areNeighbour(uint i, uint j)
+{
+    return neighbourMatrix[i][j];
+}
+
+
 /// @brief  getter - initial condition type
 /// @return initial condition type
 FHSystem::FHInitialConditionType            FHSystem::getInitialCondition()
 {
     return initialCondition;
+}
+
+std::vector<bool>                           FHSystem::getInitialCondition_upSpin()
+{
+    return initConditions_upSpin;
+}
+
+std::vector<bool>                           FHSystem::getInitialCondition_downSpin()
+{
+    return initConditions_downSpin;
 }
 
 /// @brief getter - number of spin-up particles
@@ -519,6 +606,8 @@ unsigned int                                FHSystem::getDownSpinParticleNumber(
 {
     return downSpinParticleNumber;
 }
+
+
 
 FHSystem::FHOppositeSpinInteractionType     FHSystem::getOppositeSpinInteractionType()
 {
@@ -540,15 +629,6 @@ FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyT
     return tJExCType;
 }
 
-double                                      FHSystem::getDistance(int i, int j)
-{
-    return distanceMatrix(i,j);
-}
-
-bool                                        FHSystem::areNeighbour(int i, int j)
-{
-    return neighbourMatrix[i][j];
-}
 
 std::complex<double>                        FHSystem::getInteractionEnergy(int i, int j)
 {
@@ -572,8 +652,9 @@ std::complex<double>                        FHSystem::getExchangeCouplingEnergy(
 
 std::complex<double>                        FHSystem::getExternalPotential(int i, double t)
 {
-    return std::complex<double>(0);
+    return externalPotential(i,i);
 }
+
 
 const arma::cx_dmat*                        FHSystem::getUMatrixPointer()
 {
@@ -595,10 +676,11 @@ const arma::cx_dmat*                        FHSystem::gettMatrixPointer()
     return &tMatrix;
 }
 
-const arma::cx_dvec*                        FHSystem::getExtPotPointer()
+const arma::cx_dmat*                        FHSystem::getExtPotPointer()
 {
     return &externalPotential;
 }
+
 
 std::string                                 FHSystem::getName()
 {
@@ -610,22 +692,114 @@ std::string                                 FHSystem::getFolder()
     return systemFolder;
 }
 
-std::vector<bool>                           FHSystem::getInitialCondition_upSpin()
-{
-    return initConditions_upSpin;
-}
-
-std::vector<bool>                           FHSystem::getInitialCondition_downSpin()
-{
-    return initConditions_downSpin;
-}
 
 
 // SETTERS
 
+void                    FHSystem::setPositions(const arma::dmat& positions)
+{
+    sitePositions = positions;
+    computeMatrices();
+}
+
+
+bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
+{
+    siteTypes = sTypes;
+    return sitesHaveNames();
+}
+
+void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
+{
+    siteTypeNames = typeNames;
+}
+
+
+void                    FHSystem::setSymmetry(arma::dmat symVectors)
+{
+    if (symVectors.n_cols != sitePositions.n_cols)
+    {
+        std::cout << "Symmetry vectors have a wrong dimension number." << std::endl;
+    }
+    else if (symVectors.n_rows > sitePositions.n_cols)
+    {
+        std::cout << "Symmetry vectors are too numerous for the system's dimension." << std::endl;
+    }
+    else
+    {
+        symmetryVectors = symVectors;
+    }
+
+}
+
+
+/// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
+/// @param diagonalInitConditions vectors of sites on which there is a up-spin/down-spin particle
+/// @return void
+void FHSystem::setInitialConditions(const std::vector<std::vector<unsigned int>>& diagonalInitConditions )
+{
+
+    initialCondition =  FHSystem::FHInitialConditionType::givenDiagonal;
+
+    upSpinParticleNumber = diagonalInitConditions[0].size();
+    downSpinParticleNumber = diagonalInitConditions[1].size();
+
+    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows);
+    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows);
+
+
+
+    for (unsigned int itSite = 0; itSite < diagonalInitConditions[0].size(); itSite++)
+    {
+        initConditions_upSpin[diagonalInitConditions[0][itSite]] = true;
+    }
+    for (unsigned int itSite = 0; itSite < diagonalInitConditions[1].size(); itSite++)
+    {
+        initConditions_downSpin[diagonalInitConditions[1][itSite]] = true;
+    }
+
+}
+
+/// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
+/// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
+/// @param partNumner vector of the numbers of up-spin, down-spin particle
+/// @return void
+void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::vector<unsigned int> partNumber )
+{
+
+    initialCondition = initCondType;
+
+    upSpinParticleNumber = partNumber[0];
+    downSpinParticleNumber = partNumber[1];
+
+}
+
+
+void                    FHSystem::setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType UType)
+{
+    UInteractionType = UType;
+}
+
+void                    FHSystem::setTunnelingType(FHSystem::FHTunnelingType tType)
+{
+    tunnelingType = tType;
+}
+
+void                    FHSystem::setSameSpinInteractionType(FHSystem::FHSameSpinInteractionType VType)
+{
+    VInteractionType = VType;
+}
+
+void                    FHSystem::setExchangeCouplingEnergyType(FHSystem::tJExchangeCouplingType JType)
+{
+    tJExCType = JType;
+}
+
+
+
 /// @brief setter - on-site interaction energy
 /// @param U0 on-site interaction energy
-void FHSystem::setUInteraction_OnSite(double U0, bool add)
+void                    FHSystem::setUInteraction_OnSite(double U0, bool add)
 {
     if (add)
     {
@@ -661,7 +835,7 @@ void                    FHSystem::setUInteraction_GivenDiagonal(arma::dvec& Ua, 
 
 /// @brief setter - Matrix interaction energy
 /// @param Uab Matrix interaction energy
-void FHSystem::setUInteraction_GivenMatrix(arma::dmat& Uab, bool add)
+void                    FHSystem::setUInteraction_GivenMatrix(arma::dmat& Uab, bool add)
 {
     if ((Uab.n_rows == sitePositions.n_rows) && (Uab.n_cols == sitePositions.n_rows))
     {
@@ -684,7 +858,7 @@ void FHSystem::setUInteraction_GivenMatrix(arma::dmat& Uab, bool add)
 
 /// @brief setter - Matrix interaction energy
 /// @param Us Matrix interaction energy by site type
-void                                FHSystem::setUInteraction_BySiteType(arma::dvec& Us, bool add = false)
+void                    FHSystem::setUInteraction_BySiteType(arma::dvec& Us, bool add)
 {
     if (Us.n_rows == siteTypeNames.size()) 
     {
@@ -710,7 +884,7 @@ void                                FHSystem::setUInteraction_BySiteType(arma::d
 
 /// @brief setter - nearest neighbout tunneling interaction energy
 /// @param tH1 tunneling interaction energy
-void FHSystem::setTunneling_BetweenNeighbours(double tH1, bool add)
+void                    FHSystem::setTunneling_BetweenNeighbours(double tH1, bool add)
 {
     if (!add)
     {
@@ -732,7 +906,7 @@ void FHSystem::setTunneling_BetweenNeighbours(double tH1, bool add)
 
 /// @brief setter - Same site tunneling interaction energy
 /// @param tH0 tunneling interaction energy
-void  FHSystem::setTunneling_SamePosition(double tH0, bool add = false)
+void                    FHSystem::setTunneling_SamePosition(double tH0, bool add)
 {
     if (!add)
     {
@@ -749,7 +923,6 @@ void  FHSystem::setTunneling_SamePosition(double tH0, bool add = false)
         }
     }
 }
-
 
 /// @brief setter - matrix tunneling interaction energy
 /// @param tH tunneling interaction energy by pair of sites
@@ -774,7 +947,7 @@ void                    FHSystem::setTunneling_GivenMatrix(arma::dmat tH, bool a
 
 /// @brief setter - matrix tunneling interaction energy
 /// @param tHs1s2 tunneling interaction energy by pair of site types
-void  FHSystem::setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false)
+void                    FHSystem::setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add)
 {
     if ((tHs1s2.n_rows == siteTypeNames.size()) && (tHs1s2.n_cols == siteTypeNames.size()))
     {
@@ -805,89 +978,13 @@ void                    FHSystem::setExchangeCoupling(double J, bool add)
     JMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
 }
 
-void                    FHSystem::setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType UType)
-{
-    UInteractionType = UType;
-}
-
-void                    FHSystem::setTunnelingType(FHSystem::FHTunnelingType tType)
-{
-    tunnelingType = tType;
-}
-
-void                    FHSystem::setSameSpinInteractionType(FHSystem::FHSameSpinInteractionType VType)
-{
-    VInteractionType = VType;
-}
-
-void                    FHSystem::setExchangeCouplingEnergyType(FHSystem::tJExchangeCouplingType JType)
-{
-    tJExCType = JType;
-}
 
 void                    FHSystem::setName(std::string name)    
 {
     systemName = name;
 }
 
-bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
-{
-    siteTypes = sTypes;
-    return sitesHaveNames();
-}
 
-void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
-{
-    siteTypeNames = typeNames;
-}
-
-void                    FHSystem::setPositions(const arma::dmat& positions)
-{
-    sitePositions = positions;
-    computeMatrices();
-}
-
-/// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
-/// @param diagonalInitConditions vectors of sites on which there is a up-spin/down-spin particle
-/// @return void
-void FHSystem::setInitialConditions(const std::vector<std::vector<unsigned int>>& diagonalInitConditions )
-{
-
-    initialCondition =  FHSystem::FHInitialConditionType::givenDiagonal;
-
-    upSpinParticleNumber = diagonalInitConditions[0].size();
-    downSpinParticleNumber = diagonalInitConditions[1].size();
-
-    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows);
-    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows);
-
-
-
-    for (unsigned int itSite = 0; itSite < diagonalInitConditions[0].size(); itSite++)
-    {
-        initConditions_upSpin[diagonalInitConditions[0][itSite]] = true;
-    }
-    for (unsigned int itSite = 0; itSite < diagonalInitConditions[1].size(); itSite++)
-    {
-        initConditions_downSpin[diagonalInitConditions[1][itSite]] = true;
-    }
-
-}
-
-
-/// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
-/// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
-/// @param partNumner vector of the numbers of up-spin, down-spin particle
-/// @return void
-void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::vector<unsigned int> partNumber )
-{
-
-    initialCondition = initCondType;
-
-    upSpinParticleNumber = partNumber[0];
-    downSpinParticleNumber = partNumber[1];
-
-}
 
 /// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
 /// @return void
@@ -904,18 +1001,12 @@ void FHSystem::computeMatrices()
     {
         for (int j=0; j<nSites; j++)
         {
-            double dist = 0;
-            for (int d = 0; d<sitePositions.n_cols; d++ )
-            {
-                dist = dist + pow(sitePositions(j, d) - sitePositions(i, d), 2);
-            }
-            dist = sqrt(dist);
-            distanceMatrix(i, j) = dist;
-            if (abs(dist)< 0.0001)
+            distanceMatrix(i, j) = computeDistance(i,j);
+            if (abs(distanceMatrix(i, j))< 0.0001)
             {
                 sameSiteMatrix[i][j] = true;
             }
-            if (abs(dist - 1)< 0.0001)
+            if (abs(distanceMatrix(i, j) - 1)< 0.0001)
             {
                 neighbourMatrix[i][j] = true;
             }
@@ -937,28 +1028,30 @@ void FHSystem::initiateEmptyEnergyMatrices()
     VMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     JMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     tMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 }
+
 
 /// @brief Write an ASCII version of the Fermi-Hubbard System
 /// @param folderName emplacement of the folder
 void     FHSystem::writeFHSystem(std::string folderName)
 {
     // Writing of everything on the file :
-std::string fileAdress =  systemName;
+    std::string fileAdress =  systemName;
 
-std::cout << "In system, system name : "<< systemName << std::endl;
-if (folderName != "")
-{
-    fileAdress = folderName + "/" + systemName;
-}
-
+    std::cout << "In system, system name : "<< systemName << std::endl;
+    if (folderName != "")
+    {
+        fileAdress = folderName + "/" + systemName;
+    }
    std::ofstream streamSystem(fileAdress);
 
    std::cout << "In system, file adress : "<< fileAdress << std::endl;
    
     if (streamSystem.is_open())
     {
-// I- POSITIONS OF SITES
+// I - POSITIONS
+    // I - 1 POSITION OF SITES
         bool sitesHaveTags = sitesHaveNames();
 
         streamSystem << "#POSITIONS" << std::endl;
@@ -976,104 +1069,118 @@ if (folderName != "")
                
         }
 
+    // I - 2 SYMMETRIES
+        if (isSymmetric())
+        {
+            streamSystem << "#SYMMETRIES" << std::endl;
+            for (uint itSym = 0; itSym < symmetryVectors.n_rows; itSym++)
+            {
+                for(uint itdim = 0 ; itdim < symmetryVectors.n_cols; itdim++)
+                {
+                    streamSystem << sitePositions(itSym, itdim) << "\t";
+                }
+                streamSystem << std::endl;
+            }           
+        }
+        
 // II - ENERGY PARAMETERS
     // II-1 OPPOSITE SPIN INTERACTION
-    switch(UInteractionType)
-    {
-        case FHOppositeSpinInteractionType::Unone :
+        switch(UInteractionType)
         {
-            break;
-        }
-        case FHOppositeSpinInteractionType::UonSiteConstant:
-        {
-            streamSystem << "#ENERGYPARAMETER_U_CONSTANT" << std::endl;
-            streamSystem << UMatrix(0,0).real() << std::endl;
-            break;
-        }
-        case FHOppositeSpinInteractionType::UonSiteGivenDiagonal:
-        {
-            streamSystem << "#ENERGYPARAMETER_U_BYSITE" << std::endl;
-            for(uint iSite = 0; iSite<sitePositions.n_rows; iSite++)
+            case FHOppositeSpinInteractionType::Unone :
             {
-                streamSystem << UMatrix(iSite, iSite).real() << "\t";
+                break;
             }
-            streamSystem << std::endl;
-            break;
-        }
-        case FHOppositeSpinInteractionType::UonSiteBySiteType:
-        {
-            streamSystem << "#ENERGYPARAMETER_U_BYSITETYPE" << std::endl;
-            for(uint iSiteType = 0; iSiteType < siteTypeNames.size(); iSiteType++)
+            case FHOppositeSpinInteractionType::UonSiteConstant:
             {
-                arma::uvec indSite = find(siteTypes = iSiteType, 1);
-                if (indSite.size() !=0)
+                streamSystem << "#ENERGYPARAMETER_U_CONSTANT" << std::endl;
+                streamSystem << UMatrix(0,0).real() << std::endl;
+                break;
+            }
+            case FHOppositeSpinInteractionType::UonSiteGivenDiagonal:
+            {
+                streamSystem << "#ENERGYPARAMETER_U_BYSITE" << std::endl;
+                for(uint iSite = 0; iSite<sitePositions.n_rows; iSite++)
                 {
-                   streamSystem << siteTypeNames[iSiteType]<< "\t" << UMatrix(indSite(0)).real() << std::endl;
-                }            
-            }
-            streamSystem << std::endl;
-            break;
-        }
-        case FHOppositeSpinInteractionType::UGivenMatrix:
-        {
-            streamSystem << "#ENERGYPARAMETER_U_GIVENMATRIX" << std::endl;
-            for(uint itU1 = 0; itU1 < UMatrix.n_rows; itU1++)
-            {
-                for(uint itU2 = 0; itU2 < UMatrix.n_cols; itU2++)
-                {       
-                    streamSystem << std::real(UMatrix(itU1, itU2)) << "\t";
+                    streamSystem << UMatrix(iSite, iSite).real() << "\t";
                 }
                 streamSystem << std::endl;
+                break;
             }
-            break;
-        }
-        default :
-        {
-            break;
-        }
-    }
-
-
-
-    // II-2 TUNNELING
-    switch(tunnelingType)
-    {
-        case FHTunnelingType::tHnone:
-        {
-            break;
-        }
-        case FHTunnelingType::nearestNeighbourConstant:
-        {
-            streamSystem << "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS" << std::endl;
-            arma::uvec q1 = find(tMatrix,1);
-            //std::cout << q1 << std::endl;
-            if (q1.n_rows !=0)
+            case FHOppositeSpinInteractionType::UonSiteBySiteType:
             {
-                double th = std::real( tMatrix(q1(0)) );
-                streamSystem << th << std::endl;
-            }
-            else
-            {
-                 streamSystem << 1 << std::endl;
-            }
-        }
-        case FHTunnelingType::tunnelingGivenMatrix:
-        {
-            streamSystem << "#ENERGYPARAMETER_tH_GIVENMATRIX" << std::endl;
-            for(uint itt1 = 0; itt1 < tMatrix.n_rows; itt1++)
-            {
-                for(uint itt2 = 0; itt2 < tMatrix.n_cols; itt2++)
-                {       
-                    streamSystem << std::real(tMatrix(itt1, itt2)) << "\t";
+                streamSystem << "#ENERGYPARAMETER_U_BYSITETYPE" << std::endl;
+                for(uint iSiteType = 0; iSiteType < siteTypeNames.size(); iSiteType++)
+                {
+                    arma::uvec indSite = find(siteTypes = iSiteType, 1);
+                    if (indSite.size() !=0)
+                    {
+                       streamSystem << siteTypeNames[iSiteType]<< "\t" << UMatrix(indSite(0)).real() << std::endl;
+                    }            
                 }
                 streamSystem << std::endl;
+                break;
+            }
+            case FHOppositeSpinInteractionType::UGivenMatrix:
+            {
+                streamSystem << "#ENERGYPARAMETER_U_GIVENMATRIX" << std::endl;
+                for(uint itU1 = 0; itU1 < UMatrix.n_rows; itU1++)
+                {
+                    for(uint itU2 = 0; itU2 < UMatrix.n_cols; itU2++)
+                    {       
+                        streamSystem << std::real(UMatrix(itU1, itU2)) << "\t";
+                    }
+                    streamSystem << std::endl;
+                }
+                break;
+            }
+            default :
+            {
+                break;
             }
         }
-        default :
+
+
+
+        // II-2 TUNNELING
+        switch(tunnelingType)
         {
-            break;
+            case FHTunnelingType::tHnone:
+            {
+                break;
+            }
+            case FHTunnelingType::nearestNeighbourConstant:
+            {
+                streamSystem << "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS" << std::endl;
+                arma::uvec q1 = find(tMatrix,1);
+                //std::cout << q1 << std::endl;
+                if (q1.n_rows !=0)
+                {
+                    double th = std::real( tMatrix(q1(0)) );
+                    streamSystem << th << std::endl;
+                }
+                else
+                {
+                     streamSystem << 1 << std::endl;
+                }
+            }
+            case FHTunnelingType::tunnelingGivenMatrix:
+            {
+                streamSystem << "#ENERGYPARAMETER_tH_GIVENMATRIX" << std::endl;
+                for(uint itt1 = 0; itt1 < tMatrix.n_rows; itt1++)
+                {
+                    for(uint itt2 = 0; itt2 < tMatrix.n_cols; itt2++)
+                    {       
+                        streamSystem << std::real(tMatrix(itt1, itt2)) << "\t";
+                    }
+                    streamSystem << std::endl;
+                }
+            }
+            default :
+            {
+                break;
+            }
         }
-    }
 
 
 
@@ -1083,7 +1190,8 @@ if (folderName != "")
             case FHInitialConditionType::quenched:
                 streamSystem << "#INITIALCONDITIONS_QUENCHED" << std::endl;
                 break;
-            case FHInitialConditionType::givenDiagonal:   
+            case FHInitialConditionType::givenDiagonal:
+            {
                 streamSystem << "#INITIALCONDITIONS_GIVENDIAGONAL" << std::endl;
                 for (uint itposUp = 0; itposUp < initConditions_upSpin.size(); itposUp++)
                 {
@@ -1101,6 +1209,9 @@ if (folderName != "")
                     }
                 }
                 streamSystem << std::endl;       
+                break;
+            }   
+
         }
 
 
