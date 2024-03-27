@@ -133,6 +133,7 @@ public:
     void                                setUInteraction_GivenMatrix(arma::dmat& Uab, bool add = false);
     void                                setUInteraction_BySiteType(arma::dvec& Us, bool add = false);
     void                                setTunneling_BetweenNeighbours(double tH1, bool add = false);
+    void                                setTunneling_atDistance(double tH1, double dist, bool add = false);
     void                                setTunneling_SamePosition(double tH1, bool add = false);
     void                                setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false);
     void                                setTunneling_GivenMatrix(arma::dmat tH, bool add = false);

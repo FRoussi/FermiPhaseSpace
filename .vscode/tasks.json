@@ -44,6 +44,7 @@
                 "${workspaceFolder}/makeSitesSystem.cpp",
                 "-o",
                 "${fileDirname}/makeSitesSystem",
+                "-larmadillo"
             ],
             "options": {
                 "cwd": "${fileDirname}"

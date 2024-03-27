@@ -143,40 +143,73 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     tunnelingType = FHTunnelingType::tHnone;
     tJExCType = tJExchangeCouplingType::tJJnone;
 
+    WhatToRead whatToR =  WhatToRead::nothing;  
+    int nDim = -1;
+    troolean orbitalHaveNames = troolean::dontknow;
+    bool positionsReady = false;
+
     std::ifstream systFile (fileAdressName);
     if (systFile.is_open())
     {
         printf("== Reading %s \n", fileName.c_str());
 
-        WhatToRead whatToR =  WhatToRead::nothing;  
-
-        int nDim = -1;
-        troolean orbitalHaveNames = troolean::dontknow;
-        bool positionsReady = false;
-
         std::vector<unsigned int>           orbitalTypes    = std::vector<unsigned int>();
         std::vector<std::string>            orbitalNames    = std::vector<std::string>();
-        std::vector<std::vector<double>>    pos             = std::vector<std::vector<double>>();
+        std::vector<std::vector<double>>    posVecVec       = std::vector<std::vector<double>>();
         std::vector<std::vector<double>>    symVecVec       = std::vector<std::vector<double>>();
         std::vector<unsigned int>           initCond_up     = std::vector<unsigned int>();
         std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
         std::vector<unsigned int>           particlesNumber(2, 0);
 
-        std::vector<double> Jvector = std::vector<double>();
-         std::vector<std::vector<double>> tHMatrix = std::vector<std::vector<double>>();
-        std::vector<std::vector<double>> UMatrix = std::vector<std::vector<double>>();
+        std::vector<double> Jvector                         = std::vector<double>();
+        std::vector<std::vector<double>> tHMatrix           = std::vector<std::vector<double>>();
+        std::vector<std::vector<double>> UMatrix            = std::vector<std::vector<double>>();
 
 
         std::string line;
         while (std::getline(systFile, line))
         {
-           if (line == "#POSITIONS")
+           if (line == "#POSITIONS")                                                //<- ready to read the positions
            {
                 whatToR = WhatToRead::positions;
+           }
+           else if (line == "#POSITIONS_END")                                       //<- the positions stored in "pos" 
+           {
+                arma::dmat sitePos = armaMatfromVectorsVector(posVecVec);
+                setPositions(sitePos);
+
+                if (orbitalHaveNames == troolean::yes)
+                {
+                    std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
+                    uint numberOfNames = 0;
+                    uint index = 0;
+                    for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
+                    {
+                        if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
+                        {
+                            orbitalTypes[nameInt] = index;
+                        }
+                        else
+                        {
+                            orbitalNameTypes.push_back(orbitalNames[nameInt]);
+                            orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
+                        }
+                    }
+                }
+
+                initiateEmptyEnergyMatrices();
+                positionsReady = true;
+                whatToR = WhatToRead::nothing;
            }
            else if (line == "#SYMMETRIES")
            {
                 whatToR = WhatToRead::symmetries;
+           }
+           else if (line == "#SYMMETRIES_END")
+           {
+                arma::dmat symmetryArmaMatrix = armaMatfromVectorsVector(symVecVec);
+                setSymmetry(symmetryArmaMatrix);
+                whatToR = WhatToRead::nothing;
            }
            else if (line == "#INITIALCONDITIONS_GIVENDIAGONAL")
            {
@@ -251,16 +284,17 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                     double d = std::stod(coord);
                     coordinates.push_back(d);
                 }
+
                 if (nDim == -1)
                 {
                     nDim = coordinates.size();
-                    pos.push_back(coordinates);
+                    posVecVec.push_back(coordinates);
                 }
                 else
                 {
                     if (coordinates.size() == nDim)
                     {
-                        pos.push_back(coordinates);
+                        posVecVec.push_back(coordinates);
                     }
                     else
                     {
@@ -270,36 +304,11 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 }
 
 
-                arma::dmat sitePos = armaMatfromVectorsVector(pos);
-
-                setPositions(sitePos);
-
-                if (orbitalHaveNames == troolean::yes)
-                {
-                    std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
-                    uint numberOfNames = 0;
-                    uint index = 0;
-                    for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
-                    {
-                        if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
-                        {
-                            orbitalTypes[nameInt] = index;
-                        }
-                        else
-                        {
-                            orbitalNameTypes.push_back(orbitalNames[nameInt]);
-                            orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
-                        }
-                    }
-                }
-
-                initiateEmptyEnergyMatrices();
-                positionsReady = true;
                 break;
             }
             case WhatToRead::symmetries :
             {
-                td::stringstream ss(line);
+                std::stringstream ss(line);
                 std::string coord;
                 std::vector<double> coordinates = std::vector<double>();
                 while (std::getline (ss, coord, ' ')) 
@@ -365,7 +374,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                      Uvector.push_back(std::stod(U_string));
                 }
                 UMatrix.push_back(Uvector);
-                if (UMatrix.size() == pos.size())
+                if (UMatrix.size() == posVecVec.size())
                 {
                     arma::dmat UM = armaMatfromVectorsVector(UMatrix);
                     setUInteraction_GivenMatrix(UM);
@@ -391,7 +400,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                      tHvector.push_back(std::stod(t_string));
                 }
                 tHMatrix.push_back(tHvector);
-                if (tHMatrix.size() == pos.size())
+                if (tHMatrix.size() == posVecVec.size())
                 {
                     arma::dmat tHM = armaMatfromVectorsVector(tHMatrix);
                     setTunneling_GivenMatrix(tHM);
@@ -924,6 +933,27 @@ void                    FHSystem::setTunneling_SamePosition(double tH0, bool add
     }
 }
 
+/// @brief setter - Tunneling interaction energy on sites at distance 'dist'
+/// @param tHd tunneling interaction energy
+/// @param dist distance between two sites
+void                    FHSystem::setTunneling_atDistance(double tHd, double dist, bool add)
+{
+    if (!add)
+    {
+        tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+    }
+    for (unsigned int i = 0; i< sitePositions.n_rows; i++)
+    {
+        for (unsigned int j = 0; j< sitePositions.n_rows; j++)
+        {
+            if (abs(distanceMatrix(i,j) - dist) < 0.0001)
+            {
+                tMatrix(i,j) += tHd;
+            }
+        }
+    }
+}
+
 /// @brief setter - matrix tunneling interaction energy
 /// @param tH tunneling interaction energy by pair of sites
 void                    FHSystem::setTunneling_GivenMatrix(arma::dmat tH, bool add)
@@ -1065,9 +1095,9 @@ void     FHSystem::writeFHSystem(std::string folderName)
             {
                 streamSystem << sitePositions(itpos, itdim) << "\t";
             }
-            streamSystem << std::endl;
-               
+            streamSystem << std::endl;          
         }
+        streamSystem << "#POSITIONS_END" << std::endl;
 
     // I - 2 SYMMETRIES
         if (isSymmetric())
@@ -1080,7 +1110,8 @@ void     FHSystem::writeFHSystem(std::string folderName)
                     streamSystem << sitePositions(itSym, itdim) << "\t";
                 }
                 streamSystem << std::endl;
-            }           
+            }    
+            streamSystem << "#SYMMETRIES_END" << std::endl;       
         }
         
 // II - ENERGY PARAMETERS
@@ -1163,6 +1194,7 @@ void     FHSystem::writeFHSystem(std::string folderName)
                 {
                      streamSystem << 1 << std::endl;
                 }
+                break;
             }
             case FHTunnelingType::tunnelingGivenMatrix:
             {
@@ -1175,6 +1207,7 @@ void     FHSystem::writeFHSystem(std::string folderName)
                     }
                     streamSystem << std::endl;
                 }
+                break;
             }
             default :
             {
