@@ -22,7 +22,8 @@ public:
         givenDensityMatrix,
         givenWaveFunctionBasisVector,
         givenWaveFunction,
-        quenched
+        quenched,
+        groundState
     };
 
     enum FHOppositeSpinInteractionType {
