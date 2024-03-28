@@ -8,19 +8,41 @@
 #include <armadillo>
 //#include <cmath>
 
-#include "fnctbitset.h"
-#include "fnct.h"
+
 #include "FHSystem.h"
 #include "ResultWriter.h"
 
 
+#define MAX_BITS 32
+#define M_PI 3.14159265358979323846
 
 
-std::vector<std::vector<bool>> getCombinations(unsigned int n, unsigned int p, unsigned int max_n);
-unsigned int nChoosep(unsigned int n, unsigned int p);
+std::vector<std::vector<bool>>      getCombinations(unsigned int n, unsigned int p, unsigned int max_n);
+unsigned int                        nChoosep(unsigned int n, unsigned int p);
+
+std::bitset<MAX_BITS>               bitsetFromVector(const std::vector<bool>& vec);
+
+void                                bitsetswap(std::bitset<MAX_BITS>& bs1, std::bitset<MAX_BITS>& bs2);
+
+void                                fusionSortVector(std::vector<std::bitset<MAX_BITS>>& vec);
+
+std::bitset<MAX_BITS>               positionToBinary(std::vector<uint>&);
+
+std::vector<uint>                   binaryToPosition(std::bitset<MAX_BITS>&);
+
+uint                                getParticleNumberBetween(std::bitset<MAX_BITS>& posP, uint from, uint to);
+
+uint                                countDoublons(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2);
+
+uint                                countSimilarities(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, uint nSites, uint& lastIndexWrong1, uint& lastIndexWrong2);
+
+std::bitset<MAX_BITS>               expandBitSetUnderConstraint(std::bitset<MAX_BITS> reducedBS, std::bitset<MAX_BITS> constraintBS, uint sizeReducedBS = MAX_BITS);
 
 
-bool canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
+bool                                canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
+
+
+arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
 
 
 

@@ -5,7 +5,7 @@
 #include <vector>
 #include <math.h>
 
-#include "fnctarma.h"
+
 #include "FHSystem.h"
 
 using std::cout;

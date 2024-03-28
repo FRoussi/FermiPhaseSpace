@@ -527,7 +527,7 @@ FHEDSolver::~FHEDSolver()
 // Other functions
 
 
-/// @brief Binomial coefficient or all combinations
+/// @brief Binomial coefficient 
 /// @param n Number of possible choices - here sites
 /// @param p Number of selected choices - here particles
 /// @return Number of non-ordered combinations 
@@ -626,5 +626,371 @@ bool canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, uint
         return false;
 }
 
+
+
+
+
+/// @brief Convert a vector of boolean into a bitset of boolean 
+/// @param vec vector of boolean to convert
+/// @return the converted bitset 
+std::bitset<MAX_BITS> bitsetFromVector(const std::vector<bool>& vec)
+{
+    std::bitset<MAX_BITS> bs = std::bitset<MAX_BITS>();
+    uint maxV = std::min((int)vec.size(), MAX_BITS);
+    for (uint it = 0; it<maxV; it++)
+    {
+        if (vec[it])  bs.set(it);
+    }
+
+    return bs;
+}
+
+
+/// @brief Swap two bitset 
+/// @param bs1 bitset
+/// @param bs2 bitset
+/// @return void 
+void bitsetswap(std::bitset<MAX_BITS>& bs1, std::bitset<MAX_BITS>& bs2)
+{
+   bs1 = bs1 ^ bs2;
+   bs2 = bs2 ^ bs1;
+   bs1 = bs1 ^ bs2;
+}
+
+
+/// @brief Sorting of a vector of bistset with the tri-fusion algorithm 
+/// @param vec vector of particle positions, in bitset
+/// @return void 
+void fusionSortVector(std::vector<std::bitset<MAX_BITS>>& vec)
+{
+    uint vecSize = vec.size();
+
+    if (vecSize == 1);
+
+    else if (vecSize == 2)
+    {
+        if (vec[0].to_ulong() > vec[1].to_ulong())
+        {
+            bitsetswap(vec[0], vec[1]);
+        }
+        
+    }
+
+    else
+    {
+
+        uint mid = (uint)((vecSize / 2));
+
+        std::vector<std::bitset<MAX_BITS>> vec1(vec.begin(), vec.begin() + mid);
+        fusionSortVector(vec1);
+
+        std::vector<std::bitset<MAX_BITS>> vec2(vec.begin() + mid + 1, vec.end());
+        fusionSortVector(vec2);
+
+        uint countor1 = 0;
+        uint countor2 = 0;
+
+        while (countor1 + countor2 < vecSize)
+        {
+            if (countor1 == vec1.size())
+            {
+                while (countor2 < vec2.size())
+                {
+                    vec[countor1 + countor2] = vec2[countor2];
+                    countor2 ++;
+                }
+            }
+            else if (countor2 == vec2.size())
+            {
+                while (countor1 < vec1.size())
+                {
+                    vec[countor1 + countor2] = vec1[countor1];
+                    countor1 ++;
+                }
+            }
+            else if (vec1[countor1].to_ulong() < vec2[countor2].to_ulong())
+            {
+                vec[countor1 + countor2] = vec1[countor1];
+                countor1++;
+            }
+            else
+            {
+                vec[countor1 + countor2] = vec2[countor2];
+                countor2++;
+            }
+        }
+
+    }
+}
+
+
+
+/// @brief Convert a position vector into an empty/filled vector.
+/// @param pos vector of particle positions
+/// @return Boolean vector of empty/filled sites 
+std::bitset<MAX_BITS> positionToBinary(std::vector<uint>& pos)
+{
+    std::bitset<MAX_BITS> bs = std::bitset<MAX_BITS>();
+    for (std::vector<uint>::iterator it = pos.begin(); it != pos.end(); it++)
+    {
+        bs.set(*it);
+    }
+    return bs;
+}
+
+
+/// @brief Convert an empty/filled vector into a position vector.
+/// @param binaryPos a bitset of particle presence
+/// @return Position vector 
+std::vector<uint> binaryToPosition(std::bitset<MAX_BITS>& binaryPos)
+{
+    std::vector<uint> vec = std::vector<uint>();
+    for (uint it = 0; it < binaryPos.size(); it++)
+    {
+        if (binaryPos[it])
+        {
+            vec.push_back(it);
+        }
+    }
+    return vec;
+}
+
+
+
+
+
+/// @brief Count the similarities between 2 boolean half vectors and store the last difference.
+/// @param phiH1 wave-function half basis bitset
+/// @param phiH2 wave-function half basis bitset
+/// @param lastIndexWrong1 If there is a difference, update it to be the last difference with a particle of phiH1
+/// @param lastIndexWrong2 If there is a difference, update it to be the last difference with a particle of phiH2
+/// @return Number of similarities between the 2 wave-function basis vector.
+uint countSimilarities(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, uint nSites, uint& lastIndexWrong1, uint& lastIndexWrong2)
+{
+    uint simCount = 0;
+    uint lastIdW1 = 0;
+    uint lastIdW2 = 0;
+
+    for (uint l = 0; l < nSites; l++)
+    {
+        if (phiH1[l] == phiH2[l])
+            simCount += 1;
+        else
+        {
+            if (phiH1[l] == true)
+                    lastIdW1 = l;
+            else if (phiH2[l] == true)
+                    lastIdW2 = l;
+        }
+    }
+
+    lastIndexWrong1 = lastIdW1;
+    lastIndexWrong2 = lastIdW2;
+    return simCount;
+}
+
+
+/// @brief Count the doublons in 2 bitsets.
+/// @param phiH1 wave-function half basis bitset
+/// @param phiH2 wave-function half basis bitset
+/// @return Number of doublons
+uint countDoublons(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2)
+{
+    std::bitset<MAX_BITS> andBits = phiH1 & phiH2;
+    return andBits.count();
+}
+
+
+/// @brief Count the number of particles in a wave-function basis vector between 2 sites
+/// @param posP empty/filled vector
+/// @param from index of 1st site
+/// @param to index of 2nd site
+/// @return Number of particles between 'from' and 'to'
+uint getParticleNumberBetween(std::bitset<MAX_BITS>& posP, uint from, uint to)
+{
+    uint nPart = 0;
+    if ((from < MAX_BITS) && (to < MAX_BITS))
+    {
+        uint f = std::min(from, to);
+        uint t = std::max(from, to);
+        for (uint p = f + 1; p < t; p++)
+        {
+            if (posP[p])
+                nPart++;
+        }
+    }
+
+    return nPart;
+}
+
+
+
+
+
+std::bitset<MAX_BITS> expandBitSetUnderConstraint(std::bitset<MAX_BITS> reducedBS, std::bitset<MAX_BITS> constraintBS, uint sizeReducedBS)
+{
+    std::bitset<MAX_BITS> bs = std::bitset<MAX_BITS>();
+    uint countorBS = 0;
+    uint countorReducedBS = 0;
+    while ((countorBS < MAX_BITS) && (countorReducedBS < sizeReducedBS))
+    {
+        if (constraintBS[countorBS])
+        {
+            countorBS ++;
+        }
+        else
+        {
+            bs[countorBS] = reducedBS[countorReducedBS];
+            countorBS++;
+            countorReducedBS++;
+        }
+    } 
+
+    return bs;
+}
+
+
+
+/// @brief Copy of the EXPOKIT expmv function
+/// @param t double
+/// @param A sparse matrix
+/// @param v vector
+/// @param tol
+/// @param m1
+/// @return exp(t.A)v
+arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol, unsigned int m1 )
+{
+    unsigned int n = A.n_rows;
+    unsigned int m = std::min(n, m1);
+    double anorm = arma::norm(A, "inf");
+    unsigned int mxrej = 10;
+    double btol = 1.E-7;
+    double gamma = 0.9;
+    double delta = 1.2;
+    unsigned int mb = m;
+    unsigned int mx = mb;
+    double t_out = std::abs(t);
+    int nstep = 0;
+    double t_new = 0;
+    double t_now = 0;
+    double t_step = 0;
+    double s = 0;
+    double s_error = 0;
+    double rndoff = anorm * 1.E-15;
+
+    unsigned int k1 = 2;
+    double xm = 1/(double)m;
+    double normv = arma::norm(v,2);
+    double avnorm = 0;
+    double phi1 = 0;
+    double phi2 = 0;
+    double err_loc = 0;
+    double beta = normv;
+    double fact = std::pow((m+1)/std::exp(1), m+1) * std::sqrt(2*M_PI*(m+1));
+    t_new = (1/anorm) * pow((fact * tol) / 4*beta*anorm, xm);     
+    std::complex<double> sgn = t/std::abs(t);
+    nstep = 0;
+
+    arma::cx_dvec w = v;
+    double hump = normv;
+
+    while(t_now < t_out)
+    {
+        nstep +=1;
+        t_step = std::min(t_out - t_now, t_new);
+        arma::cx_dmat V = arma::cx_dmat(n, m+1); 
+        arma::cx_dmat H = arma::cx_dmat(m+2, m+2);
+        arma::cx_dmat F;
+
+        V.col(0) = (1/beta) * w;
+        for (unsigned int j = 0; j<m; j++)
+        {
+            arma::cx_dvec p = A * V.col(j);
+            for (unsigned int i = 0; i < j ; i++)
+            {
+                H(i,j) = arma::cdot(V.col(i), p);
+                p = p - H(i,j)*V.col(i);
+            }
+            s = arma::norm(p,2);
+            if (s<btol)
+            {
+                k1 = 0;
+                mb = j;
+                t_step = t_out - t_now;
+                break;
+            }
+            H(j+1, j) = s;
+            V.col(j+1) = (1/s) * p;
+        }
+
+        if (k1 != 0)
+        {
+            H(m+1, m) = 1;
+            avnorm = arma::norm(A*V.col(m), 2);
+        }
+        unsigned int ireject = 0;
+        while(ireject < mxrej)
+        {
+            mx = mb + k1;
+            F = arma::expmat(sgn * t_step * H.submat(0, 0, mx-1, mx-1));
+            if (k1 ==0)
+            {
+                err_loc = btol;
+                break;
+            }
+            else
+            {
+                phi1 = std::abs(beta * F(m, 0));
+                phi2 = std::abs(beta * F(m+1,0) * avnorm);
+                if (phi1 > 10*phi2)
+                {
+                    err_loc = phi2;
+                    xm = 1/(double)m;
+                }
+                else if (phi1 > phi2)
+                {
+                    err_loc = (phi1*phi2)/(phi1-phi2);
+                    xm = 1/(double)m;
+                }
+                else
+                {
+                    err_loc = phi1;
+                    xm = 1/(double)(m-1);
+                }
+            }
+            if (err_loc <= delta * t_step * tol)
+            {
+                break;
+            }
+            else
+            {
+                t_step = gamma * t_step * pow((t_step * tol / err_loc), xm);
+                s = pow(10, std::floor(std::log10(t_step))-1);
+                t_step = std::ceil(t_step/s) * s;
+                if (ireject == mxrej)
+                {
+                    printf("The requested tolerance is too high.");
+                    // !!!! THROW AN ERROR HERE
+                }
+                ireject+=1;
+            }
+        }
+        mx = mb + std::max((unsigned int)0, k1-1);
+        w = V.cols(0, mx-1) * (beta * (F.col(0)).subvec(0,mx-1));
+        beta = arma::norm(w, 2);
+        hump = std::max(hump, beta);
+
+        t_now = t_now + t_step;
+        t_new = gamma * t_step * pow((t_step*tol)/err_loc, xm);
+        s = pow(10, std::floor(std::log10(t_new))-1);
+        t_new = std::ceil(t_new / s) * s;
+
+        err_loc = std::max(err_loc, rndoff);
+        s_error = s_error + err_loc;
+    }
+
+    return w;
+
+}
 
 

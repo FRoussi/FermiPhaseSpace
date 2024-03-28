@@ -8,8 +8,8 @@
 #include <armadillo>
 //#include <cmath>
 
-#include "fnctbitset.h"
-#include "fnct.h"
+
+#include "FHEDSolver.h"
 #include "FHSystem.h"
 #include "ResultWriter.h"
 

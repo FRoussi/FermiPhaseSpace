@@ -8,9 +8,6 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",              
-                "${workspaceFolder}/fnct.cpp",
-                "${workspaceFolder}/fnctbitset.cpp",        
-                "${workspaceFolder}/fnctarma.cpp",    
                 "${workspaceFolder}/FHSystem.cpp",
                 "${workspaceFolder}/ResultWriter.cpp",
                 "${workspaceFolder}/FHEDSolver.cpp",
@@ -38,8 +35,7 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
-                "-g",
-                "${workspaceFolder}/fnctarma.cpp",  
+                "-g", 
                 "${workspaceFolder}/FHSystem.cpp",
                 "${workspaceFolder}/makeSitesSystem.cpp",
                 "-o",

@@ -12,6 +12,9 @@
 
 
 
+bool rsvd(arma::cx_dmat& U, arma::dvec& s, arma::cx_dmat& V, arma::cx_dmat& D, unsigned int k);
+
+
 class FHGPSRSolver
 {
 public:
@@ -99,8 +102,10 @@ private:
     const arma::cx_dmat*    extPot;
 
 // Usefull things :
-  arma::cx_dmat                     sqrtU;
+    arma::cx_dmat                     sqrtU;
 
-  void derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
+    void derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
+
+
 
 };

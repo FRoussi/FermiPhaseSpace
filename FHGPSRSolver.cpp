@@ -1,5 +1,5 @@
 #include "FHGPSRSolver.h"
-#include "fnct.h"
+
 
 
 FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
@@ -711,6 +711,59 @@ unsigned int tt = std::floor(nTraj/10);
     }
 
 }
+
+
+
+
+
+/// @brief Copy of the MATLAB rsvd function.  random SVD
+/// Extremely fast computation of the truncated Singular Value Decomposition, using
+/// randomized algorithms as described in Halko et al. 'finding structure with randomness'.
+/// Antoine Liutkus  (c) Inria 2014
+/// @param U 
+/// @param S matrix of singular values
+/// @param V
+/// @param D matrix whose svd we want
+/// @param K number of compponents to keep
+/// @return false if the decomposition failed
+bool rsvd(arma::cx_dmat& U, arma::dvec& s, arma::cx_dmat& V, arma::cx_dmat& D, unsigned int K)
+{
+    bool successOrth = true;
+    bool successSVD = true; 
+    
+                                                    // MATLAB version
+    unsigned int M = D.n_rows;
+    unsigned int N = D.n_cols;                      //<- [M,N] = arma::size(D);
+
+    //unsigned int P = std::min(2*K,N);               //<- P = min(2*K,N);
+    unsigned int P = std::min(K+5,N);               //<- P = min(K+5,N);
+
+
+    arma::dmat X = arma::dmat(N, P, arma::fill::randn); //<- X = randn(N,P);
+    arma::cx_dmat Y = D*X;                          //<- Y = A*X;
+
+    arma::cx_dmat W1;
+    successOrth = arma::orth(W1, Y);               //<- W1 = orth(Y);
+
+    arma::cx_dmat B = W1.t() * D;                   //<- B = W1'*A;
+    
+    arma::cx_dmat W2; 
+
+    successSVD = arma::svd_econ(W2, s, V, B);       //<- [W2,S,V] = svd(B,'econ');
+
+    U = W1 * W2;                                    //<- U = W1*W2;
+
+    unsigned int uCols = U.n_cols;
+
+    unsigned int K2 = std::min(K,uCols);            //<- K = min(K, size(U,2))
+
+    U = U.head_cols(K2);                            //<- U = U(:,1:K);
+    s =s.head(K2);                                  //<- S = S(1:K,1:K);
+    V = V.head_cols(K2);                            //<- V=V(:,1:K);
+
+    return successOrth && successSVD;
+} 
+
 
 FHGPSRSolver::~FHGPSRSolver()
 {

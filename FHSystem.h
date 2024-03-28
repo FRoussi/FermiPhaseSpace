@@ -6,8 +6,15 @@
 #include <iostream>
 #include <fstream>
 
-#include "fnctarma.h"
-#include "utilitaries.h"
+#include "FHExternalPotential.h"
+#include "FHExternalPotentialPulse.h"
+
+
+arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec);
+
+template <typename T>       bool isIn(T w, std::vector<T>& v);
+
+template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex);
 
 
 
@@ -179,7 +186,7 @@ private:
     arma::cx_dmat                   VMatrix;
     arma::cx_dmat                   JMatrix;
     arma::cx_dmat                   tMatrix;
-    arma::cx_dmat                   externalPotential;
+    FHExternalPotential             externalPotential;
 
 // INITIAL CONDITIONS
     FHInitialConditionType          initialCondition;
