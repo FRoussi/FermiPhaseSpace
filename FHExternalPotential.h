@@ -23,10 +23,17 @@ public:
     arma::cx_double         getExternalPotential(uint iSite, uint jSite);
     arma::cx_double         getExternalPotential(double t, uint iSite, uint jSite);
 
+    void                    updatePotential(double t);
+
+    bool                    isThePotentialNull();
+    bool                    isThePotentialTimeDependant();
+
 protected:
 
-    bool                    isThereAPotential;
+    bool                    nullPotential;
     
+    bool                    timeDependantPotential;
+
     double                  currentPotentialTime;
 
     const arma::dmat*       sitePositions;
@@ -35,6 +42,6 @@ protected:
 
     arma::cx_dmat           externalPotential;
 
-    void                    updatePotential(double t);
+    
 
 };

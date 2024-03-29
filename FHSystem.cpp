@@ -552,6 +552,10 @@ arma::dmat                                  FHSystem::getSymmetryMatrix()
     return symmetryVectors;
 }
 
+bool                                        FHSystem::isSystemTimeDependant()
+{
+    return externalPotential.isThePotentialTimeDependant();
+}
 
 double                                      FHSystem::computeDistance(uint iSite, uint jSite)
 {
@@ -665,6 +669,11 @@ std::complex<double>                        FHSystem::getExternalPotential(int i
     return externalPotential.getExternalPotential(t,i,i);
 }
 
+std::complex<double>                        FHSystem::getExternalPotential(int i, int j, double t)
+{
+    return externalPotential.getExternalPotential(t,i,j);
+}
+
 
 const arma::cx_dmat*                        FHSystem::getUMatrixPointer()
 {
@@ -688,6 +697,12 @@ const arma::cx_dmat*                        FHSystem::gettMatrixPointer()
 
 const arma::cx_dmat*                        FHSystem::getExtPotPointer()
 {
+    return externalPotential.getExternalPotentialPointer();
+}
+
+const arma::cx_dmat*                        FHSystem::getExtPotPointer(double t)
+{
+    externalPotential.updatePotential(t);
     return externalPotential.getExternalPotentialPointer();
 }
 

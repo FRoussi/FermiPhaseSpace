@@ -3,7 +3,8 @@
 
 FHExternalPotential::FHExternalPotential()
 {
-    isThereAPotential = false;
+    nullPotential = true;
+    timeDependantPotential = false;
     currentPotentialTime = 0;
 }
 
@@ -15,13 +16,24 @@ FHExternalPotential::FHExternalPotential(const arma::dmat* sitePos)
 
     sitePositions = sitePos;
 
-    isThereAPotential = false;
+    nullPotential = true;
+    timeDependantPotential = false;
     currentPotentialTime = 0;
 }
 
-bool FHExternalPotential::getExternalPotential(double t, arma::cx_dmat& potential)
+bool                    FHExternalPotential::isThePotentialNull()
 {
-    if (isThereAPotential)
+    return nullPotential;
+}
+
+bool                    FHExternalPotential::isThePotentialTimeDependant()
+{
+    return timeDependantPotential;
+}
+
+bool                    FHExternalPotential::getExternalPotential(double t, arma::cx_dmat& potential)
+{
+    if (!nullPotential)
     {
         if (currentPotentialTime != t)
         {
@@ -57,7 +69,7 @@ arma::cx_double         FHExternalPotential::getExternalPotential(double t, uint
     return externalPotential(iSite, jSite);
 }
 
-void FHExternalPotential::updatePotential(double t)
+void                    FHExternalPotential::updatePotential(double t)
 {
     currentPotentialTime = t;
 }

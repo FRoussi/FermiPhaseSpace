@@ -60,7 +60,7 @@ private:
     double                  dt;
     unsigned int            nStepsPerTimePoint;
     unsigned int            nTimePoints;
-
+    double                  currentSimulationTime;
 
     HFIntegrator            integrator;            //<-Integrator 
 

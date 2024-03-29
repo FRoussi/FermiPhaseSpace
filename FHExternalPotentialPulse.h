@@ -11,11 +11,13 @@ public:
 
     void setTunnelingMatrix(const arma::cx_dmat* tunMat);
 
+    void updatePotential(double t);
+
 private :
 
     bool withTunnelingCoefficients;
 
-    void updatePotential(double t);
+
 
     double A0;
     double t0;

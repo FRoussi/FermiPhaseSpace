@@ -10,6 +10,13 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(const arma::dmat* sitePos, do
     phi = 0;
     polarization = polar;
     withTunnelingCoefficients = false;
+
+    if (A0 !=0)
+    {
+        nullPotential = false;
+        timeDependantPotential = true;
+    }
+
 }
 
 
@@ -22,6 +29,12 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(const arma::dmat* sitePos, do
     polarization = polar;
     phi = 0;
     withTunnelingCoefficients = false;
+
+    if (A0 !=0)
+    {
+        nullPotential = false;
+        timeDependantPotential = true;
+    }
 
     setTunnelingMatrix(tunMat);
 

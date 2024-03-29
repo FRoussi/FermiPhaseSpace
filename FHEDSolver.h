@@ -57,7 +57,10 @@ public:
 
     void initiateSolver();
 
+    double currentSimulationTime;
+
     void buildHamiltonian();
+    void updateHamiltonian(double time);
     //void numberOperator();
 
     void step(double d_t);
@@ -101,6 +104,7 @@ private:
     arma::sp_cx_dmat H_U;
     arma::sp_cx_dmat H_t;
     arma::sp_cx_dmat H_J;
+    arma::sp_cx_dmat H_externalPotential;
     arma::sp_cx_dmat H;
 
     //arma::cx_dmat Hdense;
@@ -124,6 +128,7 @@ private:
     void buildHamiltonian_U();                                                              //<- Build and store the operator "Interaction part of the Hamiltonian"
     void buildHamiltonian_tM();                                                              //<- Build and store the operator "Tunneling part of the Hamiltonian"
     void buildHamiltonian_J();                                                              //<- Build and store the operator "Exchange coupling part of the Hamiltonian"
+    void buildHamiltonian_ExternalPotential(double t);                                      //<- Build and store the operator "External Potential part of the Hamiltonian"
     void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
     arma::sp_cx_dmat numberOperatorSpinUp(unsigned int iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
     arma::sp_cx_dmat numberOperatorSpinDown(unsigned int iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".

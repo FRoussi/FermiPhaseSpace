@@ -4,6 +4,7 @@ FHEDSolver::FHEDSolver(FHSystem *fhS)
 {
     fhSystem = fhS;
     writeResults = false;
+    currentSimulationTime = 0;
 }
 
 void FHEDSolver::setResultFile(std::string wN, std::string fN)
@@ -200,6 +201,20 @@ void FHEDSolver::buildHamiltonian_J()
     }
 }
 
+ void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
+ {
+    H_externalPotential = arma::sp_cx_dmat(basisSize, basisSize);
+    for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
+    {
+        for (uint jSite = 0; jSite < fhSystem->getnSites(); jSite++)
+        {
+            if (fhSystem->getExternalPotential(iSite, jSite, time) != arma::cx_double(0,0))
+            {
+                H_externalPotential = H_externalPotential + fhSystem->getExternalPotential(iSite, jSite, time) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]);
+            }
+        }
+    }
+ }
 
 ///@brief Compute the system's Hamiltonian
 ///@return void
@@ -208,12 +223,21 @@ void FHEDSolver::buildHamiltonian()
     buildHamiltonian_U();
     buildHamiltonian_tM();
     buildHamiltonian_J();
+    buildHamiltonian_ExternalPotential(0);
 
-    H = H_U + H_t + H_J;
+    H = H_U + H_t + H_J + H_externalPotential;
 
     //printf("Test 2 - small system Hamiltonian : \n");
     //H.print_dense();
     //Hdense = arma::cx_dmat(H);
+}
+
+
+void FHEDSolver::updateHamiltonian(double time)
+{
+    buildHamiltonian_ExternalPotential(time);
+
+    H = H_U + H_t + H_J + H_externalPotential;
 }
 
 
@@ -420,13 +444,16 @@ std::complex<double> FHEDSolver::U_os_psil(uint phi_l)
 /// @return void
 void FHEDSolver::step(double d_t)
 {
-    //std::complex<double> alpha = std::complex<double>(0, -1);
-
-    //this->psi = expmv(this->dt, alpha * H, this->psi);
+    
+    if (fhSystem->isSystemTimeDependant())
+    {
+        updateHamiltonian(currentSimulationTime);
+    }
 
     std::complex<double> alpha = std::complex<double>(0, -d_t); // <- alpha = -i dt / h
 
     this->psi = expmv(alpha, H, this->psi);
+    currentSimulationTime +=dt;
 }
 
 

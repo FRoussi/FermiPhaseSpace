@@ -11,6 +11,7 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     extPot = fhSystem->getExtPotPointer();
     
     computeMomenta = false;
+
 }
 
 
@@ -42,6 +43,8 @@ void FHHFSolver::initiateSolver()
 
     FHSystem::FHInitialConditionType initCondition = fhSystem->getInitialCondition();
     integrator = HFIntegrator::RungeKutta4_38;
+
+    currentSimulationTime = 0;
 
     unsigned int nSites = fhSystem->getnSites();
 
@@ -236,8 +239,8 @@ void FHHFSolver::step_RK45(double dt)
 void FHHFSolver::derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt)
 {
 
-    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag());
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag());
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag()) + *extPot;
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag()) + *extPot;
 
     dnut_dt = - jj * ( nut * DeltaUp - DeltaUp * nut) ;
     dndt_dt = - jj * ( ndt * DeltaDo - DeltaDo * ndt) ;
@@ -265,6 +268,11 @@ void FHHFSolver::runSimulation( )
         Nd.slice(t) = Ndt;
 
 
+        if (fhSystem->isSystemTimeDependant())
+        {
+            extPot = fhSystem->getExtPotPointer(currentSimulationTime);
+        }
+
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
             if      (integrator==HFIntegrator::RungeKutta1)     step_RK1(dt/nStepsPerTimePoint);
@@ -272,6 +280,8 @@ void FHHFSolver::runSimulation( )
             else if (integrator==HFIntegrator::RungeKutta4)     step_RK4(dt/nStepsPerTimePoint);
             else if (integrator==HFIntegrator::RungeKutta4_38)  step_RK4_38(dt/nStepsPerTimePoint);
             else if (integrator==HFIntegrator::RungeKutta45)    step_RK45(dt/nStepsPerTimePoint);
+
+            currentSimulationTime += dt/nStepsPerTimePoint;
         }
  
     }
