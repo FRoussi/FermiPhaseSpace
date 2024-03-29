@@ -85,6 +85,6 @@ private:
     arma::dmat              V_1p;                   //<- rotation matrix for the momentum space
     arma::dmat              V_1p_1;                 //<- Its transpose
 
-    void derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
+    void derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, double currentTime, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
 
 };

@@ -89,6 +89,7 @@ public:
 
     // 
     bool                                isSystemTimeDependant();
+    bool                                isExternalPotentialNull();
 
     double                              computeDistance(uint iSite, uint jSite);
     double                              getDistance(uint iSite, uint jSite);
@@ -109,13 +110,14 @@ public:
     std::complex<double>                getExchangeCouplingEnergy(int iSite, int jSite);
     std::complex<double>                getExternalPotential(int iSite, double time);
     std::complex<double>                getExternalPotential(int iSite, int jSite, double time);
+    void                                updateExternalPotential(double time);
 
     const arma::cx_dmat*                getUMatrixPointer();
     const arma::cx_dmat*                getVMatrixPointer();
     const arma::cx_dmat*                getJMatrixPointer();
     const arma::cx_dmat*                gettMatrixPointer();
     const arma::cx_dmat*                getExtPotPointer();
-    const arma::cx_dmat*                getExtPotPointer(double t);
+
 
     std::string                         getName();
     std::string                         getFolder();

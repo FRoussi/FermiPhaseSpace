@@ -9,6 +9,8 @@
                 "-fdiagnostics-color=always",
                 "-g",              
                 "${workspaceFolder}/FHSystem.cpp",
+                "${workspaceFolder}/FHExternalPotential.cpp",
+                "${workspaceFolder}/FHExternalPotentialPulse.cpp",
                 "${workspaceFolder}/ResultWriter.cpp",
                 "${workspaceFolder}/FHEDSolver.cpp",
                 "${workspaceFolder}/FHfTWASolver.cpp",
@@ -36,6 +38,8 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g", 
+                "${workspaceFolder}/FHExternalPotential.cpp",
+                "${workspaceFolder}/FHExternalPotentialPulse.cpp",
                 "${workspaceFolder}/FHSystem.cpp",
                 "${workspaceFolder}/makeSitesSystem.cpp",
                 "-o",
