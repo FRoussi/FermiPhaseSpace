@@ -47,6 +47,38 @@ void FHExternalPotentialPulse::setTunnelingMatrix(const arma::cx_dmat* tunMat)
     tunnelingMatrix = tunMat;
 }
 
+
+arma::cx_dmat FHExternalPotentialPulse::getExternalPotential(double t)
+{
+
+    arma::cx_dmat extPotential = externalPotential;
+    arma::cx_dvec A_t = arma::cx_double(A0 * std::exp( - pow((t-t0)/td, 2)/2 ) * std::cos(w0 * (t-t0) + phi),0 )* polarization;
+
+    std::complex<double> zeroComp = std::complex<double>(0,0);
+
+    for (uint iSite; iSite < sitePositions->n_rows ; iSite++)
+    {
+        for (uint jSite; jSite < sitePositions->n_rows ; jSite++)
+        {
+            if (withTunnelingCoefficients)
+            {
+                if (tunnelingMatrix->at(iSite, jSite) != zeroComp)
+                {
+                    extPotential(iSite,jSite) = tunnelingMatrix->at(iSite, jSite) * std::exp(jj*arma::dot(A_t,(sitePositions->row(iSite) - sitePositions->row(jSite))));  
+                }
+                else
+                {
+                    extPotential(iSite,jSite) = zeroComp;
+                }
+
+            }
+        }
+    }
+
+    return extPotential;
+}
+
+
 void FHExternalPotentialPulse::updatePotential(double t)
 {
     arma::cx_dvec A_t = arma::cx_double(A0 * std::exp( - pow((t-t0)/td, 2)/2 ) * std::cos(w0 * (t-t0) + phi),0 )* polarization;

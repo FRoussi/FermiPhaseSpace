@@ -10,7 +10,7 @@ FHExternalPotential::FHExternalPotential()
 
 FHExternalPotential::FHExternalPotential(const arma::dmat* sitePos)
 {
-    uint nSites = sitePos->n_cols;
+    uint nSites = sitePos->n_rows;
 
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
@@ -67,6 +67,14 @@ arma::cx_double         FHExternalPotential::getExternalPotential(double t, uint
         updatePotential(t);
     }
     return externalPotential(iSite, jSite);
+}
+
+
+arma::cx_dmat        FHExternalPotential::getExternalPotential(double t)
+{
+    arma::cx_dmat extPot = externalPotential;
+
+    return extPot;
 }
 
 void                    FHExternalPotential::updatePotential(double t)

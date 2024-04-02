@@ -75,6 +75,21 @@ void FHGPSRSolver::derivative(double currentSimulationTime, const arma::cx_dmat&
     arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * rhod.diag());
     arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * rhou.diag());
 
+    if (!fhSystem->isExternalPotentialNull())
+    {
+        if (fhSystem->isSystemTimeDependant())
+        {
+            arma::cx_dmat externalPot = fhSystem->getExternalPotential(currentSimulationTime);
+            DeltaUp +=externalPot;
+            DeltaDo +=externalPot;
+        }
+        else
+        {
+            DeltaUp += *extPot;
+            DeltaDo += *extPot;
+        }
+    }
+
     drhou_dt = - jj * (rhou * DeltaUp - DeltaUp * rhou) ;
     drhod_dt = - jj * (rhod * DeltaDo - DeltaDo * rhod) ;
 }

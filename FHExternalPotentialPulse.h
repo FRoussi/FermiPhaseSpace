@@ -1,3 +1,5 @@
+#pragma once
+
 #include "FHExternalPotential.h"
 
 
@@ -16,7 +18,7 @@ public:
 
     void updatePotential(double t);
 
-private :
+protected :
 
     bool withTunnelingCoefficients;
 

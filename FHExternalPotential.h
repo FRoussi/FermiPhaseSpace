@@ -6,7 +6,7 @@
 #include <math.h>
 #include <armadillo>
 
-#include "FHSystem.h"
+//#include "FHSystem.h"
 
 
 
@@ -40,9 +40,7 @@ protected:
     const arma::dmat*       sitePositions;
 
 
-
     arma::cx_dmat           externalPotential;
-
     
 
 };

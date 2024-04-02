@@ -121,8 +121,10 @@ int main(int argc, char* argv[])
          
          printf("-- ED dynamic \n");
          FHEDSolver edSolver = FHEDSolver(&fhSystem);
+         std::cout<< "solver" << std::endl;
          edSolver.setResultFile(work + "_ED", workFolder);
          edSolver.initiateSolver();
+         std::cout<< "initiation" << std::endl;
          edSolver.setTimeParameters(edParameters[0], edParameters[1], edParameters[2]);
          edSolver.runSimulation();
 

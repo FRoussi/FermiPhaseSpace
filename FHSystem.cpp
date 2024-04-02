@@ -21,10 +21,9 @@ FHSystem::FHSystem()
 
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
-
-       
-
+    
 }
+
 
 FHSystem::FHSystem(int x)
 {
@@ -58,6 +57,7 @@ FHSystem::FHSystem(int x)
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
 
 }
+
 
 FHSystem::FHSystem(int x, int y, int z)
 {
@@ -102,6 +102,7 @@ FHSystem::FHSystem(int x, int y, int z)
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
 
 }
+
 
 FHSystem::FHSystem(std::string fileName, std::string folderName)
 {
@@ -558,7 +559,7 @@ bool                                        FHSystem::isSystemTimeDependant()
 }
 bool                                    FHSystem::isExternalPotentialNull()
 {
-    externalPotential.isThePotentialNull();
+    return externalPotential.isThePotentialNull();
 }
 
 double                                      FHSystem::computeDistance(uint iSite, uint jSite)
