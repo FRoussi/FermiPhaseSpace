@@ -29,8 +29,8 @@ public:
     void                        setfTWAParameters(unsigned int nTraj);
     void                        initiateSolver();
 
-    void                        step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
-    void                        step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
+    void                        step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
+    void                        step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
     void                        runSimulation();
 
     const arma::cx_double       jj = arma::cx_double(0,1);
@@ -92,7 +92,9 @@ private:
     arma::dmat                  V_1p_1;             //<- Its transpose
 
     arma::cx_dmat               halfDiag;           //<- Diagonal matrix of 0.5
-    void derivative(const arma::cx_dmat& nu, const arma::cx_dmat& nd, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
+    arma::cx_dvec               halfVec;            //<- Vector of 0.5
+
+    void derivative(double currentTime, const arma::cx_dmat& nu, const arma::cx_dmat& nd, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
 
 
 };

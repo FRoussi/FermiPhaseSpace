@@ -6,7 +6,7 @@
 #include <math.h>
 #include <armadillo>
 
-
+#include "FHSystem.h"
 
 
 
@@ -22,6 +22,7 @@ public:
     arma::cx_dmat*          getExternalPotentialPointer();
     arma::cx_double         getExternalPotential(uint iSite, uint jSite);
     arma::cx_double         getExternalPotential(double t, uint iSite, uint jSite);
+    arma::cx_dmat           getExternalPotential(double t);
 
     void                    updatePotential(double t);
 

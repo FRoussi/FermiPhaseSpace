@@ -110,6 +110,7 @@ public:
     std::complex<double>                getExchangeCouplingEnergy(int iSite, int jSite);
     std::complex<double>                getExternalPotential(int iSite, double time);
     std::complex<double>                getExternalPotential(int iSite, int jSite, double time);
+    arma::cx_dmat                       getExternalPotential(double time);
     void                                updateExternalPotential(double time);
 
     const arma::cx_dmat*                getUMatrixPointer();

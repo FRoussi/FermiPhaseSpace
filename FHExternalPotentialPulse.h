@@ -1,5 +1,3 @@
-#pragma once
-
 #include "FHExternalPotential.h"
 
 
@@ -10,6 +8,9 @@ public:
 
     FHExternalPotentialPulse(const arma::dmat* sitePos, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar);
     FHExternalPotentialPulse(const arma::dmat* sitePos, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat);
+
+
+    arma::cx_dmat getExternalPotential(double t);
 
     void setTunnelingMatrix(const arma::cx_dmat* tunMat);
 

@@ -678,6 +678,11 @@ std::complex<double>                        FHSystem::getExternalPotential(int i
     return externalPotential.getExternalPotential(t,i,j);
 }
 
+arma::cx_dmat                        FHSystem::getExternalPotential(double time)
+{
+    return externalPotential.getExternalPotential(time);
+}
+
 void                                FHSystem::updateExternalPotential(double time)
 {
     externalPotential.updatePotential(time);

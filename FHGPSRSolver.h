@@ -38,8 +38,8 @@ public:
     void                setGPSRParameters(unsigned int nTraj);
     void                initiateSolver();
 
-    void                step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
-    void                step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
+    void                step_Drift_RK2(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
+    void                step_Drift_RK4_38(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
 
     void                step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
     void                step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
@@ -52,10 +52,10 @@ public:
     arma::cx_dmat       sqrtDecomposition(arma::cx_dmat& D);
     arma::cx_dmat       sqrtDecomposition_fromA(arma::cx_dmat& A);
     
-    void                step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
+    void                step(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
     void                runSimulation();
 
-    const std::complex<double> jj = std::complex<double>(0,1);
+    const std::complex<double> jj       = std::complex<double>(0,1);
     const std::complex<double> sqrt_pjj = std::sqrt(jj);
     const std::complex<double> sqrt_mjj = std::sqrt(-jj);
 
@@ -95,16 +95,16 @@ private:
     arma::cx_dmat                   rhod0;
 
 // Link to Energy matrices
-    const arma::cx_dmat*    U;                     
-    const arma::cx_dmat*    tM;
-    const arma::cx_dmat*    J;
-    const arma::cx_dmat*    V;
-    const arma::cx_dmat*    extPot;
+    const arma::cx_dmat*            U;                     
+    const arma::cx_dmat*            tM;
+    const arma::cx_dmat*            J;
+    const arma::cx_dmat*            V;
+    const arma::cx_dmat*            extPot;
 
 // Usefull things :
-    arma::cx_dmat                     sqrtU;
+    arma::cx_dmat                   sqrtU;
 
-    void derivative(const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
+    void derivative(double currentSimulationTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
 
 
 

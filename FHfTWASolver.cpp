@@ -7,11 +7,15 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS)
 
     unsigned int nSites = fhSystem->getnSites();
     arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
-    arma::dmat haldDiagReal = arma::dmat(nSites, nSites, arma::fill::eye)/2;
-    halfDiag = arma::cx_dmat(haldDiagReal, zeroMat);
+
+    halfDiag = 0.5 * arma::cx_dmat(nSites, nSites, arma::fill::eye);
+    halfVec = 0.5 * arma::cx_dvec(nSites, arma::fill::eye);
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
+    J = fhSystem->getJMatrixPointer();
+    V = fhSystem->getVMatrixPointer();
+    extPot = fhSystem->getExtPotPointer();
 
 
     computeMomenta = false;
@@ -175,6 +179,8 @@ void FHfTWASolver::runSimulation( )
     #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
+
+        double currentSimulationTime = 0;
         arma::cx_dmat Nu_loc;
         arma::cx_dmat Nd_loc;
         arma::cx_dmat rhou;
@@ -237,8 +243,9 @@ void FHfTWASolver::runSimulation( )
             // We do 'nStepsPerTimePoint' simulation steps
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
             {
-                if (integrator==fTWAIntegrator::RungeKutta2) step_RK2(rhou, rhod, dt/nStepsPerTimePoint);                   //<- RK2 integrator chosen
-                else if (integrator==fTWAIntegrator::RungeKutta4_38) step_RK4_38(rhou, rhod, dt/nStepsPerTimePoint);        //<- RK4 integrator chosen
+                if (integrator==fTWAIntegrator::RungeKutta2) step_RK2(currentSimulationTime, rhou, rhod, dt/nStepsPerTimePoint);                   //<- RK2 integrator chosen
+                else if (integrator==fTWAIntegrator::RungeKutta4_38) step_RK4_38(currentSimulationTime, rhou, rhod, dt/nStepsPerTimePoint);        //<- RK4 integrator chosen
+                currentSimulationTime += dt/nStepsPerTimePoint;
             }
         }
 
@@ -335,19 +342,35 @@ void FHfTWASolver::runSimulation( )
 
 
 
+
 /// @brief Time derivative of the trajectories
 /// @param rhou the up-spin density matrix
 /// @param rhod the down-spin density matrix 
 /// @param drhou_dt the time derivative of the up-spin density matrix, to be updated
 /// @param drhod_dt the time derivative of the down-spin density matrix, to be updated 
 /// @return void
-void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
+void FHfTWASolver::derivative(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
 
-    arma::cx_dvec half = arma::cx_double(0.5,0) *  arma::cx_dvec(rhou.n_rows, arma::fill::ones); 
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * (rhod.diag() + halfVec)) ;
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * (rhou.diag() + halfVec)) ;
+    
+    
+    if (!fhSystem->isExternalPotentialNull())
+    {
+        if (fhSystem->isSystemTimeDependant())
+        {
+            arma::cx_dmat externalPot = fhSystem->getExternalPotential(currentSimulationTime);
+            DeltaUp +=externalPot;
+            DeltaDo +=externalPot;
+        }
+        else
+        {
+            DeltaUp += *extPot;
+            DeltaDo += *extPot;
+        }
+    }
 
-    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * (rhod.diag() + half));
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * (rhou.diag() + half));
 
     drhou_dt = - jj * ( rhou * DeltaUp - DeltaUp * rhou) ;
     drhod_dt = - jj * ( rhod * DeltaDo - DeltaDo * rhod) ;
@@ -359,17 +382,17 @@ void FHfTWASolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rh
 /// @param rhod the down-spin density matrix , to be updated
 /// @param dt the time step
 /// @return void
-void FHfTWASolver::step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
+void FHfTWASolver::step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
     arma::cx_dmat drhou_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat drhod_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
-    derivative(rhou, rhod, drhou_dt, drhod_dt);
+    derivative(currentSimulationTime, rhou, rhod, drhou_dt, drhod_dt);
 
     arma::cx_dmat rhou_mid = rhou + drhou_dt * dt/2 ;
     arma::cx_dmat rhod_mid = rhod + drhod_dt * dt/2 ;
 
-    derivative(rhou_mid, rhod_mid, drhou_dt, drhod_dt);
+    derivative(currentSimulationTime + dt/2, rhou_mid, rhod_mid, drhou_dt, drhod_dt);
 
     rhou = rhou + drhou_dt * dt ;
     rhod = rhod + drhod_dt * dt ;
@@ -380,7 +403,7 @@ void FHfTWASolver::step_RK2(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 /// @param rhod the down-spin density matrix , to be updated
 /// @param dt the time step
 /// @return void
-void FHfTWASolver::step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
+void FHfTWASolver::step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
    unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt_k1 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -396,19 +419,19 @@ void FHfTWASolver::step_RK4_38(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double 
     arma::cx_dmat drhod_dt_k4 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 // k1 :
-    derivative(rhou, rhod, drhou_dt_k1, drhod_dt_k1);
+    derivative(currentSimulationTime, rhou, rhod, drhou_dt_k1, drhod_dt_k1);
 // k2 : 1/3   |   1/3
     arma::cx_dmat rhou_k = rhou + drhou_dt_k1 * dt/3 ;
     arma::cx_dmat rhod_k = rhod + drhod_dt_k1 * dt/3 ;
-    derivative(rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
+    derivative(currentSimulationTime + dt/3, rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
 // k3 : 2/3   |   -1/3    1
     rhou_k = rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
     rhod_k = rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
-    derivative(rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
+    derivative(currentSimulationTime + 2*dt/3, rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
 // k4 : 1     |    1      -1     1
     rhou_k = rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
     rhod_k = rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
-    derivative(rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
+    derivative(currentSimulationTime + dt, rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
 
     rhou = rhou + (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4) * dt / 8;
     rhod = rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * dt / 8;

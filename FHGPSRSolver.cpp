@@ -9,6 +9,9 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
+    J = fhSystem->getJMatrixPointer();
+    V = fhSystem->getVMatrixPointer();
+    extPot = fhSystem->getExtPotPointer();
 
     sqrtU =  arma::sqrt(*U);
 
@@ -67,7 +70,7 @@ void FHGPSRSolver::initiateSolver()
 /// @param drhou_dt the time derivative of the up-spin density matrix, to be updated
 /// @param drhod_dt the time derivative of the down-spin density matrix, to be updated 
 /// @return void
-void FHGPSRSolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
+void FHGPSRSolver::derivative(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
     arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * rhod.diag());
     arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * rhou.diag());
@@ -84,18 +87,18 @@ void FHGPSRSolver::derivative(const arma::cx_dmat& rhou, const arma::cx_dmat& rh
 /// @param drhou_Drift the up-spin density matrix step, to be updated
 /// @param drhod_Drift the down-spin density matrix step, to be updated
 /// @return void
-void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
+void FHGPSRSolver::step_Drift_RK2( double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     arma::cx_dmat drhod_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
-    derivative(rhou, rhod, drhou_dt, drhod_dt);
+    derivative(currentSimulationTime, rhou, rhod, drhou_dt, drhod_dt);
 
     arma::cx_dmat rhou_mid = rhou + drhou_dt * dt/2 ;
     arma::cx_dmat rhod_mid = rhod + drhod_dt * dt/2 ;
 
-    derivative(rhou_mid, rhod_mid, drhou_dt, drhou_dt);
+    derivative(currentSimulationTime + dt/2, rhou_mid, rhod_mid, drhou_dt, drhou_dt);
 
     drhou_Drift = drhou_dt * dt;
     drhod_Drift = drhod_dt * dt;
@@ -109,7 +112,7 @@ void FHGPSRSolver::step_Drift_RK2(const arma::cx_dmat& rhou, const arma::cx_dmat
 /// @param drhou_Drift the up-spin density matrix step, to be updated
 /// @param drhod_Drift the down-spin density matrix step, to be updated
 /// @return void
-void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
+void FHGPSRSolver::step_Drift_RK4_38(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift)
 {
     unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt_k1 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -125,19 +128,19 @@ void FHGPSRSolver::step_Drift_RK4_38(const arma::cx_dmat& rhou, const arma::cx_d
     arma::cx_dmat drhod_dt_k4 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 // k1 :
-    derivative(rhou, rhod, drhou_dt_k1, drhod_dt_k1);
+    derivative(currentSimulationTime, rhou, rhod, drhou_dt_k1, drhod_dt_k1);
 // k2 : 1/3   |   1/3
     arma::cx_dmat rhou_k = rhou + drhou_dt_k1 * dt/3 ;
     arma::cx_dmat rhod_k = rhod + drhod_dt_k1 * dt/3 ;
-    derivative(rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
+    derivative(currentSimulationTime + dt/3, rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
 // k3 : 2/3   |   -1/3    1
     rhou_k = rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
     rhod_k = rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
-    derivative(rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
+    derivative(currentSimulationTime + 2*dt/3, rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
 // k4 : 1     |    1      -1     1
     rhou_k = rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
     rhod_k = rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
-    derivative(rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
+    derivative(currentSimulationTime + dt, rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
 
     drhou_Drift = (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4 ) * dt/8;
     drhod_Drift = (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4 ) * dt/8;
@@ -572,7 +575,7 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition_fromA(arma::cx_dmat& A)
 /// @param rhod the down-spin density matrix, to be updated 
 /// @param dt the time step
 /// @return void
-void FHGPSRSolver::step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
+void FHGPSRSolver::step(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
 {
 
     if (rhou.has_nan() || rhou.has_inf() || rhod.has_nan() || rhod.has_inf())
@@ -589,8 +592,8 @@ void FHGPSRSolver::step(arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
         arma::cx_dmat drhod_Diff = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
         // Step from the drift part : 
-        if (driftIntegrator == GPSRDriftIntegrator::RungeKutta2)            step_Drift_RK2(rhou, rhod, dt, drhou_Drift, drhod_Drift);
-        else if (driftIntegrator == GPSRDriftIntegrator::RungeKutta4_38)    step_Drift_RK4_38(rhou, rhod, dt, drhou_Drift, drhod_Drift);
+        if (driftIntegrator == GPSRDriftIntegrator::RungeKutta2)            step_Drift_RK2(currentSimulationTime, rhou, rhod, dt, drhou_Drift, drhod_Drift);
+        else if (driftIntegrator == GPSRDriftIntegrator::RungeKutta4_38)    step_Drift_RK4_38(currentSimulationTime, rhou, rhod, dt, drhou_Drift, drhod_Drift);
 
         // Step from the diffusion part : 
         double U0 = std::real( fhSystem->getInteractionEnergy(0,0));
@@ -633,6 +636,8 @@ void FHGPSRSolver::runSimulation( )
     arma::cx_drowvec EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
 
+    double simulationTime = 0;
+
     #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
@@ -656,7 +661,8 @@ void FHGPSRSolver::runSimulation( )
             
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s++)
             {
-                step(rhou, rhod, dt/nStepsPerTimePoint);
+                step(simulationTime, rhou, rhod, dt/nStepsPerTimePoint);
+                simulationTime += dt/nStepsPerTimePoint;
             }
         }
 unsigned int tt = std::floor(nTraj/10);
