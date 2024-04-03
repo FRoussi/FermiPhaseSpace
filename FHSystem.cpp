@@ -1041,11 +1041,20 @@ void                    FHSystem::setName(std::string name)
 }
 
 
-void                                FHSystem::makePotential_pulse()
+void                    FHSystem::makePotential_pulse()
 {
-    
+    double intensityA0 = 1;
+    double centert0 = 1.;
+    double widthtd = 0.1;
+    double frequencyw0 = 100;
+    arma::dvec polar = arma::dvec(sitePositions.n_cols, arma::fill::zeros);
+    polar(0) = 1/std::sqrt(2);
+    polar(1) = 1/std::sqrt(2);
+    externalPotential = FHExternalPotentialPulse(&sitePositions, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
 }
-void                                FHSystem::readPotential(std::string fileName, std::string folderName = "")
+
+
+void                    FHSystem::readPotential(std::string fileName, std::string folderName = "")
 {
     
 }
@@ -1053,7 +1062,7 @@ void                                FHSystem::readPotential(std::string fileName
 
 /// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
 /// @return void
-void FHSystem::computeMatrices()
+void                    FHSystem::computeMatrices()
 {
 
     unsigned int nSites = sitePositions.n_rows;
@@ -1080,7 +1089,7 @@ void FHSystem::computeMatrices()
 }
 
 
-void FHSystem::initiateEmptyEnergyMatrices()
+void                    FHSystem::initiateEmptyEnergyMatrices()
 {
     UInteractionType = FHOppositeSpinInteractionType::Unone;
     tunnelingType = FHTunnelingType::tHnone;
@@ -1099,7 +1108,7 @@ void FHSystem::initiateEmptyEnergyMatrices()
 
 /// @brief Write an ASCII version of the Fermi-Hubbard System
 /// @param folderName emplacement of the folder
-void     FHSystem::writeFHSystem(std::string folderName)
+void                    FHSystem::writeFHSystem(std::string folderName)
 {
     // Writing of everything on the file :
     std::string fileAdress =  systemName;
