@@ -19,8 +19,11 @@ FHSystem::FHSystem()
 
     initiateEmptyEnergyMatrices();
 
-    UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+    UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
+    tunnelingType           = FHTunnelingType::nearestNeighbourConstant;
+    VInteractionType        = FHSameSpinInteractionType::Vnone;
+    tJExCType               = tJExchangeCouplingType::tJJnone;
+    externalPotentialType   = ExternalPotentialType::ExtPotNone;
     
 }
 
@@ -55,6 +58,9 @@ FHSystem::FHSystem(int x)
 
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+        VInteractionType        = FHSameSpinInteractionType::Vnone;
+    tJExCType               = tJExchangeCouplingType::tJJnone;
+    externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
 }
 
@@ -100,6 +106,9 @@ FHSystem::FHSystem(int x, int y, int z)
     initiateEmptyEnergyMatrices();
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+        VInteractionType        = FHSameSpinInteractionType::Vnone;
+    tJExCType               = tJExchangeCouplingType::tJJnone;
+    externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
 }
 
@@ -144,6 +153,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     VInteractionType = FHSameSpinInteractionType::Vnone;
     tunnelingType = FHTunnelingType::tHnone;
     tJExCType = tJExchangeCouplingType::tJJnone;
+    externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
     WhatToRead whatToR =  WhatToRead::nothing;  
     int nDim = -1;
@@ -1056,7 +1066,38 @@ void                    FHSystem::makePotential_pulse()
 
 void                    FHSystem::readPotential(std::string fileName, std::string folderName = "")
 {
-    
+
+    std::string fileAdressName = fileName; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + fileName;
+    }
+
+
+
+    std::ifstream systFile (fileAdressName);
+    if (systFile.is_open())
+    {
+        std::string line;
+        std::getline(systFile, line);
+        
+            if (line == "#EXTERNALPOTENTIAL_NULL")                                                //<- ready to read the positions
+            {
+                externalPotentialType = ExternalPotentialType::ExtPotNone;
+            }
+            else if (line == "#EXTERNALPOTENTIAL_CONSTANT")   
+            {
+                externalPotentialType = ExternalPotentialType::ExtPotConstant;
+            }
+            else if (line == "#EXTERNALPOTENTIAL_PULSE")
+            {
+                externalPotentialType = ExternalPotentialType::ExtPotPulse;
+            } 
+    }
+    else
+    {
+        std::cout << "External Potential " << fileName << " cannot be read" << std::endl;
+    }
 }
 
 

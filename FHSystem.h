@@ -66,6 +66,12 @@ public:
         tunnelingGivenMatrix
     };
 
+    enum ExternalPotentialType {
+        ExtPotNone,
+        ExtPotConstant,
+        ExtPotPulse
+    };
+
 // CONSTRUCTORS
 
     FHSystem();
@@ -193,6 +199,7 @@ private:
     FHSameSpinInteractionType       VInteractionType;
     tJExchangeCouplingType          tJExCType;
     FHTunnelingType                 tunnelingType;
+    ExternalPotentialType           externalPotentialType;
 
     arma::cx_dmat                   UMatrix;
     arma::cx_dmat                   VMatrix;
