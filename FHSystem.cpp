@@ -1041,6 +1041,15 @@ void                    FHSystem::setName(std::string name)
 }
 
 
+void                                FHSystem::makePotential_pulse()
+{
+    
+}
+void                                FHSystem::readPotential(std::string fileName, std::string folderName = "")
+{
+    
+}
+
 
 /// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
 /// @return void

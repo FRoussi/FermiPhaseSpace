@@ -160,6 +160,10 @@ public:
     void                                writeFHSystem(std::string folderName = "");
 
 
+// External Potential
+    void                                makePotential_pulse();
+    void                                readPotential(std::string fileName, std::string folderName = "");
+
 // INITIATION
     void                                initiateEmptyEnergyMatrices();
 
