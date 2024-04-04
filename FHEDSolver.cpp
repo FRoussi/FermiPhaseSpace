@@ -231,6 +231,7 @@ void FHEDSolver::buildHamiltonian()
     buildHamiltonian_J();
 
     buildHamiltonian_ExternalPotential(0);
+    
     H = H_U + H_t + H_J + H_externalPotential;
 
     //printf("Test 2 - small system Hamiltonian : \n");

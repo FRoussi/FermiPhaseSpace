@@ -1064,7 +1064,7 @@ void                    FHSystem::makePotential_pulse()
 }
 
 
-void                    FHSystem::readPotential(std::string fileName, std::string folderName = "")
+void                    FHSystem::readPotential(std::string fileName, std::string folderName)
 {
 
     std::string fileAdressName = fileName; 
@@ -1079,20 +1079,41 @@ void                    FHSystem::readPotential(std::string fileName, std::strin
     if (systFile.is_open())
     {
         std::string line;
+        std::string coord;
         std::getline(systFile, line);
         
-            if (line == "#EXTERNALPOTENTIAL_NULL")                                                //<- ready to read the positions
+        if (line == "#EXTERNALPOTENTIAL_NULL")                                                //<- ready to read the positions
+        {
+            externalPotentialType = ExternalPotentialType::ExtPotNone;
+        }
+        else if (line == "#EXTERNALPOTENTIAL_CONSTANT")   
+        {
+            externalPotentialType = ExternalPotentialType::ExtPotConstant;
+        }
+        else if (line == "#EXTERNALPOTENTIAL_PULSE")
+        {
+            externalPotentialType = ExternalPotentialType::ExtPotPulse;
+            std::getline(systFile, line);
+            double intensityA0 = std::stod(line);
+            std::getline(systFile, line);
+            double centert0 = std::stod(line);
+            double widthtd = std::stod(line);
+            std::getline(systFile, line);
+            double frequencyw0 = std::stod(line);
+            std::getline(systFile, line);
+            arma::dvec polar = arma::dvec(sitePositions.n_cols, arma::fill::zeros);
+            std::stringstream ss(line);
+            uint coordCountor = 0;
+            while (std::getline(ss, coord, ' ')) 
             {
-                externalPotentialType = ExternalPotentialType::ExtPotNone;
+                if (coordCountor < sitePositions.n_cols)
+                {
+                    polar(coordCountor) = std::stod(coord);
+                }
+                coordCountor++;
             }
-            else if (line == "#EXTERNALPOTENTIAL_CONSTANT")   
-            {
-                externalPotentialType = ExternalPotentialType::ExtPotConstant;
-            }
-            else if (line == "#EXTERNALPOTENTIAL_PULSE")
-            {
-                externalPotentialType = ExternalPotentialType::ExtPotPulse;
-            } 
+            externalPotential = FHExternalPotentialPulse(&sitePositions, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
+        } 
     }
     else
     {
