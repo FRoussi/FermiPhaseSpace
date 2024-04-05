@@ -58,7 +58,7 @@ FHSystem::FHSystem(int x)
 
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
     tunnelingType = FHTunnelingType::nearestNeighbourConstant;
-        VInteractionType        = FHSameSpinInteractionType::Vnone;
+    VInteractionType        = FHSameSpinInteractionType::Vnone;
     tJExCType               = tJExchangeCouplingType::tJJnone;
     externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
