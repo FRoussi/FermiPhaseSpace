@@ -515,7 +515,8 @@ arma::cx_dmat FHGPSRSolver::sqrtDecomposition(arma::cx_dmat& D)
         }
         else if (diffusionIntegrator == GPSRDiffusionIntegrator::numerical_rsvd)
         {
-            successSVD = rsvd(P,s,Q,D1, 2*nSites);
+            //successSVD = rsvd(P,s,Q,D1, 2*nSites);
+            successSVD = rsvd(P,s,Q,D1, nSites + 5);
         }
 
         arma::dmat sqrtS = arma::diagmat(arma::sqrt(s)); 
