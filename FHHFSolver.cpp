@@ -244,8 +244,8 @@ void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const 
         fhSystem->updateExternalPotential(currentTime);
     }
 
-    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag()) + *extPot;
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag()) + *extPot;
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag()) + *extPot + arma::diagmat(*V * nut.diag());
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag()) + *extPot + arma::diagmat(*V * ndt.diag());
 
     dnut_dt = - jj * ( nut * DeltaUp - DeltaUp * nut) ;
     dndt_dt = - jj * ( ndt * DeltaDo - DeltaDo * ndt) ;

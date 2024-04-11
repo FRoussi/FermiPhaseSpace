@@ -82,11 +82,11 @@ private:
     arma::dmat                  sqrtNoiseVarianceMatrixU;
     arma::dmat                  sqrtNoiseVarianceMatrixD;
 
-    const arma::cx_dmat*    U;                     // Link to Energy matrices
-    const arma::cx_dmat*    tM;
-    const arma::cx_dmat*    J;
-    const arma::cx_dmat*    V;
-    const arma::cx_dmat*    extPot;
+    const arma::cx_dmat*        U;                     // Link to Energy matrices
+    const arma::cx_dmat*        tM;
+    const arma::cx_dmat*        J;
+    const arma::cx_dmat*        V;
+    const arma::cx_dmat*        extPot;
 
     arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
     arma::dmat                  V_1p_1;             //<- Its transpose
