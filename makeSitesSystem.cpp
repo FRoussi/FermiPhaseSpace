@@ -71,6 +71,94 @@ vector<vector<double>> makeGrid(unsigned int nx, unsigned int ny, unsigned int n
     return pos;
 }
 
+/// @brief Makes a Body-centered Cubic grid of sites 
+/// @param nx number of cubes in the X dimension
+/// @param ny number of cubes in the Y dimension
+/// @param nz number of cubes in the Z dimension
+/// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(3)
+/// @return a vector of site positions
+vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+{
+    
+    unsigned int nPoints = 2*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
+    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+
+
+    unsigned int counter = 0;
+    for (unsigned int z = 0; z <= nz; z++)
+    {
+        for (unsigned int y = 0; y <= ny; y++)
+        {
+            for (unsigned int x = 0; x <= nx; x++)
+            {
+                vector<double> newPos = {a*x, a*y, a*z};
+                pos[counter] = newPos;
+                counter +=1;
+                if ((x != nx) && (y != ny) && (z != nz) )
+                {
+                    newPos = {a*(x + 0.5), a*(y + 0.5), a*(z+0.5)};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+            }
+        }
+    }
+
+    pos.resize(counter);
+
+    return pos;
+}
+
+
+/// @brief Makes a Face-centered Cubic grid of sites 
+/// @param nx number of cubes in the X dimension
+/// @param ny number of cubes in the Y dimension
+/// @param nz number of cubes in the Z dimension
+/// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(2)
+/// @return a vector of site positions
+vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+{
+    
+    unsigned int nPoints = 4*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
+    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+
+    unsigned int counter = 0;
+    for (unsigned int z = 0; z <= nz; z++)
+    {
+        for (unsigned int y = 0; y <= ny; y++)
+        {
+            for (unsigned int x = 0; x <= nx; x++)
+            {
+                vector<double> newPos = {a*x, a*y, a*z};
+                pos[counter] = newPos;
+                counter +=1;
+                if ((y != ny) && (z != nz) )
+                {
+                    newPos = {a*x , a*(y + 0.5), a*(z + 0.5)};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+                if ((x != nx) && (z != nz) )
+                {
+                    newPos = {a*(x + 0.5) , a*y, a*(z + 0.5)};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+                if ((x != nx) && (y != ny) )
+                {
+                    newPos = {a*(x + 0.5) , a*(y + 0.5), a*z};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+            }
+        }
+    }
+
+    pos.resize(counter);
+
+    return pos;
+}
+
 
 
 
@@ -82,41 +170,41 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
 {
 
     double sqrt3 = std::sqrt(3);
-unsigned int nOfPoints = 0;
+    unsigned int nOfPoints = 0;
     vector<vector<double>> pos = vector<vector<double>>();
 
-vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a},
+    vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a},
                                 {-sqrt3/2 *a, 0.5 *a},
                                 {0   *a,      1   *a},
                                 {0   *a,      -1  *a},
                                 {sqrt3/2 *a, -0.5 *a},
                                 {sqrt3/2 *a, 0.5  *a}};
-vector<vector<double>> posNew = pos0;
+    vector<vector<double>> posNew = pos0;
 
 
-double iVec[2] = {sqrt3 *a, 0 *a};
-double jVec[2] = {sqrt3/2 *a, 1.5 *a};
+    double iVec[2] = {sqrt3 *a, 0 *a};
+    double jVec[2] = {sqrt3/2 *a, 1.5 *a};
 
-unsigned int basisIndex[2] = {0,0};
+    unsigned int basisIndex[2] = {0,0};
 
 
-for (unsigned int bv = 0; bv < nCombs; bv++)
-{
-    for (unsigned int p = 0; p<6; p++)
+    for (unsigned int bv = 0; bv < nCombs; bv++)
     {
-        posNew[p][0] = pos0[p][0] + iVec[0] * basisIndex[0] + jVec[0] * basisIndex[1];
-        posNew[p][1] = pos0[p][1] + iVec[1] * basisIndex[0] + jVec[1] * basisIndex[1];;
-    }
+        for (unsigned int p = 0; p<6; p++)
+        {
+            posNew[p][0] = pos0[p][0] + iVec[0] * basisIndex[0] + jVec[0] * basisIndex[1];
+            posNew[p][1] = pos0[p][1] + iVec[1] * basisIndex[0] + jVec[1] * basisIndex[1];;
+        }
     pos.insert(pos.end(), posNew.begin(), posNew.end());
 
     getNextIndex(basisIndex[0], basisIndex[1]);
 
     nOfPoints +=6;
 
-}
+    }
 
-// We remove the doublons :
-double samePointThreshold = 0.001 * a;
+    // We remove the doublons :
+    double samePointThreshold = 0.001 * a;
 
 
     for (unsigned int i1 = 0; i1< pos.size(); i1++)         //<- we look for all points equal to positions(i1)
