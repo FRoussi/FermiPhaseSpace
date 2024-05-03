@@ -522,6 +522,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
 
     readPositions(positionFile);
 
+    initiateEmptyEnergyMatrices();
+
+
 // Initial condition
     std::string initCond = rootSystem["IC"].asString();
     if (initCond == "spin_wave")
@@ -568,7 +571,32 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
     }
 
 // Tunneling Energy
-    std::string initCond = rootSystem["EnergyT"].asString();
+    std::string tunnEn = rootSystem["EnergyT"].asString();
+    if (tunnEn == "nearestNeighbors")
+    {
+        tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+        double tH = rootSystem["parametersT"].asDouble();
+    }
+
+// Opposite-spin interaction
+    std::string UEn = rootSystem["EnergyU"].asString();
+    if (UEn == "None")
+    {
+        UInteractionType = FHOppositeSpinInteractionType::Unone;
+    }
+    if (UEn == "onSite")
+    {
+       setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
+        double U0 = rootSystem["parametersU"].asDouble();                
+        setUInteraction_OnSite(U0);
+    }
+
+    // Same-spin Interaction
+    std::string VEn = rootSystem["EnergyV"].asString();
+    if (VEn == "nearestNeighbors")
+    {
+        VInteractionType = FHSameSpinInteractionType::Vnone;
+    }
 
 }
 
