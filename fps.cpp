@@ -4,11 +4,11 @@
 #include <armadillo>
 #include <omp.h>
 
-#include "FHSystem.h"
-#include "FHEDSolver.h"
-#include "FHHFSolver.h"
-#include "FHfTWASolver.h"
-#include "FHGPSRSolver.h"
+#include "include/FHSystem.h"
+#include "include/FHEDSolver.h"
+#include "include/FHHFSolver.h"
+#include "include/FHfTWASolver.h"
+#include "include/FHGPSRSolver.h"
 
 #define THREAD_NUM 4
 
