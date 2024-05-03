@@ -8,6 +8,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",              
+                "${workspaceFolder}/src/jsoncpp.cpp",
                 "${workspaceFolder}/src/FHSystem.cpp",
                 "${workspaceFolder}/src/FHExternalPotential.cpp",
                 "${workspaceFolder}/src/FHExternalPotentialPulse.cpp",
@@ -20,7 +21,7 @@
                 "-o",
                 "${fileDirname}/fps",
                 "-larmadillo",
-                "-fopenmp"
+                "-fopenmp",
             ],
             "options": {
                 "cwd": "${fileDirname}"

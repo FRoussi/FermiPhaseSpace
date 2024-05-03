@@ -508,6 +508,72 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
 
 
+FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
+{
+
+
+// Positions
+    std::string positionFile = rootSystem["positions"].asString();
+
+    if (folderName !="")
+    {
+        positionFile = folderName + "/" + positionFile;
+    }
+
+    readPositions(positionFile);
+
+// Initial condition
+    std::string initCond = rootSystem["IC"].asString();
+    if (initCond == "spin_wave")
+    {
+        initialCondition = FHInitialConditionType::spin_wave;
+        for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+        {
+            if (iPart%2 == 0)
+            {
+                initConditions_upSpin.push_back(true);
+                initConditions_downSpin.push_back(false);
+            }
+            else
+            {
+                initConditions_upSpin.push_back(false);
+                initConditions_downSpin.push_back(true);
+            }
+        }
+    }
+    else if (initCond == "charge_wave")
+    {
+        initialCondition = FHInitialConditionType::charge_wave;
+        for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+        {
+            if (iPart%2 == 0)
+            {
+                initConditions_upSpin.push_back(true);
+                initConditions_downSpin.push_back(true);
+            }
+            else
+            {
+                initConditions_upSpin.push_back(false);
+                initConditions_downSpin.push_back(false);
+            }
+        }
+    }
+    else if (initCond == "quenched")
+    {
+
+    }
+    else if (initCond == "givenInFile")
+    {
+
+    }
+
+// Tunneling Energy
+    std::string initCond = rootSystem["EnergyT"].asString();
+
+}
+
+
+
 /// @brief getter - number of sites
 /// @return number of sites
 unsigned int                                FHSystem::getnSites()
@@ -1063,6 +1129,59 @@ void                    FHSystem::makePotential_pulse()
     externalPotential = FHExternalPotentialPulse(&sitePositions, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
 }
 
+void                    FHSystem::readPositions(std::string xyzFile)
+{
+
+    uint nPart = 0;
+    std::vector<std::vector<double>> positions3;
+
+    std::vector<std::string> siteNames;
+    std::string line;
+    std::string coord;
+     
+
+    std::ifstream posFile(xyzFile);
+    if (posFile.is_open())
+    {
+        // Particle number :
+        std::getline(posFile, line);
+        nPart = std::stoi(line);
+        // Comment :
+        std::getline(posFile, line);
+        // Particles :
+        while(std::getline(posFile, line))
+        {
+            std::stringstream ss(line);
+            // Get the site name
+            std::getline(ss, coord, ' ');
+            siteNames.push_back(coord);
+            // Get its coordinates :
+            std::vector<double> coordinates;
+            while (std::getline (ss, coord, ' ')) 
+            {
+                double d = std::stod(coord);
+                coordinates.push_back(d);
+            }
+            coordinates.resize(3);
+            positions3.push_back(coordinates);
+
+        }
+
+        posFile.close();
+    }
+
+
+    if (nPart == positions3.size())
+    {
+        std::cout << "Position file read, " << nPart << " particles." << std::endl;
+        sitePositions = armaMatfromVectorsVector(positions3);
+    }
+    else
+    {
+        std::cout << "Problem in the xyz file : " << nPart << " particles announced, " << positions3.size() << " found." << std::endl;
+    }
+
+}
 
 void                    FHSystem::readPotential(std::string fileName, std::string folderName)
 {
@@ -1075,7 +1194,7 @@ void                    FHSystem::readPotential(std::string fileName, std::strin
 
 
 
-    std::ifstream systFile (fileAdressName);
+    std::ifstream systFile(fileAdressName);
     if (systFile.is_open())
     {
         std::string line;

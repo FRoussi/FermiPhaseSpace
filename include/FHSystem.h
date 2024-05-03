@@ -8,6 +8,7 @@
 
 #include "FHExternalPotential.h"
 #include "FHExternalPotentialPulse.h"
+#include "json/json.h"
 
 
 arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec);
@@ -25,6 +26,8 @@ class FHSystem
 public:
 
     enum FHInitialConditionType {
+        spin_wave,
+        charge_wave,
         givenDiagonal,
         givenDensityMatrix,
         givenWaveFunctionBasisVector,
@@ -78,6 +81,7 @@ public:
     FHSystem(int x);
     FHSystem(int x, int y, int z);
     FHSystem(std::string fileName, std::string folderName = "");
+    FHSystem(Json::Value rootSystem, std::string folderName = "");
 
 
 // GETTERS
@@ -169,6 +173,9 @@ public:
 // External Potential
     void                                makePotential_pulse();
     void                                readPotential(std::string fileName, std::string folderName = "");
+
+// XYZ file
+    void readPositions(std::string xyzFile);
 
 // INITIATION
     void                                initiateEmptyEnergyMatrices();

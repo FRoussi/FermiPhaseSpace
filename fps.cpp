@@ -9,6 +9,7 @@
 #include "include/FHHFSolver.h"
 #include "include/FHfTWASolver.h"
 #include "include/FHGPSRSolver.h"
+#include "include/json/json.h"
 
 #define THREAD_NUM 4
 
@@ -28,7 +29,7 @@ int main(int argc, char* argv[])
    omp_set_num_threads(THREAD_NUM);
 
 
-   std::string work = "2Sites";
+   std::string work = "2Sites.json";
     if (argc > 1)
     {
         work = std::string(argv[1]);
@@ -46,6 +47,9 @@ int main(int argc, char* argv[])
    };
 
 
+
+
+
    std::string workFolder = "systemsFolder";
    std::string instructionsFileName = work;
    std::stringstream instructionsStream("");
@@ -58,6 +62,23 @@ int main(int argc, char* argv[])
    std::string line, word;
    std::stringstream lineStream;
 
+   Json::Value rootSim;
+   Json::CharReaderBuilder builder;
+   builder["collectComments"] = true;
+   JSONCPP_STRING errs;
+   if(!Json::parseFromStream(builder, instructionsFile, &rootSim, &errs))
+   {
+      std::cout << errs << std::endl;
+   }
+
+
+   std::cout << rootSim << std::endl;
+
+
+
+
+
+/*
    while(std::getline(instructionsFile, line))
    {
       instructionsStream << line << "\n";
@@ -174,6 +195,8 @@ int main(int argc, char* argv[])
          gpsrSolver.runSimulation();
       }
    }
+
+*/
 
    std::cout <<"Final entry. Looks good." << " \n";
 
