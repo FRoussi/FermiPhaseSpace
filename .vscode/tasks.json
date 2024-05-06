@@ -39,6 +39,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g", 
+                "${workspaceFolder}/src/jsoncpp.cpp",
                 "${workspaceFolder}/src/FHExternalPotential.cpp",
                 "${workspaceFolder}/src/FHExternalPotentialPulse.cpp",
                 "${workspaceFolder}/src/FHSystem.cpp",
@@ -56,6 +57,5 @@
             "group":"build",
             "detail": "Compile the system maker: /usr/bin/g++."
         }
-        
     ]
 }

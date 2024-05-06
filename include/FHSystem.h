@@ -26,8 +26,8 @@ class FHSystem
 public:
 
     enum FHInitialConditionType {
-        spin_wave,
-        charge_wave,
+        spinWave,
+        chargeWave,
         givenDiagonal,
         givenDensityMatrix,
         givenWaveFunctionBasisVector,
@@ -56,15 +56,15 @@ public:
 
     enum tJExchangeCouplingType {
         tJJnone,
-        tJNearestNeighbourConstant,
+        tJNearestNeighboursConstant,
         tJGivenMatrix,
         tJBySiteType
     };
 
     enum FHTunnelingType {
         tHnone,
-        nearestNeighbourConstant,
-        nearestNeighbourBySiteType,
+        nearestNeighboursConstant,
+        nearestNeighboursBySiteType,
         tunnelingDistanceFunction,
         tunnelingGivenMatrix
     };
@@ -139,14 +139,16 @@ public:
 
 // SETTERS      
 
-    void                                setPositions(const arma::dmat& positions);
+    void                                setPositions(const arma::dmat& positions, std::string sitesName = "C");
+    void                                setPositions(const arma::dmat& positions, std::vector<std::string> siteNames);
 
     bool                                setSiteTypes(arma::uvec sTypes);
     void                                setSiteTypeNames(std::vector<std::string> typeNames);  
 
     void                                setSymmetry(arma::dmat symmetryVectors); 
 
-    void                                setInitialConditions(const std::vector<std::vector<unsigned int>>& initConditions);
+    void                                setInitialConditionsDiagonal(const std::vector<std::vector<unsigned int>>& initConditions);
+    void                                setInitialConditions(FHInitialConditionType initialCondType);
     void                                setInitialConditions(FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
 
     void                                setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
@@ -167,7 +169,10 @@ public:
 
     void                                setName(std::string name);
 
-    void                                writeFHSystem(std::string folderName = "");
+
+
+    Json::Value                         writeFHSystemJson();
+    void                                writeFHSystemBis(std::string folderName = "");
 
 
 // External Potential
@@ -175,7 +180,8 @@ public:
     void                                readPotential(std::string fileName, std::string folderName = "");
 
 // XYZ file
-    void readPositions(std::string xyzFile);
+    void                readPositions(std::string xyzFile);
+    void                writePositions(std::string xyzFile, std::string folderName = "");
 
 // INITIATION
     void                                initiateEmptyEnergyMatrices();
@@ -189,6 +195,7 @@ private:
     arma::dmat                      sitePositions;
     arma::uvec                      siteTypes;
     std::vector<std::string>        siteTypeNames;
+    std::vector<std::string>        siteNames;
 
 // SYMMETRIES
     arma::dmat                      symmetryVectors;

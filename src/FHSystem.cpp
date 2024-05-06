@@ -14,13 +14,13 @@ FHSystem::FHSystem()
     initCond[1] = initCond_down;
 
     setPositions(pos);
-    setInitialConditions(initCond);
+    setInitialConditionsDiagonal(initCond);
     computeMatrices();
 
     initiateEmptyEnergyMatrices();
 
     UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType           = FHTunnelingType::nearestNeighbourConstant;
+    tunnelingType           = FHTunnelingType::nearestNeighboursConstant;
     VInteractionType        = FHSameSpinInteractionType::Vnone;
     tJExCType               = tJExchangeCouplingType::tJJnone;
     externalPotentialType   = ExternalPotentialType::ExtPotNone;
@@ -51,13 +51,13 @@ FHSystem::FHSystem(int x)
 
 
     setPositions(pos);
-    setInitialConditions(initCond);
+    setInitialConditionsDiagonal(initCond);
     computeMatrices();
 
     initiateEmptyEnergyMatrices();
 
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+    tunnelingType = FHTunnelingType::nearestNeighboursConstant;
     VInteractionType        = FHSameSpinInteractionType::Vnone;
     tJExCType               = tJExchangeCouplingType::tJJnone;
     externalPotentialType   = ExternalPotentialType::ExtPotNone;
@@ -99,13 +99,13 @@ FHSystem::FHSystem(int x, int y, int z)
 
     setPositions(pos);
        externalPotential = FHExternalPotential(&pos);
-    setInitialConditions(initCond);
+    setInitialConditionsDiagonal(initCond);
     computeMatrices();
 
 
     initiateEmptyEnergyMatrices();
     UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+    tunnelingType = FHTunnelingType::nearestNeighboursConstant;
         VInteractionType        = FHSameSpinInteractionType::Vnone;
     tJExCType               = tJExchangeCouplingType::tJJnone;
     externalPotentialType   = ExternalPotentialType::ExtPotNone;
@@ -251,7 +251,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
            else if (line == "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS")
            {
                 whatToR = WhatToRead::energyParameter_tH_NNConstant;
-                tunnelingType = FHTunnelingType::nearestNeighbourConstant; 
+                tunnelingType = FHTunnelingType::nearestNeighboursConstant; 
            }
            else if (line == "#ENERGYPARAMETER_tH_GIVENMATRIX")
            {
@@ -485,7 +485,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
             initCond[0] = initCond_up;
             initCond[1] = initCond_down;
 
-            setInitialConditions(initCond);
+            setInitialConditionsDiagonal(initCond);
     }
     else if (initialCondition == FHInitialConditionType::quenched)
     {
@@ -508,12 +508,12 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
 
 
-FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
+FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 {
 
 
 // Positions
-    std::string positionFile = rootSystem["positions"].asString();
+    std::string positionFile = rootSystem.get("positions", "").asString();
 
     if (folderName !="")
     {
@@ -526,10 +526,10 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
 
 
 // Initial condition
-    std::string initCond = rootSystem["IC"].asString();
-    if (initCond == "spin_wave")
+    std::string initCond = rootSystem.get("IC", "spinWave").asString();
+    if (initCond == "spinWave")
     {
-        initialCondition = FHInitialConditionType::spin_wave;
+        initialCondition = FHInitialConditionType::spinWave;
         for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
         {
             if (iPart%2 == 0)
@@ -544,9 +544,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
             }
         }
     }
-    else if (initCond == "charge_wave")
+    else if (initCond == "chargeWave")
     {
-        initialCondition = FHInitialConditionType::charge_wave;
+        initialCondition = FHInitialConditionType::chargeWave;
         for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
         {
             if (iPart%2 == 0)
@@ -574,7 +574,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName = "")
     std::string tunnEn = rootSystem["EnergyT"].asString();
     if (tunnEn == "nearestNeighbors")
     {
-        tunnelingType = FHTunnelingType::nearestNeighbourConstant;
+        tunnelingType = FHTunnelingType::nearestNeighboursConstant;
         double tH = rootSystem["parametersT"].asDouble();
     }
 
@@ -835,9 +835,17 @@ std::string                                 FHSystem::getFolder()
 
 // SETTERS
 
-void                    FHSystem::setPositions(const arma::dmat& positions)
+void                    FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)
 {
     sitePositions = positions;
+    siteNames = std::vector<std::string>(sitePositions.n_rows, sitesName);
+    computeMatrices();
+}
+
+void                    FHSystem::setPositions(const arma::dmat& positions, std::vector<std::string> sN)
+{
+    sitePositions = positions;
+    siteNames = sN;
     computeMatrices();
 }
 
@@ -875,7 +883,7 @@ void                    FHSystem::setSymmetry(arma::dmat symVectors)
 /// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
 /// @param diagonalInitConditions vectors of sites on which there is a up-spin/down-spin particle
 /// @return void
-void FHSystem::setInitialConditions(const std::vector<std::vector<unsigned int>>& diagonalInitConditions )
+void FHSystem::setInitialConditionsDiagonal(const std::vector<std::vector<unsigned int>>& diagonalInitConditions )
 {
 
     initialCondition =  FHSystem::FHInitialConditionType::givenDiagonal;
@@ -883,8 +891,8 @@ void FHSystem::setInitialConditions(const std::vector<std::vector<unsigned int>>
     upSpinParticleNumber = diagonalInitConditions[0].size();
     downSpinParticleNumber = diagonalInitConditions[1].size();
 
-    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows);
-    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows);
+    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
+    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
 
 
 
@@ -899,6 +907,58 @@ void FHSystem::setInitialConditions(const std::vector<std::vector<unsigned int>>
 
 }
 
+
+/// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
+/// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
+/// @return void
+void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
+{
+
+    initialCondition = initCondType;
+
+    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
+    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
+    upSpinParticleNumber = 0;
+    downSpinParticleNumber = 0 ; 
+
+    if (initialCondition == FHInitialConditionType::spinWave)
+    {
+        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite ++)
+        {
+            if (iSite%2 == 0)
+            {
+                initConditions_upSpin[iSite] = true;
+                upSpinParticleNumber++;
+            }
+            else
+            {
+                initConditions_downSpin[iSite] = true;
+                downSpinParticleNumber++;
+            }
+
+        }
+    }
+    else if (initialCondition == FHInitialConditionType::spinWave)
+    {
+        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite ++)
+        {
+            if (iSite%2 == 0)
+            {
+                initConditions_upSpin[iSite] = true;
+                upSpinParticleNumber++;
+                initConditions_downSpin[iSite] = true;
+                downSpinParticleNumber++;
+            }
+        }
+    }
+    else
+    {
+        upSpinParticleNumber = sitePositions.n_rows/2;
+        downSpinParticleNumber = sitePositions.n_rows/2;
+    }
+
+}
+
 /// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
 /// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
 /// @param partNumner vector of the numbers of up-spin, down-spin particle
@@ -907,9 +967,34 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
 {
 
     initialCondition = initCondType;
+    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
+    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
 
     upSpinParticleNumber = partNumber[0];
     downSpinParticleNumber = partNumber[1];
+    if (initialCondition == FHInitialConditionType::spinWave)
+    {
+        for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, upSpinParticleNumber); iSite +=2)
+        {
+                initConditions_upSpin[iSite] = true;
+        }
+        for (uint iSite = 1; iSite < std::min((uint)sitePositions.n_rows, downSpinParticleNumber); iSite +=2)
+        {
+                initConditions_downSpin[iSite] = true;
+        }
+
+    }
+    else if (initialCondition == FHInitialConditionType::spinWave)
+    {
+        for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, upSpinParticleNumber); iSite +=2)
+        {
+                initConditions_upSpin[iSite] = true;
+        }
+        for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, downSpinParticleNumber); iSite +=2)
+        {
+                initConditions_downSpin[iSite] = true;
+        }
+    }
 
 }
 
@@ -1163,7 +1248,7 @@ void                    FHSystem::readPositions(std::string xyzFile)
     uint nPart = 0;
     std::vector<std::vector<double>> positions3;
 
-    std::vector<std::string> siteNames;
+    siteNames = std::vector<std::string>();
     std::string line;
     std::string coord;
      
@@ -1208,6 +1293,38 @@ void                    FHSystem::readPositions(std::string xyzFile)
     {
         std::cout << "Problem in the xyz file : " << nPart << " particles announced, " << positions3.size() << " found." << std::endl;
     }
+
+}
+
+
+
+void                 FHSystem::writePositions(std::string xyzFile, std::string folderName)
+{
+        // Writing of everything on the file :
+    std::string fileAdress =  xyzFile + ".xyz";
+
+    std::cout << "Writing positions in: "<< fileAdress << std::endl;
+    if (folderName != "")
+    {
+        fileAdress = folderName + "/" + fileAdress;
+    }
+
+
+   std::ofstream streamPosition(fileAdress);
+    if (streamPosition.is_open())
+    {   
+        streamPosition << sitePositions.n_rows << std::endl;
+        streamPosition << std::endl;
+
+        for (uint iSite = 0; iSite < sitePositions.n_rows ; iSite ++)
+        {
+            streamPosition << siteNames[iSite] << "\t" << sitePositions(iSite, 0) << "\t" << sitePositions(iSite, 1) << "\t" << sitePositions(iSite, 2) << std::endl;
+        }
+
+
+        streamPosition.close();
+    }
+
 
 }
 
@@ -1315,9 +1432,103 @@ void                    FHSystem::initiateEmptyEnergyMatrices()
 }
 
 
+
+/// @brief Write a JSON version of the Fermi-Hubbard System
+/// @param folderName emplacement of the folder
+Json::Value                    FHSystem::writeFHSystemJson()
+{
+
+
+    Json::Value systemRoot;
+//Positions
+    systemRoot["positions"] = systemName + ".xyz";
+
+//Initial condition
+    switch (initialCondition)
+    {
+    case FHInitialConditionType::spinWave:
+        systemRoot["IC"] = "spinWave"; 
+        break;
+    case FHInitialConditionType::chargeWave:
+        systemRoot["IC"] = "chargeWave"; 
+        break;
+    case FHInitialConditionType::quenched:
+        systemRoot["IC"] = "quenched"; 
+        break;
+    case FHInitialConditionType::groundState:
+        systemRoot["IC"] = "groundState"; 
+        break;
+    case FHInitialConditionType::givenDiagonal:
+        systemRoot["IC"] = "givenDiagonal"; 
+        break;
+    default:
+        break;
+    } 
+
+// Energy
+    switch (tunnelingType)
+    {
+    case FHTunnelingType::tHnone:
+        systemRoot["EnergyT"] = "None";
+        break;   
+    case FHTunnelingType::nearestNeighboursConstant:
+    {
+        systemRoot["EnergyT"] = "nearestNeighbours";
+        arma::uvec q1 = find(tMatrix,1);
+        if (q1.n_rows !=0)
+        {
+            double th = std::real( tMatrix(q1(0)) );
+            systemRoot["parametersT"] = th;
+        }
+        else
+        {
+            systemRoot["parametersT"] = 0;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    switch (UInteractionType)
+    {
+    case FHOppositeSpinInteractionType::Unone:
+        systemRoot["EnergyU"] = "None";
+        break;   
+    case FHOppositeSpinInteractionType::UonSiteConstant:
+    {
+        systemRoot["EnergyU"] = "onSite";
+        systemRoot["parametersU"] = std::real( UMatrix(0,0));
+        break;
+    }
+    default:
+        break;
+    }
+
+    switch (VInteractionType)
+    {
+    case FHSameSpinInteractionType::Vnone:
+        systemRoot["EnergyV"] = "None";
+        break;   
+    case FHSameSpinInteractionType::VonSiteConstant:
+    {
+        systemRoot["EnergyV"] = "onSite";
+        systemRoot["parametersV"] = std::real( VMatrix(0,0));
+        break;
+    }
+    default:
+        break;
+    }
+
+
+
+    return systemRoot;
+}
+
+
 /// @brief Write an ASCII version of the Fermi-Hubbard System
 /// @param folderName emplacement of the folder
-void                    FHSystem::writeFHSystem(std::string folderName)
+void                    FHSystem::writeFHSystemBis(std::string folderName)
 {
     // Writing of everything on the file :
     std::string fileAdress =  systemName;
@@ -1433,7 +1644,7 @@ void                    FHSystem::writeFHSystem(std::string folderName)
             {
                 break;
             }
-            case FHTunnelingType::nearestNeighbourConstant:
+            case FHTunnelingType::nearestNeighboursConstant:
             {
                 streamSystem << "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS" << std::endl;
                 arma::uvec q1 = find(tMatrix,1);

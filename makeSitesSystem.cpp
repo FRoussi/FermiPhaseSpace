@@ -8,6 +8,8 @@
 
 #include "include/FHSystem.h"
 
+#include "include/json/json.h"
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -263,7 +265,6 @@ int main(int argc, char* argv[])
 {
 
 
-
    cout << "Writing a new system." << endl;
 
 
@@ -298,7 +299,7 @@ int main(int argc, char* argv[])
     IC initC = IC::spinWave;                            //<- default initial condition
 
     NRJ en = NRJ::HF;
-    vector<double> energyParam = {1,1};                 //<- default energy parameters
+    vector<double> energyParam = {-1,1};                 //<- default energy parameters
 
 
 
@@ -369,58 +370,80 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
     }
 
 
-// Computation of the Initial condition
-vector<unsigned int> IC_UP = vector<unsigned int>();
-vector<unsigned int> IC_DOWN = vector<unsigned int>();
-    switch (initC)
-    {
-    case IC::spinWave :
-        for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
-        {
-            IC_UP.push_back(uppos);
-        }
-        for (unsigned int downpos = 1; downpos < pos.size(); downpos+=2)
-        {
-            IC_DOWN.push_back(downpos);
-        }
-        break;
-    case IC::chargeWave :
-        for (unsigned int uppos = 0; uppos < pos.size(); uppos+=2)
-        {
-            IC_UP.push_back(uppos);
-        }
-        for (unsigned int downpos = 0; downpos < pos.size(); downpos+=2)
-        {
-            IC_DOWN.push_back(downpos);
-        }
-    }
+
 
 
 // MAKING OF THE FHSystem
     arma::dmat sitePosition = armaMatfromVectorsVector(pos);
     //cout << "Position : " << endl << sitePosition << endl; 
 
-    std::vector<std::vector<uint>> IC = {IC_UP, IC_DOWN};
 
     FHSystem newSystem = FHSystem();
     newSystem.setName(fileName);                                                                        //<- Name
     newSystem.setPositions(sitePosition);                                                               //<- Position
-    newSystem.setTunnelingType(FHSystem::FHTunnelingType::nearestNeighbourConstant);                    //<- Energy
+    newSystem.setTunnelingType(FHSystem::FHTunnelingType::nearestNeighboursConstant);                    //<- Energy
     newSystem.setTunneling_BetweenNeighbours(energyParam[0]);
     newSystem.setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType::UonSiteConstant);
     newSystem.setUInteraction_OnSite(energyParam[1]);
     
-
-    newSystem.setInitialConditions(IC);                                                                 //<- Initial conditions
+    switch (initC)
+    {
+    case IC::spinWave:
+        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);
+        break;
+    case IC::chargeWave:
+        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::chargeWave);
+        break;
+    case IC::quenched:
+        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::quenched);
+        break; 
+    default:
+        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);
+        break;
+    }
+                                                       //<- Initial conditions
   
 
     //cout << "file folder : " <<  fileFolder << endl; 
 
-    newSystem.writeFHSystem(fileFolder);
 
 
-    cout << fileName << " system created with " << pos.size() << " sites and " << IC_UP.size() + IC_DOWN.size() << " particles." << endl;  
+    Json::Value simRoot;
+    simRoot["sim_name"] = fileName;
+    simRoot["method"] = "HF";
+
+    Json::Value param;
+    param["t_max"] = 2.;
+    param["dt"] = 0.01;
+    param["stepsPerTimePoints"] = 1;
+    simRoot["parameters"] = param;
+
+    simRoot["system"] = newSystem.writeFHSystemJson();
+
+
+
+    std::cout << simRoot << std::endl;
+
+    std::string  fileAdress = fileFolder + "/" + fileName;
+    std::string fileAdressJSON = fileAdress + ".json";
+
+    std::ofstream streamSystem(fileAdressJSON);
+    if (streamSystem.is_open())
+    {
+        streamSystem << simRoot ;
+        streamSystem.close();
+    }
+
+   std::cout << "In system, file adress : "<< fileAdress << std::endl;
+
+    newSystem.writeFHSystemBis(fileFolder);
+
+
+
+
+    cout << fileName << " system created with " << pos.size() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
 
 
     return 0;
 }
+
