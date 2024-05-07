@@ -9,6 +9,10 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     J = fhSystem->getJMatrixPointer();
     V = fhSystem->getVMatrixPointer();
     extPot = fhSystem->getExtPotPointer();
+
+std::cout << "E matrices" << std::endl;
+    tM->print();
+    U->print();
     
     computeMomenta = false;
 
@@ -48,8 +52,10 @@ void FHHFSolver::initiateSolver()
 
     unsigned int nSites = fhSystem->getnSites();
 
-    if (initCondition == FHSystem::FHInitialConditionType::givenDiagonal)
+
+    if ((initCondition == FHSystem::FHInitialConditionType::givenDiagonal) || (initCondition == FHSystem::FHInitialConditionType::spinWave) || (initCondition == FHSystem::FHInitialConditionType::chargeWave))
     {
+
         Nu0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
         Nd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
         for (unsigned int it= 0; it < nSites; it ++)
@@ -60,9 +66,10 @@ void FHHFSolver::initiateSolver()
 
         nPartU = std::floor(std::real(arma::accu(Nu0)));
         nPartD = std::floor(std::real(arma::accu(Nd0)));
-        printf("Test 4 - Initial Density matrix : \n");
+        printf("Test 4 - Initial Density matrices : \n");
 
         Nu0.print();
+        Nd0.print();
     }
     else if (initCondition == FHSystem::FHInitialConditionType::quenched)
     {

@@ -515,12 +515,17 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 // Positions
     std::string positionFile = rootSystem.get("positions", "").asString();
 
+       
+
     if (folderName !="")
     {
         positionFile = folderName + "/" + positionFile;
     }
 
+    std::cout << positionFile << std::endl;
     readPositions(positionFile);
+
+    std::cout << sitePositions << std::endl;
 
     initiateEmptyEnergyMatrices();
 
@@ -572,10 +577,13 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 
 // Tunneling Energy
     std::string tunnEn = rootSystem["EnergyT"].asString();
-    if (tunnEn == "nearestNeighbors")
+    if (tunnEn == "nearestNeighbours")
     {
+        std::cout << "Hello tunn "<< std::endl;
         tunnelingType = FHTunnelingType::nearestNeighboursConstant;
-        double tH = rootSystem["parametersT"].asDouble();
+        double tH = rootSystem.get("parametersT", -7.).asDouble();
+        std::cout << "Hello tunn tH =" << tH << std::endl;
+        setTunneling_BetweenNeighbours(tH);
     }
 
 // Opposite-spin interaction
@@ -587,13 +595,13 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
     if (UEn == "onSite")
     {
        setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
-        double U0 = rootSystem["parametersU"].asDouble();                
+        double U0 = rootSystem.get("parametersU", 1.).asDouble();                
         setUInteraction_OnSite(U0);
     }
 
     // Same-spin Interaction
     std::string VEn = rootSystem["EnergyV"].asString();
-    if (VEn == "nearestNeighbors")
+    if (VEn == "None")
     {
         VInteractionType = FHSameSpinInteractionType::Vnone;
     }
@@ -1110,6 +1118,7 @@ void                    FHSystem::setUInteraction_BySiteType(arma::dvec& Us, boo
 /// @param tH1 tunneling interaction energy
 void                    FHSystem::setTunneling_BetweenNeighbours(double tH1, bool add)
 {
+    std::cout << "Tunn function, nrow=" << sitePositions.n_rows << " ncol=" << sitePositions.n_cols << std::endl;
     if (!add)
     {
         tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
@@ -1258,6 +1267,7 @@ void                    FHSystem::readPositions(std::string xyzFile)
     {
         // Particle number :
         std::getline(posFile, line);
+
         nPart = std::stoi(line);
         // Comment :
         std::getline(posFile, line);
@@ -1266,28 +1276,31 @@ void                    FHSystem::readPositions(std::string xyzFile)
         {
             std::stringstream ss(line);
             // Get the site name
-            std::getline(ss, coord, ' ');
+            ss >> coord;
             siteNames.push_back(coord);
             // Get its coordinates :
             std::vector<double> coordinates;
-            while (std::getline (ss, coord, ' ')) 
+            while (ss >> coord)//(std::getline (ss, coord, '\t')) 
             {
                 double d = std::stod(coord);
                 coordinates.push_back(d);
-            }
+            }                      
             coordinates.resize(3);
             positions3.push_back(coordinates);
-
         }
 
         posFile.close();
+    }
+    else
+    {
+        std::cout << "Problem with the particle file " << xyzFile << std::endl;
     }
 
 
     if (nPart == positions3.size())
     {
         std::cout << "Position file read, " << nPart << " particles." << std::endl;
-        sitePositions = armaMatfromVectorsVector(positions3);
+        setPositions(armaMatfromVectorsVector(positions3));
     }
     else
     {
@@ -1314,11 +1327,11 @@ void                 FHSystem::writePositions(std::string xyzFile, std::string f
     if (streamPosition.is_open())
     {   
         streamPosition << sitePositions.n_rows << std::endl;
-        streamPosition << std::endl;
+    
 
         for (uint iSite = 0; iSite < sitePositions.n_rows ; iSite ++)
         {
-            streamPosition << siteNames[iSite] << "\t" << sitePositions(iSite, 0) << "\t" << sitePositions(iSite, 1) << "\t" << sitePositions(iSite, 2) << std::endl;
+            streamPosition << std::endl << siteNames[iSite] << "\t" << sitePositions(iSite, 0) << "\t" << sitePositions(iSite, 1) << "\t" << sitePositions(iSite, 2) ;
         }
 
 

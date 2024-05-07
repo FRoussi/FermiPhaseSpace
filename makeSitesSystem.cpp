@@ -420,6 +420,8 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
 
     simRoot["system"] = newSystem.writeFHSystemJson();
 
+    
+
 
 
     std::cout << simRoot << std::endl;
@@ -434,15 +436,17 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
         streamSystem.close();
     }
 
+    newSystem.writePositions(fileName, fileFolder);
+
    std::cout << "In system, file adress : "<< fileAdress << std::endl;
 
-    newSystem.writeFHSystemBis(fileFolder);
+//    newSystem.writeFHSystemBis(fileFolder);
 
 
 
 
     cout << fileName << " system created with " << pos.size() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
-
+    cout << "Particles positions in " << fileFolder << "/" << fileName << ".xyz" << endl; 
 
     return 0;
 }

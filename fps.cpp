@@ -46,6 +46,14 @@ int main(int argc, char* argv[])
       compute_GPSR
    };
 
+   enum dynamicMethod
+   {
+      HF,
+      fTWA,
+      GPSR,
+      ED
+   };
+
 
 
 
@@ -55,7 +63,8 @@ int main(int argc, char* argv[])
    std::stringstream instructionsStream("");
    std::string systemFileName;
    FHSystem fhSystem;
-   std::vector<double> nrjParameters;
+   bool systemLoaded;
+
 
    std::cout << "-- Reading work file "<< instructionsFileName << " --" << std::endl;
    std::ifstream instructionsFile = std::ifstream(workFolder + "/" + instructionsFileName);
@@ -75,128 +84,95 @@ int main(int argc, char* argv[])
    std::cout << rootSim << std::endl;
 
 
+   std::string simName = rootSim.get("sim_name", "defaultSimName").asString();
+
+   std::string stringMethod = rootSim.get("method", "HF").asString();
 
 
+   dynamicMethod chosenMethod = dynamicMethod::HF;
+   if (stringMethod == "fTWA")         chosenMethod = dynamicMethod::fTWA; 
+   else if (stringMethod == "GPSR")    chosenMethod = dynamicMethod::GPSR;
+   else if (stringMethod == "ED")      chosenMethod = dynamicMethod::ED;
 
-/*
-   while(std::getline(instructionsFile, line))
+
+   Json::Value systemJSON = rootSim.get("system", "");
+   fhSystem = FHSystem(systemJSON, workFolder);
+   systemLoaded = true;
+   std::cout << "System loaded" << std::endl;
+
+   switch (chosenMethod)
    {
-      instructionsStream << line << "\n";
-      std::cout << line.c_str() << "\n";
-   }
-   instructionsFile.close();
-   std::cout << "---------------------------" << std::endl;
-
-   task TODO = task::nothing;
-   bool systemLoaded = false;
-   while(std::getline(instructionsStream, line))
+   case dynamicMethod::HF:
    {
-      if (line == "#SYSTEM_FILE")
-        TODO = task::readSystemFile;        
-      else if (line == "#ED")
-      {
-         if (systemLoaded )
-            TODO = task::compute_ED;
-         else
-            std::cout << "Not reading ED instructions because something not loaded." << std::endl;      
-      } 
-      else if (line == "#HF")
-      {
-         if (systemLoaded )
-            TODO = task::compute_FH;
-         else
-            std::cout << "Not reading HF instructions because something not loaded." << std::endl;      
-      } 
-      else if (line == "#fTWA")
-      {
-         if (systemLoaded)
-            TODO = task::compute_fTWA;
-         else
-            std::cout << "Not reading fTWA instructions because something not loaded." << std::endl;      
-      } 
-      else if (line == "#GPSR")
-      {
-         if (systemLoaded )
-            TODO = task::compute_GPSR;
-         else
-            std::cout << "Not reading GPSR instructions because something not loaded." << std::endl;      
-      }   
-
-      else if (TODO == task::readSystemFile)
-      {
-         systemFileName = line;
-         fhSystem = FHSystem(systemFileName, workFolder);
-         systemLoaded = true;
-         std::cout << "System loaded" << std::endl;
-         //std::cout << "Initial conditions spin up   : [" << fhSystem.getInitialCondition_upSpin()[0] << fhSystem.getInitialCondition_upSpin()[1] << "]"<< std::endl;
-         //std::cout << "Initial conditions spin down : [" << fhSystem.getInitialCondition_downSpin()[0] << fhSystem.getInitialCondition_downSpin()[1] << "]"<< std::endl;
-         
-      }
-
-      else if (TODO == task::compute_ED)
-      {
-         lineStream = std::stringstream(line);
-         std::vector<double> edParameters;
-         while(std::getline(lineStream, word, ' '))
-            edParameters.push_back(std::stod(word));
-         
-         printf("-- ED dynamic \n");
-         FHEDSolver edSolver = FHEDSolver(&fhSystem);
-         std::cout<< "solver" << std::endl;
-         edSolver.setResultFile(work + "_ED", workFolder);
-         edSolver.initiateSolver();
-         std::cout<< "initiation" << std::endl;
-         edSolver.setTimeParameters(edParameters[0], edParameters[1], edParameters[2]);
-         edSolver.runSimulation();
-
-      }
-      else if (TODO == task::compute_FH)
-      {
-         lineStream = std::stringstream(line);
-         std::vector<double> hfParameters;
-         while(std::getline(lineStream, word, ' '))
-            hfParameters.push_back(std::stod(word));
+         double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
+         double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
+         int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
          
          printf("-- HF dynamic \n");
          FHHFSolver hfSolver = FHHFSolver(&fhSystem);
          hfSolver.setResultFile(work + "_HF", workFolder);
          hfSolver.initiateSolver();
-         hfSolver.setTimeParameters(hfParameters[0], hfParameters[1], hfParameters[2]);
+         hfSolver.setTimeParameters(param_tm, param_dt, param_sptp);
          hfSolver.runSimulation();
-      }
-      else if (TODO == task::compute_fTWA)
-      {
-         lineStream = std::stringstream(line);
-         std::vector<double> ftwaParameters;
-         while(std::getline(lineStream, word, ' '))
-            ftwaParameters.push_back(std::stod(word));
+
+         break;
+   }   
+   case dynamicMethod::fTWA:
+   {
+         double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
+         double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
+         int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
+         int param_nTraj = rootSim["parameters"].get("n_traj", 10).asInt();
          
          printf("-- fTWA dynamic \n");
-         FHfTWASolver ftwaSolver = FHfTWASolver(&fhSystem);
-         ftwaSolver.setResultFile(work + "_fTWA", workFolder);
-         ftwaSolver.initiateSolver();
-         ftwaSolver.setTimeParameters(ftwaParameters[0], ftwaParameters[1], ftwaParameters[2]);
-         ftwaSolver.setfTWAParameters(ftwaParameters[3]);
-         ftwaSolver.runSimulation();
-      }
-      else if (TODO == task::compute_GPSR)
-      {
-         lineStream = std::stringstream(line);
-         std::vector<double> gpsrParameters;
-         while(std::getline(lineStream, word, ' '))
-            gpsrParameters.push_back(std::stod(word));
-         
+         FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
+         fTWASolver.setResultFile(work + "_fTWA", workFolder);
+         fTWASolver.initiateSolver();
+         fTWASolver.setTimeParameters(param_tm, param_dt, param_sptp);
+         fTWASolver.setfTWAParameters(param_nTraj);
+         fTWASolver.runSimulation();
+
+         break;
+   }
+   case dynamicMethod::GPSR:
+   {
+         double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
+         double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
+         int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
+         int param_nTraj = rootSim["parameters"].get("n_traj", 10).asInt();
+
          printf("-- GPSR dynamic \n");
-         FHGPSRSolver gpsrSolver = FHGPSRSolver(&fhSystem);
-         gpsrSolver.setResultFile(work + "_GPSR", workFolder);
-         gpsrSolver.initiateSolver();
-         gpsrSolver.setTimeParameters(gpsrParameters[0], gpsrParameters[1], gpsrParameters[2]);
-         gpsrSolver.setGPSRParameters(gpsrParameters[3]);
-         gpsrSolver.runSimulation();
-      }
+         FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
+         GPSRSolver.setResultFile(work + "_GPSR", workFolder);
+         GPSRSolver.initiateSolver();
+         GPSRSolver.setTimeParameters(param_tm, param_dt, param_sptp);
+         GPSRSolver.setGPSRParameters(param_nTraj);
+         GPSRSolver.runSimulation();
+
+         break;
+   }
+   case dynamicMethod::ED:
+   {
+         double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
+         double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
+         int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
+         
+         printf("-- ED dynamic \n");
+         FHEDSolver EDSolver = FHEDSolver(&fhSystem);
+         EDSolver.setResultFile(work + "_ED", workFolder);
+         EDSolver.initiateSolver();
+         EDSolver.setTimeParameters(param_tm, param_dt, param_sptp);
+         EDSolver.runSimulation();
+
+         break;
+   }
+   default:
+      std::cout << "Simulation method not known." << std::endl;
+      break;
    }
 
-*/
+
+
 
    std::cout <<"Final entry. Looks good." << " \n";
 
