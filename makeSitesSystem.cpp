@@ -175,12 +175,12 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
     unsigned int nOfPoints = 0;
     vector<vector<double>> pos = vector<vector<double>>();
 
-    vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a},
-                                {-sqrt3/2 *a, 0.5 *a},
-                                {0   *a,      1   *a},
-                                {0   *a,      -1  *a},
-                                {sqrt3/2 *a, -0.5 *a},
-                                {sqrt3/2 *a, 0.5  *a}};
+    vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a, 0},
+                                {-sqrt3/2 *a, 0.5 *a, 0},
+                                {0   *a,      1   *a, 0},
+                                {0   *a,      -1  *a, 0},
+                                {sqrt3/2 *a, -0.5 *a, 0},
+                                {sqrt3/2 *a, 0.5  *a, 0}};
     vector<vector<double>> posNew = pos0;
 
 
@@ -195,14 +195,13 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
         for (unsigned int p = 0; p<6; p++)
         {
             posNew[p][0] = pos0[p][0] + iVec[0] * basisIndex[0] + jVec[0] * basisIndex[1];
-            posNew[p][1] = pos0[p][1] + iVec[1] * basisIndex[0] + jVec[1] * basisIndex[1];;
+            posNew[p][1] = pos0[p][1] + iVec[1] * basisIndex[0] + jVec[1] * basisIndex[1];
         }
-    pos.insert(pos.end(), posNew.begin(), posNew.end());
+        pos.insert(pos.end(), posNew.begin(), posNew.end());
 
-    getNextIndex(basisIndex[0], basisIndex[1]);
+        getNextIndex(basisIndex[0], basisIndex[1]);
 
-    nOfPoints +=6;
-
+        nOfPoints +=6;
     }
 
     // We remove the doublons :
@@ -272,11 +271,12 @@ int main(int argc, char* argv[])
     string fileFolder = "systemsFolder";
 
     // Possible values
-    vector<string> possibleGeometry = {"grid", "graphene", "line"};
+    vector<string> possibleGeometry = {"grid", "graphene", "bcc", "fcc"};
     enum geometry{
         grid,
         graphene,
-        line
+        bcc,
+        fcc
     };
 
     vector<string> possibleIC = {"ic_sw", "ic_cw", "ic_quenched"};
@@ -333,7 +333,8 @@ int main(int argc, char* argv[])
         {
             if (string(argv[iArg]) == possibleGeometry[0])  geom = geometry::grid;       //<- we note the geometry
             if (string(argv[iArg]) == possibleGeometry[1])  geom = geometry::graphene; 
-            if (string(argv[iArg]) == possibleGeometry[2])  geom = geometry::line;  
+            if (string(argv[iArg]) == possibleGeometry[2])  geom = geometry::bcc;  
+            if (string(argv[iArg]) == possibleGeometry[3])  geom = geometry::fcc;
             wtr = whatToRead::geometryParameters;                   //<- We stand ready to read the geometry parameters
         } 
         else if (isIn(string(argv[iArg]), possibleIC)) //((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
@@ -366,6 +367,12 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
         break;
     case geometry::graphene :
         pos = makeHoneyCombs(static_cast<int>(geomParam[0]),geomParam[1]);
+        break;
+    case geometry::bcc :
+        pos = makeBCCGrid(static_cast<int>(geomParam[0]),geomParam[1], geomParam[2], 1.);
+        break;
+    case geometry::fcc :
+        pos = makeFCCGrid(static_cast<int>(geomParam[0]),geomParam[1], geomParam[2], 1);
         break;
     }
 

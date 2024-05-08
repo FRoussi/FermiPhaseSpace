@@ -1133,8 +1133,8 @@ void                    FHSystem::setTunneling_BetweenNeighbours(double tH1, boo
             }
         }
     }
-    printf("J-Matrix : \n");
-    tMatrix.print();
+    //printf("J-Matrix : \n");
+    //tMatrix.print();
 }
 
 /// @brief setter - Same site tunneling interaction energy
@@ -1315,12 +1315,14 @@ void                 FHSystem::writePositions(std::string xyzFile, std::string f
 {
         // Writing of everything on the file :
     std::string fileAdress =  xyzFile + ".xyz";
-
     std::cout << "Writing positions in: "<< fileAdress << std::endl;
     if (folderName != "")
     {
         fileAdress = folderName + "/" + fileAdress;
     }
+
+
+
 
 
    std::ofstream streamPosition(fileAdress);
