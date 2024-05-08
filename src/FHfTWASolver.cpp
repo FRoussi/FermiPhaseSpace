@@ -61,7 +61,7 @@ void FHfTWASolver::initiateSolver()
     diagNu0 = arma::dvec(nSites, arma::fill::zeros);
     diagNd0 = arma::dvec(nSites, arma::fill::zeros);
 
-    if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::givenDiagonal)
+    if ((fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::givenDiagonal) || (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::spinWave) || (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::chargeWave))
     {
 
         for (unsigned int it= 0; it < nSites; it ++)
@@ -148,7 +148,9 @@ void FHfTWASolver::runSimulation( )
 
     printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
     unsigned int nSites = fhSystem->getnSites();
+    
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
+    std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
     arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dcube rhod_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
 
@@ -206,14 +208,7 @@ void FHfTWASolver::runSimulation( )
 
 
 
-        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::givenDiagonal)
-        {
-           // Initial rho matrices :
-           rhou = rhou0_mean + wnu;  
-           rhod = rhod0_mean + wnd;
-
-        }
-        else if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
+        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
         {
             // Initial matrices in momentum space :
             arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
@@ -224,6 +219,14 @@ void FHfTWASolver::runSimulation( )
             rhod = V_1p * mD * V_1p_1;
 
         }
+        else 
+        {
+           // Initial rho matrices :
+           rhou = rhou0_mean + wnu;  
+           rhod = rhod0_mean + wnd;
+
+        }
+
 
         // We compute the trajectory dynamic and add up the diagonal to the result
         for (unsigned int t = 0;  t<nTimePoints; t++)

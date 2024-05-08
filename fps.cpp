@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
          
          printf("-- HF dynamic \n");
          FHHFSolver hfSolver = FHHFSolver(&fhSystem);
-         hfSolver.setResultFile(work + "_HF", workFolder);
+         hfSolver.setResultFile(simName + "_HF_res", workFolder);
          hfSolver.initiateSolver();
          hfSolver.setTimeParameters(param_tm, param_dt, param_sptp);
          hfSolver.runSimulation();
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
          
          printf("-- fTWA dynamic \n");
          FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
-         fTWASolver.setResultFile(work + "_fTWA", workFolder);
+         fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
          fTWASolver.initiateSolver();
          fTWASolver.setTimeParameters(param_tm, param_dt, param_sptp);
          fTWASolver.setfTWAParameters(param_nTraj);
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 
          printf("-- GPSR dynamic \n");
          FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
-         GPSRSolver.setResultFile(work + "_GPSR", workFolder);
+         GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
          GPSRSolver.initiateSolver();
          GPSRSolver.setTimeParameters(param_tm, param_dt, param_sptp);
          GPSRSolver.setGPSRParameters(param_nTraj);
@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
          
          printf("-- ED dynamic \n");
          FHEDSolver EDSolver = FHEDSolver(&fhSystem);
-         EDSolver.setResultFile(work + "_ED", workFolder);
+         EDSolver.setResultFile(simName + "_ED_res", workFolder);
          EDSolver.initiateSolver();
          EDSolver.setTimeParameters(param_tm, param_dt, param_sptp);
          EDSolver.runSimulation();
