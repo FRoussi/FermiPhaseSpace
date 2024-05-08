@@ -356,10 +356,10 @@ int main(int argc, char* argv[])
     }
 
 // Computation of the geometry
-for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
-{
-    geomParam.push_back(1.);
-}
+    for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
+    {
+        geomParam.push_back(1.);
+    }
     switch (geom)
     {
     case geometry::grid:
@@ -378,12 +378,9 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
 
 
 
-
-
 // MAKING OF THE FHSystem
     arma::dmat sitePosition = armaMatfromVectorsVector(pos);
     //cout << "Position : " << endl << sitePosition << endl; 
-
 
     FHSystem newSystem = FHSystem();
     newSystem.setName(fileName);                                                                        //<- Name
@@ -409,10 +406,7 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
         break;
     }
                                                        //<- Initial conditions
-  
-
     //cout << "file folder : " <<  fileFolder << endl; 
-
 
 
     Json::Value simRoot;
@@ -428,9 +422,6 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
     simRoot["system"] = newSystem.writeFHSystemJson();
 
     
-
-
-
     std::cout << simRoot << std::endl;
 
     std::string  fileAdress = fileFolder + "/" + fileName;
@@ -445,16 +436,13 @@ for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
 
     newSystem.writePositions(fileName, fileFolder);
 
-   std::cout << "In system, file adress : "<< fileAdress << std::endl;
+   //std::cout << "In system, file adress : "<< fileAdress << std::endl;
 
 //    newSystem.writeFHSystemBis(fileFolder);
 
 
-
-
     cout << fileName << " system created with " << pos.size() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
-    cout << "Particles positions in " << fileFolder << "/" << fileName << ".xyz" << endl; 
+    cout << "Particles position in " << fileFolder << "/" << fileName << ".xyz" << endl; 
 
     return 0;
 }
-

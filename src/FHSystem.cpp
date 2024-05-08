@@ -511,11 +511,8 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 {
 
-
 // Positions
     std::string positionFile = rootSystem.get("positions", "").asString();
-
-       
 
     if (folderName !="")
     {
@@ -525,7 +522,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
     std::cout << positionFile << std::endl;
     readPositions(positionFile);
 
-    std::cout << sitePositions << std::endl;
+    //std::cout << sitePositions << std::endl;
 
     initiateEmptyEnergyMatrices();
 
@@ -579,10 +576,8 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
     std::string tunnEn = rootSystem["EnergyT"].asString();
     if (tunnEn == "nearestNeighbours")
     {
-        std::cout << "Hello tunn "<< std::endl;
         tunnelingType = FHTunnelingType::nearestNeighboursConstant;
         double tH = rootSystem.get("parametersT", -7.).asDouble();
-        std::cout << "Hello tunn tH =" << tH << std::endl;
         setTunneling_BetweenNeighbours(tH);
     }
 
@@ -1118,7 +1113,7 @@ void                    FHSystem::setUInteraction_BySiteType(arma::dvec& Us, boo
 /// @param tH1 tunneling interaction energy
 void                    FHSystem::setTunneling_BetweenNeighbours(double tH1, bool add)
 {
-    std::cout << "Tunn function, nrow=" << sitePositions.n_rows << " ncol=" << sitePositions.n_cols << std::endl;
+
     if (!add)
     {
         tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
@@ -1310,39 +1305,33 @@ void                    FHSystem::readPositions(std::string xyzFile)
 }
 
 
-
+/// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
+/// @return void
 void                 FHSystem::writePositions(std::string xyzFile, std::string folderName)
 {
         // Writing of everything on the file :
     std::string fileAdress =  xyzFile + ".xyz";
-    std::cout << "Writing positions in: "<< fileAdress << std::endl;
+    //std::cout << "Writing positions in: "<< fileAdress << std::endl;
     if (folderName != "")
     {
         fileAdress = folderName + "/" + fileAdress;
     }
 
-
-
-
-
    std::ofstream streamPosition(fileAdress);
     if (streamPosition.is_open())
     {   
         streamPosition << sitePositions.n_rows << std::endl;
-    
-
         for (uint iSite = 0; iSite < sitePositions.n_rows ; iSite ++)
         {
             streamPosition << std::endl << siteNames[iSite] << "\t" << sitePositions(iSite, 0) << "\t" << sitePositions(iSite, 1) << "\t" << sitePositions(iSite, 2) ;
         }
-
-
         streamPosition.close();
     }
-
-
 }
 
+
+/// @brief Read a potential stored in fileName.
+/// @return void
 void                    FHSystem::readPotential(std::string fileName, std::string folderName)
 {
 
