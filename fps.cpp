@@ -11,7 +11,7 @@
 #include "include/FHGPSRSolver.h"
 #include "include/json/json.h"
 
-#define THREAD_NUM 4
+#define DEF_MAX_THREAD_NUM 4
 
 int main(int argc, char* argv[])
 {
@@ -22,11 +22,21 @@ int main(int argc, char* argv[])
    arma::arma_version ver;
    std::cout << "ARMA version: "<< ver.as_string() << std::endl;
 
-   std::cout << "OpenMP active, "  << THREAD_NUM << " threads used on " << omp_get_max_threads() << " avalaible"<< std::endl;
+   char* env_OMP = std::getenv("OMP_NUM_THREADS");
+   if (env_OMP==NULL)
+   {
+      omp_set_num_threads(DEF_MAX_THREAD_NUM);
+   }
+
+
+  std::cout << "OpenMP active, "  << std::endl; 
+  std::cout << "-- Number of processors :        " << omp_get_num_procs() << std::endl;
+  std::cout << "-- Number of threads available : " << omp_get_max_threads() << std::endl;
+
 
    std::cout << "Double precision = " << std::numeric_limits<double>::digits10 << std::endl;
 
-   omp_set_num_threads(THREAD_NUM);
+
 
 
    std::string work = "2Sites.json";
