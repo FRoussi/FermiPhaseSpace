@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
       omp_set_num_threads(DEF_MAX_THREAD_NUM);
    }
 
-
+//test git
   std::cout << "OpenMP active, "  << std::endl; 
   std::cout << "-- Number of processors :        " << omp_get_num_procs() << std::endl;
   std::cout << "-- Number of threads available : " << omp_get_max_threads() << std::endl;
