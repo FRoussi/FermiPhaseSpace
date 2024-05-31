@@ -65,39 +65,43 @@ int main(int argc, char* argv[])
    };
 
 
-
-
-
    std::string workFolder = "systemsFolder";
    std::string instructionsFileName = work;
    std::stringstream instructionsStream("");
    std::string systemFileName;
    FHSystem fhSystem;
    bool systemLoaded;
-
-
-   std::cout << "-- Reading work file "<< instructionsFileName << " --" << std::endl;
-   std::ifstream instructionsFile = std::ifstream(workFolder + "/" + instructionsFileName);
-   std::string line, word;
-   std::stringstream lineStream;
-
    Json::Value rootSim;
-   Json::CharReaderBuilder builder;
-   builder["collectComments"] = true;
-   JSONCPP_STRING errs;
-   if(!Json::parseFromStream(builder, instructionsFile, &rootSim, &errs))
+
+
+   std::cout << "-- Reading work file "<< instructionsFileName << " --" << std::endl;  
+   
+   std::ifstream instructionsFile = std::ifstream(workFolder + "/" + instructionsFileName);
+
+   if (instructionsFile.good())
    {
-      std::cout << errs << std::endl;
+      std::string line, word;
+      std::stringstream lineStream;
+
+      Json::CharReaderBuilder builder;
+      builder["collectComments"] = true;
+      JSONCPP_STRING errs;
+      if(!Json::parseFromStream(builder, instructionsFile, &rootSim, &errs))
+      {
+         std::cout << errs << std::endl;
+      }
    }
+   else
+   {
+      std::cout << instructionsFileName << " not found." << std::endl;
+   }
+
 
 
    std::cout << rootSim << std::endl;
 
-
    std::string simName = rootSim.get("sim_name", "defaultSimName").asString();
-
    std::string stringMethod = rootSim.get("method", "HF").asString();
-
 
    dynamicMethod chosenMethod = dynamicMethod::HF;
    if (stringMethod == "fTWA")         chosenMethod = dynamicMethod::fTWA; 
@@ -185,6 +189,8 @@ int main(int argc, char* argv[])
 
 
    std::cout <<"Final entry. Looks good." << " \n";
+
+
 
    return 0;
 }
