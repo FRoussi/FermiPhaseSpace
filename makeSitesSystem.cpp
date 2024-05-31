@@ -1,3 +1,6 @@
+// EXAMPLE : ./makeSitesSystem <systemName> <systemType> <parameter1>
+//           ./makeSitesSystem bigGraphene graphene 4
+
 //#include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -264,7 +267,7 @@ int main(int argc, char* argv[])
 {
 
 
-   cout << "Writing a new system." << endl;
+   cout << "== Writing a new FH system." << endl;
 
 
     string fileName = "newSystem";
@@ -422,7 +425,7 @@ int main(int argc, char* argv[])
     simRoot["system"] = newSystem.writeFHSystemJson();
 
     
-    std::cout << simRoot << std::endl;
+    //std::cout << simRoot << std::endl;
 
     std::string  fileAdress = fileFolder + "/" + fileName;
     std::string fileAdressJSON = fileAdress + ".json";
@@ -441,8 +444,8 @@ int main(int argc, char* argv[])
 //    newSystem.writeFHSystemBis(fileFolder);
 
 
-    cout << fileName << " system created with " << pos.size() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
-    cout << "Particles position in " << fileFolder << "/" << fileName << ".xyz" << endl; 
+    cout << "== " << fileName << " system created with " << pos.size() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
+    cout << "== Particle positions in " << fileFolder << "/" << fileName << ".xyz" << endl; 
 
     return 0;
 }

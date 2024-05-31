@@ -4,6 +4,7 @@ FHEDSolver::FHEDSolver(FHSystem *fhS)
 {
     fhSystem = fhS;
     writeResults = false;
+    talkative = false;
     currentSimulationTime = 0;
 }
 
@@ -12,6 +13,7 @@ void FHEDSolver::setResultFile(std::string wN, std::string fN)
     workName = wN;
     folderName = fN;
     writeResults = true;
+    talkative = false;
 }
 
 
@@ -21,6 +23,11 @@ void FHEDSolver::setTimeParameters(double t_max, double d_t, uint nPerTS)
     this->dt = d_t;
     this->nStepsPerTimePoint = nPerTS;
     this->nTimePoints = floor(tMax / dt + 1);
+}
+
+void FHEDSolver::setTalkative(bool yn)
+{
+    talkative = yn;
 }
 
 void FHEDSolver::setComputeMomenta(bool yn)
@@ -468,7 +475,7 @@ void FHEDSolver::step(double d_t)
 void FHEDSolver::runSimulation()
 {
 
-    std::cout << "Start simulation" << std::endl << std::flush;
+    std::cout << "- Start simulation" << std::endl << std::flush;
 
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
@@ -516,8 +523,8 @@ void FHEDSolver::runSimulation()
 
     std::cout << "|" << std::endl << std::flush; 
 
-    printf("Test 3 - small system dynamic, n_1u : \n");
-    niiu.row(0).print();
+    //printf("Test 3 - small system dynamic, n_1u : \n");
+    //niiu.row(0).print();
     
 
     // Writing the results :
@@ -544,6 +551,8 @@ void FHEDSolver::runSimulation()
         results.writeLine("EU", EU);
         results.writeLine("EtH", EtH);
         results.writeLine("E", E);
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
 

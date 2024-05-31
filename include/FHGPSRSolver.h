@@ -36,6 +36,7 @@ public:
     void                setResultFile(std::string workName, std::string folderNameName);
     void                setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
     void                setGPSRParameters(unsigned int nTraj);
+    void                setTalkative(bool yn);
     void                initiateSolver();
 
     void                step_Drift_RK2(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
@@ -70,6 +71,9 @@ private:
     bool                            writeResults;
     std::string                     workName;                                           //<- A name for the work, for the results file
     std::string                     folderName;                                         //<- A name for the work folder, for the results file
+
+// Work parameters
+    bool talkative;
 
 // GPSR parameters :
     unsigned int                    nTraj;

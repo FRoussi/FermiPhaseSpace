@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 
 
    arma::arma_version ver;
-   std::cout << "ARMA version: "<< ver.as_string() << std::endl;
+   std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
 
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
    if (env_OMP==NULL)
@@ -28,13 +28,12 @@ int main(int argc, char* argv[])
       omp_set_num_threads(DEF_MAX_THREAD_NUM);
    }
 
-//test git
-  std::cout << "OpenMP active, "  << std::endl; 
-  std::cout << "-- Number of processors :        " << omp_get_num_procs() << std::endl;
-  std::cout << "-- Number of threads available : " << omp_get_max_threads() << std::endl;
+  std::cout << "== OpenMP active, "  << std::endl; 
+  std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
+  std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
 
 
-   std::cout << "Double precision = " << std::numeric_limits<double>::digits10 << std::endl;
+   std::cout << "== Double precision :   2^ -" << std::numeric_limits<double>::digits10 << std::endl;
 
 
 
@@ -74,7 +73,7 @@ int main(int argc, char* argv[])
    Json::Value rootSim;
 
 
-   std::cout << "-- Reading work file "<< instructionsFileName << " --" << std::endl;  
+   std::cout << "- Reading work file "<< instructionsFileName << std::endl;  
    
    std::ifstream instructionsFile = std::ifstream(workFolder + "/" + instructionsFileName);
 
@@ -98,7 +97,7 @@ int main(int argc, char* argv[])
 
 
 
-   std::cout << rootSim << std::endl;
+   //std::cout << rootSim << std::endl;
 
    std::string simName = rootSim.get("sim_name", "defaultSimName").asString();
    std::string stringMethod = rootSim.get("method", "HF").asString();
@@ -112,7 +111,7 @@ int main(int argc, char* argv[])
    Json::Value systemJSON = rootSim.get("system", "");
    fhSystem = FHSystem(systemJSON, workFolder);
    systemLoaded = true;
-   std::cout << "System loaded" << std::endl;
+   std::cout << "- System loaded" << std::endl;
 
    switch (chosenMethod)
    {
@@ -122,7 +121,7 @@ int main(int argc, char* argv[])
          double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
          int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
          
-         printf("-- HF dynamic \n");
+         std::cout << "- Computation of HF dynamic " << std::endl;
          FHHFSolver hfSolver = FHHFSolver(&fhSystem);
          hfSolver.setResultFile(simName + "_HF_res", workFolder);
          hfSolver.initiateSolver();
@@ -138,7 +137,7 @@ int main(int argc, char* argv[])
          int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
          int param_nTraj = rootSim["parameters"].get("n_traj", 10).asInt();
          
-         printf("-- fTWA dynamic \n");
+         std::cout << "- Computation of fTWA dynamic "<< std::endl;
          FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
          fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
          fTWASolver.initiateSolver();
@@ -155,7 +154,7 @@ int main(int argc, char* argv[])
          int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
          int param_nTraj = rootSim["parameters"].get("n_traj", 10).asInt();
 
-         printf("-- GPSR dynamic \n");
+         std::cout <<  "- Computation of GPSR dynamic "<< std::endl;
          FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
          GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
          GPSRSolver.initiateSolver();
@@ -171,7 +170,7 @@ int main(int argc, char* argv[])
          double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
          int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
          
-         printf("-- ED dynamic \n");
+         std::cout <<  "- Computation of ED dynamic "<< std::endl;
          FHEDSolver EDSolver = FHEDSolver(&fhSystem);
          EDSolver.setResultFile(simName + "_ED_res", workFolder);
          EDSolver.initiateSolver();
@@ -188,7 +187,7 @@ int main(int argc, char* argv[])
 
 
 
-   std::cout <<"Final entry. Looks good." << " \n";
+   std::cout <<"- Program closing." << std::endl;
 
 
 

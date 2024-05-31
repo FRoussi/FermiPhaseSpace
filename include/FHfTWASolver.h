@@ -27,6 +27,7 @@ public:
     void                        setResultFile(std::string workName, std::string folderNameName);
     void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
     void                        setfTWAParameters(unsigned int nTraj);
+    void                        setTalkative(bool yn);
     void                        initiateSolver();
 
     void                        step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
@@ -50,6 +51,9 @@ private:
     std::string                 folderName;            //<- A name for the work folder, for the results file
 
     bool                        computeMomenta;
+
+// Work parameters
+    bool talkative;
 
 // fTWA parameters :    
     unsigned int                nTraj;

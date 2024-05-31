@@ -519,10 +519,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
         positionFile = folderName + "/" + positionFile;
     }
 
-    std::cout << positionFile << std::endl;
+    // std::cout << positionFile << std::endl;
     readPositions(positionFile);
 
-    //std::cout << sitePositions << std::endl;
 
     initiateEmptyEnergyMatrices();
 
@@ -1294,7 +1293,7 @@ void                    FHSystem::readPositions(std::string xyzFile)
 
     if (nPart == positions3.size())
     {
-        std::cout << "Position file read, " << nPart << " particles." << std::endl;
+        std::cout << "- Position file read, " << nPart << " particles." << std::endl;
         setPositions(armaMatfromVectorsVector(positions3));
     }
     else

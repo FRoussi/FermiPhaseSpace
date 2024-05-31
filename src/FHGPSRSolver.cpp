@@ -17,6 +17,8 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
 
     driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38;
     diffusionIntegrator = GPSRDiffusionIntegrator::numerical_rsvd;
+
+    talkative = false;
 }
 
 void FHGPSRSolver::setResultFile(std::string wN, std::string fN)
@@ -45,6 +47,11 @@ void FHGPSRSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPT
 void FHGPSRSolver::setGPSRParameters(unsigned int nT)
 {
     this->nTraj = nT;
+}
+
+void FHGPSRSolver::setTalkative(bool yn)
+{
+    talkative = yn;
 }
 
 /// @brief Initiate the GPSR solver, compute the initial density matrix probability. 
@@ -627,7 +634,8 @@ void FHGPSRSolver::step(double currentSimulationTime, arma::cx_dmat& rhou, arma:
 void FHGPSRSolver::runSimulation( )
 {
 
-    printf("GPSR dynamic, nTraj=%i \n", nTraj);
+    //printf("GPSR dynamic, nTraj=%i \n", nTraj);
+    std::cout << "- Start simulation" << std::endl;
     unsigned int nSites = fhSystem->getnSites();
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
@@ -684,7 +692,7 @@ void FHGPSRSolver::runSimulation( )
 unsigned int tt = std::floor(nTraj/10);
     if ((i_traj%tt) == 0)
     {
-        printf("Trajectory %i computed by thread %i \n", i_traj, omp_get_thread_num());    
+        std::cout<< "  -- Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
     }
    
     }
@@ -730,6 +738,8 @@ unsigned int tt = std::floor(nTraj/10);
         results.writeLineInReal("EU", EU);
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
 }

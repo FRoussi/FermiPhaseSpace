@@ -54,6 +54,7 @@ public:
     void setResultFile(std::string workName, std::string folderNameName);
     void setTimeParameters(double t_max, double dt, unsigned int nPerTS);
     void setComputeMomenta(bool yn);
+    void setTalkative(bool yn);
 
     void initiateSolver();
 
@@ -77,9 +78,10 @@ private:
     std::string workName;                                           //<- A name for the work, for the results file
     std::string folderName;                                         //<- A name for the work folder, for the results file
 
+// Work parameters
+    bool talkative;
 
-
-// Time parameter
+// Time parameters
     double tMax;                                                    //<- Maximum time extend of the simulation 
     double dt;                                                      //<- Time step of calculated observables        
     unsigned int nStepsPerTimePoint;                                //<- Number of simulated time steps between the calculation of observable

@@ -19,6 +19,7 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS)
 
 
     computeMomenta = false;
+    talkative = false;
 }
 
 void FHfTWASolver::setResultFile(std::string wN, std::string fN)
@@ -47,6 +48,11 @@ void FHfTWASolver::setTimeParameters(double t_max, double d_t, unsigned int nSPT
 void FHfTWASolver::setfTWAParameters(unsigned int nT)
 {
     this->nTraj = nT;
+}
+
+void FHfTWASolver::setTalkative(bool yn)
+{
+    talkative = yn;
 }
 
 /// @brief Initiate the fTWA solver, compute the initial density matrix probability and the noise variance to apply.
@@ -123,8 +129,13 @@ void FHfTWASolver::initiateSolver()
     
     sqrtNoiseVarianceMatrixU = arma::sqrt(sqrtNoiseVarianceMatrixU);
     sqrtNoiseVarianceMatrixD = arma::sqrt(sqrtNoiseVarianceMatrixD);
-    printf("Test 6 - Variance matrix : \n");
-    sqrtNoiseVarianceMatrixU.print();
+
+    if (talkative)
+    {
+        std::cout << "--- fTWA Variance matrix : " << std::endl ;
+        sqrtNoiseVarianceMatrixU.print();
+    }
+
 
 }
 
@@ -146,11 +157,13 @@ void FHfTWASolver::setComputeMomenta(bool yn)
 void FHfTWASolver::runSimulation( )
 {
 
-    printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
+    //printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
+    std::cout << "- Start simulation" << std::endl;
+
     unsigned int nSites = fhSystem->getnSites();
     
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
-    std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
+    //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
     arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dcube rhod_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
 
@@ -257,7 +270,7 @@ void FHfTWASolver::runSimulation( )
         unsigned int tt = std::floor(nTraj/10);
         if ((i_traj%tt) == 0)
         {
-            std::cout << "Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
+            std::cout << "  -- Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
         }
 
     }
@@ -338,6 +351,8 @@ void FHfTWASolver::runSimulation( )
         results.writeLineInReal("EU", EU);
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
+
+         std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 }
 

@@ -10,11 +10,10 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     V = fhSystem->getVMatrixPointer();
     extPot = fhSystem->getExtPotPointer();
 
-std::cout << "E matrices" << std::endl;
-    tM->print();
-    U->print();
-    
+
     computeMomenta = false;
+    talkative = false;
+
 
 }
 
@@ -40,6 +39,10 @@ void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
     this->nTimePoints = floor(tMax/dt +1);
 }
 
+void FHHFSolver::setTalkative(bool yn)
+{
+    talkative = yn;
+}
 
 /// @brief Initiate the HF solver, compute the initial density matrix.
 void FHHFSolver::initiateSolver()
@@ -66,10 +69,23 @@ void FHHFSolver::initiateSolver()
 
         nPartU = std::floor(std::real(arma::accu(Nu0)));
         nPartD = std::floor(std::real(arma::accu(Nd0)));
-        printf("Test 4 - Initial Density matrices : \n");
 
-        Nu0.print();
-        Nd0.print();
+
+        if (talkative)
+        {
+            std::cout << "E matrices" << std::endl;
+            tM->print();
+            U->print();
+        }
+
+        if (talkative)
+        {
+            printf("Test 4 - Initial Density matrices : \n");
+            Nu0.print();
+            Nd0.print();
+        }
+
+
     }
     else if (initCondition == FHSystem::FHInitialConditionType::quenched)
     {
@@ -95,8 +111,8 @@ void FHHFSolver::initiateSolver()
         Nu0 =  V_1p * Mku0 * V_1p_1;
         Nd0 =  V_1p * Mkd0 * V_1p_1;
 
-        printf("Test 4 - Initial Density matrix : \n");
-        Nu0.print();
+        // printf("Test 4 - Initial Density matrix : \n");
+        // Nu0.print();
     }
     else
     {
@@ -330,10 +346,14 @@ void FHHFSolver::runSimulation( )
 
     arma::cx_drowvec E = EU + EtH;
 
-    printf("--- Mean field dynamic, n1u : \n");
-    (arma::real(Niiu.row(0))).print();
-    printf("--- Mean field dynamic, E : \n");
-    (arma::real(E)).print();
+    if (talkative)
+    {
+        printf("--- Mean field dynamic, n1u : \n");
+        (arma::real(Niiu.row(0))).print();
+        printf("--- Mean field dynamic, E : \n");
+        (arma::real(E)).print();
+    }
+
 
 
        // Writing the results :
@@ -365,6 +385,8 @@ void FHHFSolver::runSimulation( )
         results.writeLineInReal("EU", EU);
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
 

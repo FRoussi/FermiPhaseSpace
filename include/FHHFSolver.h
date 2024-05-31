@@ -30,6 +30,7 @@ public:
     void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
     void                        initiateSolver();
     void                        setComputeMomenta(bool yn);
+    void                        setTalkative(bool yn);
 
     void                        step_RK1(double dt);
     void                        step_RK2(double dt);
@@ -54,6 +55,9 @@ private:
 
 // other things to compute
     bool                    computeMomenta;  
+
+// Work parameters
+    bool                    talkative;
 
 // Time parameter
     double                  tMax;
