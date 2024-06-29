@@ -113,6 +113,8 @@ int main(int argc, char* argv[])
    systemLoaded = true;
    std::cout << "- System loaded" << std::endl;
 
+   const auto startSimTime{std::chrono::steady_clock::now()};
+
    switch (chosenMethod)
    {
    case dynamicMethod::HF:
@@ -184,9 +186,13 @@ int main(int argc, char* argv[])
       break;
    }
 
+   const auto endSimTime{std::chrono::steady_clock::now()};
+
+   const std::chrono::duration<double> elapsed_seconds{endSimTime - startSimTime};
 
 
 
+   std::cout << "- Computation time : " << elapsed_seconds.count() << " s." << std::endl;
    std::cout <<"- Program closing." << std::endl;
 
 
