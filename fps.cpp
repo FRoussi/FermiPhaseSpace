@@ -75,7 +75,11 @@ int main(int argc, char* argv[])
 
    std::cout << "- Reading work file "<< instructionsFileName << std::endl;  
    
-   std::ifstream instructionsFile = std::ifstream(workFolder + "/" + instructionsFileName);
+   std::string file = workFolder + "/" + instructionsFileName;
+
+   std::ifstream instructionsFile = std::ifstream(file);
+
+
 
    if (instructionsFile.good())
    {
