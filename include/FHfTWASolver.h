@@ -8,7 +8,8 @@
 #include <omp.h>
 
 #include "FHSystem.h"
-#include "ResultWriter.h"
+#include "ResultWriterTxt.h"
+#include "ResultWriterJson.h"
 
 
 

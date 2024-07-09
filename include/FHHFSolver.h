@@ -6,7 +6,8 @@
 #include <armadillo>
 
 #include "FHSystem.h"
-#include "ResultWriter.h"
+#include "ResultWriterTxt.h"
+#include "ResultWriterJson.h"
 
 
 
@@ -27,6 +28,7 @@ public:
     FHHFSolver(FHSystem* fhs);
 
     void                        setResultFile(std::string workName, std::string folderNameName);
+    void                        writeResults(std::string how, bool yn = true);
     void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
     void                        initiateSolver();
     void                        setComputeMomenta(bool yn);
@@ -49,7 +51,9 @@ private:
     FHSystem*               fhSystem;           //<- Fermi Hubbard System  
 
 // results in :
-    bool                    writeResults;
+    bool                    writeResultsTxt;
+    bool                    writeResultsJson;
+    bool                    writeResultsHDF5;
     std::string             workName;           //<- A name for the work, for the results file
     std::string             folderName;         //<- A name for the work folder, for the results file
 

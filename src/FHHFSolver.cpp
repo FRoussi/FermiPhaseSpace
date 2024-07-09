@@ -14,6 +14,9 @@ FHHFSolver::FHHFSolver(FHSystem* fhS)
     computeMomenta = false;
     talkative = false;
 
+    writeResultsTxt = false;
+    writeResultsJson = false;
+    writeResultsHDF5 = false;
 
 }
 
@@ -22,7 +25,23 @@ void FHHFSolver::setResultFile(std::string wN, std::string fN)
 {
     workName = wN;
     folderName = fN;
-    writeResults = true;
+}
+
+void                        FHHFSolver::writeResults(std::string how, bool yn)
+{
+
+    if (how  == "txt")
+    {
+        writeResultsTxt = yn;
+    }
+    if (how  == "json")
+    {
+        writeResultsJson = yn;
+    }
+    if (how  == "hdf5")
+    {
+        writeResultsHDF5 = yn;
+    }
 }
 
 
@@ -355,12 +374,14 @@ void FHHFSolver::runSimulation( )
     }
 
 
+    std::cout << "- Computation done, writing results." << std::endl;
 
        // Writing the results :
-    if (writeResults)
+    if (writeResultsTxt)
     {
-        ResultWriter results = ResultWriter(workName, folderName);
+        ResultWriterTxt results = ResultWriterTxt(workName, folderName);
         results.newResults();
+
         results.writeLine("t", timeLine);
         for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
         {
@@ -389,10 +410,54 @@ void FHHFSolver::runSimulation( )
         std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
+    if (writeResultsJson)
+    {
+
+        ResultWriterJson rJson; 
+        Json::Value resJson = fhSystem->getOriginalJsonSystem();
+        std::cout << "- Writing a json file." << std::endl;
+        Json::Value niiuJson;
+        for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
+        {
+            std::string iSiteStr = std::to_string(iSite + 1);
+            niiuJson[iSiteStr] = rJson.writeLineInReal(Niiu.row(iSite));
+        }
+        resJson["Niiu"] = niiuJson;
+std::cout << "- Writing niiu." << std::endl;
+        Json::Value niidJson;
+        for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
+        {
+            std::string iSiteStr = std::to_string(iSite + 1);
+            niidJson[iSiteStr] = rJson.writeLineInReal(Niid.row(iSite));
+        }
+        resJson["Niid"] = niidJson;
+
+
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["indentation"] = "";
+        std::string document = Json::writeString(wbuilder, resJson);
+std::cout << "- Writing the doc." << std::endl;
+        std::string fileAdressName = folderName + "/" + workName + ".json";
+        std::ofstream resultFile(fileAdressName);
+        resultFile << document;
+        resultFile.close();
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".json" << std::endl;
+    }
+
+    if (writeResultsHDF5)
+    {
+        
+    }
+
+
 
     
 
 }
+
+
+
 
 /// @brief Destructor
 FHHFSolver::~FHHFSolver()

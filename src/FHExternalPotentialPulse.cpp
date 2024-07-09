@@ -56,9 +56,9 @@ arma::cx_dmat FHExternalPotentialPulse::getExternalPotential(double t)
 
     std::complex<double> zeroComp = std::complex<double>(0,0);
 
-    for (uint iSite; iSite < sitePositions->n_rows ; iSite++)
+    for (uint iSite = 0; iSite < sitePositions->n_rows ; iSite++)
     {
-        for (uint jSite; jSite < sitePositions->n_rows ; jSite++)
+        for (uint jSite = 0; jSite < sitePositions->n_rows ; jSite++)
         {
             if (withTunnelingCoefficients)
             {
@@ -85,9 +85,9 @@ void FHExternalPotentialPulse::updatePotential(double t)
 
     std::complex<double> zeroComp = std::complex<double>(0,0);
 
-    for (uint iSite; iSite < sitePositions->n_rows ; iSite++)
+    for (uint iSite = 0; iSite < sitePositions->n_rows ; iSite++)
     {
-        for (uint jSite; jSite < sitePositions->n_rows ; jSite++)
+        for (uint jSite = 0; jSite < sitePositions->n_rows ; jSite++)
         {
             if (withTunnelingCoefficients)
             {

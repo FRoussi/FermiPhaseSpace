@@ -172,6 +172,7 @@ public:
 
 
     Json::Value                         writeFHSystemJson();
+    Json::Value                         getOriginalJsonSystem();
     void                                writeFHSystemBis(std::string folderName = "");
 
 
@@ -226,8 +227,11 @@ private:
     std::vector<bool>               initConditions_upSpin;
     std::vector<bool>               initConditions_downSpin;
 
+// SYSTEM
     std::string                     systemName;
     std::string                     systemFolder;
+    Json::Value                     originalJsonSystem;
+
 
 
     void                            computeMatrices();

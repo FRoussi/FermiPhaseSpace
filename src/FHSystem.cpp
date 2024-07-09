@@ -502,7 +502,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
     }
 
 
-    
+    originalJsonSystem = Json::Value();
 }
 
 
@@ -511,6 +511,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 {
 
+    originalJsonSystem = rootSystem;
 // Positions
     std::string positionFile = rootSystem.get("positions", "").asString();
 
@@ -1400,9 +1401,9 @@ void                    FHSystem::computeMatrices()
     neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
     sameSiteMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
     
-    for (int i=0; i<nSites; i++)
+    for (uint i=0; i<nSites; i++)
     {
-        for (int j=0; j<nSites; j++)
+        for (uint j=0; j<nSites; j++)
         {
             distanceMatrix(i, j) = computeDistance(i,j);
             if (abs(distanceMatrix(i, j))< 0.0001)
@@ -1526,6 +1527,12 @@ Json::Value                    FHSystem::writeFHSystemJson()
 
 
     return systemRoot;
+}
+
+
+Json::Value                    FHSystem::getOriginalJsonSystem()
+{
+    return originalJsonSystem;
 }
 
 

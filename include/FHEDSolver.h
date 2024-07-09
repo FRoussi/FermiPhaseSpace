@@ -10,7 +10,8 @@
 
 
 #include "FHSystem.h"
-#include "ResultWriter.h"
+#include "ResultWriterTxt.h"
+#include "ResultWriterJson.h"
 
 
 #define MAX_BITS 32

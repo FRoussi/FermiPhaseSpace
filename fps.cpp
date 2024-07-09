@@ -130,6 +130,7 @@ int main(int argc, char* argv[])
          std::cout << "- Computation of HF dynamic " << std::endl;
          FHHFSolver hfSolver = FHHFSolver(&fhSystem);
          hfSolver.setResultFile(simName + "_HF_res", workFolder);
+         hfSolver.writeResults("json");
          hfSolver.initiateSolver();
          hfSolver.setTimeParameters(param_tm, param_dt, param_sptp);
          hfSolver.runSimulation();
@@ -146,6 +147,7 @@ int main(int argc, char* argv[])
          std::cout << "- Computation of fTWA dynamic "<< std::endl;
          FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
          fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
+         //fTWASolver.writeResults("txt");
          fTWASolver.initiateSolver();
          fTWASolver.setTimeParameters(param_tm, param_dt, param_sptp);
          fTWASolver.setfTWAParameters(param_nTraj);
