@@ -130,6 +130,7 @@ int main(int argc, char* argv[])
          std::cout << "- Computation of HF dynamic " << std::endl;
          FHHFSolver hfSolver = FHHFSolver(&fhSystem);
          hfSolver.setResultFile(simName + "_HF_res", workFolder);
+         hfSolver.setJsonFile(rootSim);
          hfSolver.writeResults("json");
          hfSolver.initiateSolver();
          hfSolver.setTimeParameters(param_tm, param_dt, param_sptp);
