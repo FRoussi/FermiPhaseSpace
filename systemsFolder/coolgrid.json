@@ -1,0 +1,21 @@
+{
+	"method" : "GPSR",
+	"parameters" : 
+	{
+		"dt" : 0.01,
+		"stepsPerTimePoints" : 1,
+		"t_max" : 2.0,
+		"n_traj" : 100
+	},
+	"sim_name" : "coolgrid",
+	"system" : 
+	{
+		"EnergyT" : "nearestNeighbours",
+		"EnergyU" : "onSite",
+		"EnergyV" : "None",
+		"IC" : "spinWave",
+		"parametersT" : -1.0,
+		"parametersU" : 1.0,
+		"positions" : "coolgrid.xyz"
+	}
+}
