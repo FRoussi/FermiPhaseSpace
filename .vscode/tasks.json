@@ -12,6 +12,7 @@
                 "${workspaceFolder}/src/FHSystem.cpp",
                 "${workspaceFolder}/src/FHExternalPotential.cpp",
                 "${workspaceFolder}/src/FHExternalPotentialPulse.cpp",
+                "${workspaceFolder}/src/FHSolver.cpp",
                 "${workspaceFolder}/src/ResultWriterTxt.cpp",
                 "${workspaceFolder}/src/ResultWriterJson.cpp",
                 "${workspaceFolder}/src/FHEDSolver.cpp",

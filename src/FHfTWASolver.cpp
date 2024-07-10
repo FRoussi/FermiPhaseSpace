@@ -1,9 +1,9 @@
 #include "../include/FHfTWASolver.h"
 
 
-FHfTWASolver::FHfTWASolver(FHSystem* fhS)
+FHfTWASolver::FHfTWASolver(FHSystem* fhS) : FHSolver(fhS)
 {
-    fhSystem = fhS;
+
 
     unsigned int nSites = fhSystem->getnSites();
     arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
@@ -18,29 +18,10 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS)
     extPot = fhSystem->getExtPotPointer();
 
 
-    computeMomenta = false;
-    talkative = false;
 }
 
-void FHfTWASolver::setResultFile(std::string wN, std::string fN)
-{
-    workName = wN;
-    folderName = fN;
-    writeResults = true;
-}
 
-/// @brief Set time simulation parameters.
-/// @param t_max the maximum simulation time
-/// @param d_t the time step between stored values in the simulation 
-/// @param nSPTP number of simulation steps between two time steps
-/// @return void
-void FHfTWASolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
-{
-    this->tMax = t_max;
-    this->dt = d_t;
-    this->nStepsPerTimePoint = nSPTP;
-    this->nTimePoints = floor(tMax/dt +1);
-}
+
 
 /// @brief Set fTWA simulation parameters.
 /// @param nT number of trajectories used
@@ -50,10 +31,7 @@ void FHfTWASolver::setfTWAParameters(unsigned int nT)
     this->nTraj = nT;
 }
 
-void FHfTWASolver::setTalkative(bool yn)
-{
-    talkative = yn;
-}
+
 
 /// @brief Initiate the fTWA solver, compute the initial density matrix probability and the noise variance to apply.
 void FHfTWASolver::initiateSolver()
@@ -324,7 +302,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_drowvec E = EtH+ EU;
 
     // Writing the results :
-    if (writeResults)
+    if (writeResultsTxt)
     {
         ResultWriterTxt results = ResultWriterTxt(workName, folderName);
         results.newResults();
@@ -354,6 +332,48 @@ void FHfTWASolver::runSimulation( )
 
          std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
+
+    if (writeResultsJson)
+    {
+
+        ResultWriterJson rJson; 
+        Json::Value resJson = jsonFile;
+        Json::Value niiuJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niiuJson.append(rJson.writeLineInReal(Nu.tube(iSite, iSite)));
+        }
+        resJson["Niiu"] = niiuJson;
+        Json::Value niidJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niidJson.append(rJson.writeLineInReal(Nd.tube(iSite, iSite)));
+        }
+        resJson["Niid"] = niidJson;
+
+
+        Json::Value EJson(Json::objectValue);
+        EJson["U"] = rJson.writeLineInReal(EU);
+        EJson["tH"] = rJson.writeLineInReal(EtH);
+        EJson["tot"] = rJson.writeLineInReal(E);
+        resJson["E"] = EJson;
+
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["indentation"] = "";
+        std::string document = Json::writeString(wbuilder, resJson);
+        std::string fileAdressName = folderName + "/" + workName + ".json";
+        std::ofstream resultFile(fileAdressName);
+        resultFile << document;
+        resultFile.close();
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".json" << std::endl;
+    }
+
+    if (writeResultsHDF5)
+    {
+        
+    }
+
 }
 
 

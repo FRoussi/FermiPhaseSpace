@@ -13,7 +13,7 @@
 		"EnergyU" : "onSite",
 		"EnergyV" : "None",
 		"IC" : "spinWave",
-		"parametersT" : 0,
+		"parametersT" : 1.0,
 		"parametersU" : 1.0,
 		"positions" : "newSystem.xyz"
 	}

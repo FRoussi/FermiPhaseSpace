@@ -11,7 +11,7 @@
 
 #include "FHEDSolver.h"
 #include "FHSystem.h"
-#include "ResultWriter.h"
+#include "ResultWriterTxt.h"
 
 
 

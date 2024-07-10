@@ -8,10 +8,9 @@
 #include <armadillo>
 //#include <cmath>
 
+#include "FHSolver.h"
 
-#include "FHSystem.h"
-#include "ResultWriterTxt.h"
-#include "ResultWriterJson.h"
+
 
 
 #define MAX_BITS 32
@@ -47,15 +46,14 @@ arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_cx_dm
 
 
 
-class FHEDSolver  	
+class FHEDSolver : public FHSolver
 {
 public:
     FHEDSolver(FHSystem* fhSystem);
 
-    void setResultFile(std::string workName, std::string folderNameName);
-    void setTimeParameters(double t_max, double dt, unsigned int nPerTS);
+
     void setComputeMomenta(bool yn);
-    void setTalkative(bool yn);
+
 
     void initiateSolver();
 
@@ -71,22 +69,8 @@ public:
     ~FHEDSolver();
 
 private:
-// Fermi Hubbard System  :
-    FHSystem* fhSystem;                                             //<- Pointer to the Fermi-Hubbard model
 
-// results in :
-    bool writeResults;
-    std::string workName;                                           //<- A name for the work, for the results file
-    std::string folderName;                                         //<- A name for the work folder, for the results file
 
-// Work parameters
-    bool talkative;
-
-// Time parameters
-    double tMax;                                                    //<- Maximum time extend of the simulation 
-    double dt;                                                      //<- Time step of calculated observables        
-    unsigned int nStepsPerTimePoint;                                //<- Number of simulated time steps between the calculation of observable
-    unsigned int nTimePoints;                                       //<- Number of time steps (=tMax/dt)
 // Other parameters :
     unsigned int nPartU;                                            //<- Number of up-spin fermions
     unsigned int nPartD;                                            //<- Number of down-spin fermions
@@ -117,7 +101,6 @@ private:
     std::vector<std::vector<arma::sp_cx_dmat>> NijdSet;
 
     //Momentum space :
-    bool computeMomenta;
     uint nOfMomentumStates;
     arma::dmat momentaVec;
     arma::dvec momentaNRJ;

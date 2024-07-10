@@ -1,67 +1,35 @@
 #include "../include/FHHFSolver.h"
 
 
-FHHFSolver::FHHFSolver(FHSystem* fhS)
+FHHFSolver::FHHFSolver(FHSystem* fhS) : FHSolver(fhS)
 {
+
+/*
     fhSystem = fhS;
+
+    computeMomenta = false;
+    talkative = false;
+    jsonFile = Json::Value();
+
+    writeResultsTxt = false;
+    writeResultsJson = false;
+    writeResultsHDF5 = false; */
+
+
+        
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
     J = fhSystem->getJMatrixPointer();
     V = fhSystem->getVMatrixPointer();
     extPot = fhSystem->getExtPotPointer();
 
-
-    computeMomenta = false;
-    talkative = false;
-
-    writeResultsTxt = false;
-    writeResultsJson = false;
-    writeResultsHDF5 = false;
-
 }
 
 
-void FHHFSolver::setResultFile(std::string wN, std::string fN)
-{
-    workName = wN;
-    folderName = fN;
-}
-
-void                        FHHFSolver::writeResults(std::string how, bool yn)
-{
-
-    if (how  == "txt")
-    {
-        writeResultsTxt = yn;
-    }
-    if (how  == "json")
-    {
-        writeResultsJson = yn;
-    }
-    if (how  == "hdf5")
-    {
-        writeResultsHDF5 = yn;
-    }
-}
 
 
-/// @brief Set time simulation parameters.
-/// @param t_max the maximum simulation time
-/// @param d_t the time step between stored values in the simulation 
-/// @param nSPTP number of simulation steps between two time steps
-/// @return void
-void FHHFSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
-{
-    this->tMax = t_max;
-    this->dt = d_t;
-    this->nStepsPerTimePoint = nSPTP;
-    this->nTimePoints = floor(tMax/dt +1);
-}
 
-void FHHFSolver::setTalkative(bool yn)
-{
-    talkative = yn;
-}
+
 
 /// @brief Initiate the HF solver, compute the initial density matrix.
 void FHHFSolver::initiateSolver()
@@ -374,8 +342,6 @@ void FHHFSolver::runSimulation( )
     }
 
 
-    std::cout << "- Computation done, writing results." << std::endl;
-
        // Writing the results :
     if (writeResultsTxt)
     {
@@ -414,29 +380,30 @@ void FHHFSolver::runSimulation( )
     {
 
         ResultWriterJson rJson; 
-        Json::Value resJson = fhSystem->getOriginalJsonSystem();
-        std::cout << "- Writing a json file." << std::endl;
-        Json::Value niiuJson;
+        Json::Value resJson = jsonFile;
+        Json::Value niiuJson(Json::arrayValue);
         for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
         {
-            std::string iSiteStr = std::to_string(iSite + 1);
-            niiuJson[iSiteStr] = rJson.writeLineInReal(Niiu.row(iSite));
+            niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
         }
         resJson["Niiu"] = niiuJson;
-std::cout << "- Writing niiu." << std::endl;
-        Json::Value niidJson;
+        Json::Value niidJson(Json::arrayValue);
         for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
         {
-            std::string iSiteStr = std::to_string(iSite + 1);
-            niidJson[iSiteStr] = rJson.writeLineInReal(Niid.row(iSite));
+            niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
         }
         resJson["Niid"] = niidJson;
+
+        Json::Value EJson(Json::objectValue);
+        EJson["U"] = rJson.writeLineInReal(EU);
+        EJson["tH"] = rJson.writeLineInReal(EtH);
+        EJson["tot"] = rJson.writeLineInReal(E);
+        resJson["E"] = EJson;
 
 
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "";
         std::string document = Json::writeString(wbuilder, resJson);
-std::cout << "- Writing the doc." << std::endl;
         std::string fileAdressName = folderName + "/" + workName + ".json";
         std::ofstream resultFile(fileAdressName);
         resultFile << document;

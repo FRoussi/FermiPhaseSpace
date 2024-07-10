@@ -1,34 +1,15 @@
 #include "../include/FHEDSolver.h"
 
-FHEDSolver::FHEDSolver(FHSystem *fhS)
+FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
 {
-    fhSystem = fhS;
-    writeResults = false;
-    talkative = false;
+
     currentSimulationTime = 0;
 }
 
-void FHEDSolver::setResultFile(std::string wN, std::string fN)
-{
-    workName = wN;
-    folderName = fN;
-    writeResults = true;
-    talkative = false;
-}
 
 
-void FHEDSolver::setTimeParameters(double t_max, double d_t, uint nPerTS)
-{
-    this->tMax = t_max;
-    this->dt = d_t;
-    this->nStepsPerTimePoint = nPerTS;
-    this->nTimePoints = floor(tMax / dt + 1);
-}
 
-void FHEDSolver::setTalkative(bool yn)
-{
-    talkative = yn;
-}
+
 
 void FHEDSolver::setComputeMomenta(bool yn)
 {
@@ -528,7 +509,7 @@ void FHEDSolver::runSimulation()
     
 
     // Writing the results :
-    if (writeResults)
+    if (writeResultsTxt)
     {
         ResultWriterTxt results = ResultWriterTxt(workName, folderName);
         results.newResults();
@@ -555,7 +536,46 @@ void FHEDSolver::runSimulation()
         std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
+    if (writeResultsJson)
+    {
 
+        ResultWriterJson rJson; 
+        Json::Value resJson = jsonFile;
+        Json::Value niiuJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niiuJson.append(rJson.writeLine(niiu.row(iSite)));
+        }
+        resJson["Niiu"] = niiuJson;
+        Json::Value niidJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niidJson.append(rJson.writeLine(niid.row(iSite)));
+        }
+        resJson["Niid"] = niidJson;
+
+        Json::Value EJson(Json::objectValue);
+        EJson["U"] = rJson.writeLine(EU);
+        EJson["tH"] = rJson.writeLine(EtH);
+        EJson["tot"] = rJson.writeLine(E);
+        resJson["E"] = EJson;
+
+
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["indentation"] = "";
+        std::string document = Json::writeString(wbuilder, resJson);
+        std::string fileAdressName = folderName + "/" + workName + ".json";
+        std::ofstream resultFile(fileAdressName);
+        resultFile << document;
+        resultFile.close();
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".json" << std::endl;
+    }
+
+    if (writeResultsHDF5)
+    {
+        
+    }
     
 
 }

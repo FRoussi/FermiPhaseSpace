@@ -5,14 +5,11 @@
 #include <vector>
 #include <armadillo>
 
-#include "FHSystem.h"
-#include "ResultWriterTxt.h"
-#include "ResultWriterJson.h"
+#include "FHSolver.h"
 
 
 
-
-class FHHFSolver
+class FHHFSolver : public FHSolver
 {
 public:
 
@@ -27,12 +24,9 @@ public:
 
     FHHFSolver(FHSystem* fhs);
 
-    void                        setResultFile(std::string workName, std::string folderNameName);
-    void                        writeResults(std::string how, bool yn = true);
-    void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoints = 1);
     void                        initiateSolver();
     void                        setComputeMomenta(bool yn);
-    void                        setTalkative(bool yn);
+
 
     void                        step_RK1(double dt);
     void                        step_RK2(double dt);
@@ -41,33 +35,13 @@ public:
     void                        step_RK45(double dt);
     void                        runSimulation();
 
-    const arma::cx_double       jj = arma::cx_double(0,1);
 
     ~FHHFSolver();
 
 private:
-
-
-    FHSystem*               fhSystem;           //<- Fermi Hubbard System  
-
-// results in :
-    bool                    writeResultsTxt;
-    bool                    writeResultsJson;
-    bool                    writeResultsHDF5;
-    std::string             workName;           //<- A name for the work, for the results file
-    std::string             folderName;         //<- A name for the work folder, for the results file
-
-// other things to compute
-    bool                    computeMomenta;  
-
-// Work parameters
-    bool                    talkative;
+        
 
 // Time parameter
-    double                  tMax;
-    double                  dt;
-    unsigned int            nStepsPerTimePoint;
-    unsigned int            nTimePoints;
     double                  currentSimulationTime;
 
     HFIntegrator            integrator;            //<-Integrator 

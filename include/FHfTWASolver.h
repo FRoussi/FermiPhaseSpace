@@ -7,13 +7,12 @@
 #include <armadillo>
 #include <omp.h>
 
-#include "FHSystem.h"
-#include "ResultWriterTxt.h"
-#include "ResultWriterJson.h"
+
+#include "FHSolver.h"
 
 
 
-class FHfTWASolver
+class FHfTWASolver : public FHSolver
 {
 public:
 
@@ -25,36 +24,23 @@ public:
 
     FHfTWASolver(FHSystem* fhs);
 
-    void                        setResultFile(std::string workName, std::string folderNameName);
-    void                        setTimeParameters(double t_max, double dt, unsigned int nStepsPerTimePoint = 1);
+
     void                        setfTWAParameters(unsigned int nTraj);
-    void                        setTalkative(bool yn);
+
     void                        initiateSolver();
 
     void                        step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
     void                        step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
     void                        runSimulation();
 
-    const arma::cx_double       jj = arma::cx_double(0,1);
 
-    void setComputeMomenta(bool yn);
+    void                        setComputeMomenta(bool yn);
 
     ~FHfTWASolver();
 
 private:
 
-// Fermi Hubbard System  :
-    FHSystem*                   fhSystem;
 
-// results in :         
-    bool                        writeResults;
-    std::string                 workName;              //<- A name for the work, for the results file
-    std::string                 folderName;            //<- A name for the work folder, for the results file
-
-    bool                        computeMomenta;
-
-// Work parameters
-    bool talkative;
 
 // fTWA parameters :    
     unsigned int                nTraj;
@@ -62,11 +48,7 @@ private:
     // Integrator   
     fTWAIntegrator              integrator;
 
-// Time parameter
-    double                      tMax;
-    double                      dt;
-    unsigned int                nStepsPerTimePoint;
-    unsigned int                nTimePoints;
+
 
 // Initial conditions :
     std::vector<bool>           posPartU;

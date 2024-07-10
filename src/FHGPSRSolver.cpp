@@ -2,9 +2,9 @@
 
 
 
-FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
+FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : FHSolver(fhS)
 {
-    fhSystem = fhS;
+
 
 
     U = fhSystem->getUMatrixPointer();
@@ -18,28 +18,10 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS)
     driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38;
     diffusionIntegrator = GPSRDiffusionIntegrator::numerical_rsvd;
 
-    talkative = false;
+
 }
 
-void FHGPSRSolver::setResultFile(std::string wN, std::string fN)
-{
-    workName = wN;
-    folderName = fN;
-    writeResults = true;
-}
 
-/// @brief Set time simulation parameters.
-/// @param t_max the maximum simulation time
-/// @param d_t the time step between stored values in the simulation 
-/// @param nSPTP number of simulation steps between two time steps
-/// @return void
-void FHGPSRSolver::setTimeParameters(double t_max, double d_t, unsigned int nSPTP)
-{
-    this->tMax = t_max;
-    this->dt = d_t;
-    this->nStepsPerTimePoint = nSPTP;
-    this->nTimePoints = floor(tMax/dt +1);
-}
 
 /// @brief Set GPSR simulation parameters.
 /// @param nT number of trajectories used
@@ -49,10 +31,7 @@ void FHGPSRSolver::setGPSRParameters(unsigned int nT)
     this->nTraj = nT;
 }
 
-void FHGPSRSolver::setTalkative(bool yn)
-{
-    talkative = yn;
-}
+
 
 /// @brief Initiate the GPSR solver, compute the initial density matrix probability. 
 void FHGPSRSolver::initiateSolver()
@@ -721,7 +700,7 @@ unsigned int tt = std::floor(nTraj/10);
 
 
     // Writing the results :
-    if (writeResults)
+    if (writeResultsTxt)
     {
         ResultWriterTxt results = ResultWriterTxt(workName, folderName);
         results.newResults();
@@ -740,6 +719,46 @@ unsigned int tt = std::floor(nTraj/10);
         results.writeLineInReal("E", E);
 
         std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
+    }
+
+     if (writeResultsJson)
+    {
+
+        ResultWriterJson rJson; 
+        Json::Value resJson = jsonFile;
+        Json::Value niiuJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
+        {
+            niiuJson.append(rJson.writeLineInReal(Nu.tube(iSite, iSite)));
+        }
+        resJson["Niiu"] = niiuJson;
+        Json::Value niidJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niidJson.append(rJson.writeLineInReal(Nd.tube(iSite, iSite)));
+        }
+        resJson["Niid"] = niidJson;
+
+        Json::Value EJson(Json::objectValue);
+        EJson["U"] = rJson.writeLineInReal(EU);
+        EJson["tH"] = rJson.writeLineInReal(EtH);
+        EJson["tot"] = rJson.writeLineInReal(E);
+        resJson["E"] = EJson;
+
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["indentation"] = "";
+        std::string document = Json::writeString(wbuilder, resJson);
+        std::string fileAdressName = folderName + "/" + workName + ".json";
+        std::ofstream resultFile(fileAdressName);
+        resultFile << document;
+        resultFile.close();
+
+        std::cout << "- Results writen in " << folderName << "/" << workName << ".json" << std::endl;
+    }
+
+    if (writeResultsHDF5)
+    {
+        
     }
 
 }

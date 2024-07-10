@@ -525,7 +525,7 @@ std::cout << "|" << std::endl; ;
     // Writing the results :
     if (writeResults)
     {
-        ResultWriter results = ResultWriter(workName, folderName);
+        ResultWriterTxt results = ResultWriterTxt(workName, folderName);
         results.newResults();
         results.writeLine("t", timeLine);
         for (uint iSite=0; iSite<fhSystem->getnSites(); iSite++)
