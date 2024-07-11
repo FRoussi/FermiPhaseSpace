@@ -562,7 +562,7 @@ void FHEDSolver::runSimulation()
 
 
         Json::StreamWriterBuilder wbuilder;
-        wbuilder["indentation"] = "";
+        wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);
         std::string fileAdressName = folderName + "/" + workName + ".json";
         std::ofstream resultFile(fileAdressName);
