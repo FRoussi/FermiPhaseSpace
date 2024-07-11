@@ -12,7 +12,11 @@
 		"EnergyT" : "nearestNeighbours",
 		"EnergyU" : "onSite",
 		"EnergyV" : "None",
-		"IC" : "spinWave",
+		"IC" : 
+		{ 
+			"type" : "givenDiagonal",
+			"subtype" : "spinWave" 
+		},
 		"parametersT" : 1.0,
 		"parametersU" : 1.0,
 		"positions" : "newSystem.xyz"

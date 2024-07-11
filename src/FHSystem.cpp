@@ -528,48 +528,65 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 
 
 // Initial condition
-    std::string initCond = rootSystem.get("IC", "spinWave").asString();
-    if (initCond == "spinWave")
+    Json::Value jsonIC = rootSystem["IC"];
+    if (jsonIC != Json::Value::null)
     {
-        initialCondition = FHInitialConditionType::spinWave;
-        for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+        std::string typeIC = jsonIC.get("type", "givenDiagonal").asString();
+        if (typeIC == "givenDiagonal")
         {
-            if (iPart%2 == 0)
+            initialCondition = FHInitialConditionType::givenDiagonal;
+            std::string subtypeIC = jsonIC.get("subtype", "spinWave").asString();
+
+            if (subtypeIC == "spinWave")
             {
-                initConditions_upSpin.push_back(true);
-                initConditions_downSpin.push_back(false);
-            }
-            else
+                for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+                {
+                    if (iPart%2 == 0)
+                    {
+                        initConditions_upSpin.push_back(true);
+                        initConditions_downSpin.push_back(false);
+                    }
+                    else
+                    {
+                        initConditions_upSpin.push_back(false);
+                        initConditions_downSpin.push_back(true);
+                    }
+                }
+            }  
+
+            else if (subtypeIC == "chargeWave")
             {
-                initConditions_upSpin.push_back(false);
-                initConditions_downSpin.push_back(true);
-            }
+                for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+                {
+                    if (iPart%2 == 0)
+                    {
+                        initConditions_upSpin.push_back(true);
+                        initConditions_downSpin.push_back(true);
+                    }
+                    else
+                    {
+                        initConditions_upSpin.push_back(false);
+                        initConditions_downSpin.push_back(false);
+                    }
+                }
+            }                  
+
+        }
+
+
+
+        else if (typeIC == "quenched")
+        {
+
+        }
+        else if (typeIC == "givenInFile")
+        {
+
         }
     }
-    else if (initCond == "chargeWave")
+    else
     {
-        initialCondition = FHInitialConditionType::chargeWave;
-        for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
-        {
-            if (iPart%2 == 0)
-            {
-                initConditions_upSpin.push_back(true);
-                initConditions_downSpin.push_back(true);
-            }
-            else
-            {
-                initConditions_upSpin.push_back(false);
-                initConditions_downSpin.push_back(false);
-            }
-        }
-    }
-    else if (initCond == "quenched")
-    {
-
-    }
-    else if (initCond == "givenInFile")
-    {
-
+        std::cout << "No Initial condition in the json file." << std::endl;  
     }
 
 // Tunneling Energy
@@ -941,7 +958,7 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
 
         }
     }
-    else if (initialCondition == FHInitialConditionType::spinWave)
+    else if (initialCondition == FHInitialConditionType::chargeWave)
     {
         for (uint iSite = 0; iSite < sitePositions.n_rows; iSite ++)
         {
@@ -975,7 +992,7 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
 
     upSpinParticleNumber = partNumber[0];
     downSpinParticleNumber = partNumber[1];
-    if (initialCondition == FHInitialConditionType::spinWave)
+    if (initialCondition == FHInitialConditionType::givenDiagonal)
     {
         for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, upSpinParticleNumber); iSite +=2)
         {
