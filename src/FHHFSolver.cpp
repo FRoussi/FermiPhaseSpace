@@ -381,6 +381,10 @@ void FHHFSolver::runSimulation( )
 
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
+
+        Json::Value tJson(Json::objectValue);
+        tJson["t"] = rJson.writeLine(timeLine);
+
         Json::Value niiuJson(Json::arrayValue);
         for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
         {

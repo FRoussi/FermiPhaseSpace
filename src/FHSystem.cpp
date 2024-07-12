@@ -536,6 +536,8 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
         {
             initialCondition = FHInitialConditionType::givenDiagonal;
             std::string subtypeIC = jsonIC.get("subtype", "spinWave").asString();
+            initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
+            initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
 
             if (subtypeIC == "spinWave")
             {
@@ -543,13 +545,12 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
                 {
                     if (iPart%2 == 0)
                     {
-                        initConditions_upSpin.push_back(true);
-                        initConditions_downSpin.push_back(false);
+                        initConditions_upSpin[iPart] = true;
                     }
                     else
                     {
-                        initConditions_upSpin.push_back(false);
-                        initConditions_downSpin.push_back(true);
+
+                        initConditions_downSpin[iPart] = true;
                     }
                 }
             }  
@@ -560,16 +561,37 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
                 {
                     if (iPart%2 == 0)
                     {
-                        initConditions_upSpin.push_back(true);
-                        initConditions_downSpin.push_back(true);
-                    }
-                    else
-                    {
-                        initConditions_upSpin.push_back(false);
-                        initConditions_downSpin.push_back(false);
+                        initConditions_upSpin[iPart] = true;
+                        initConditions_downSpin[iPart] = true;
                     }
                 }
-            }                  
+            }     
+
+            else if (subtypeIC == "spinWave3")
+            {
+
+                uint midParticleNumber = std::ceil(sitePositions.n_rows/2);
+                for (uint iPart = 0; iPart < midParticleNumber ; iPart++ )
+                {
+                    initConditions_upSpin[iPart] = true;
+                }
+                for (uint iPart = midParticleNumber; iPart < sitePositions.n_rows ; iPart++ )
+                {
+                    initConditions_downSpin[iPart] = true;
+                }
+                
+            }  
+
+            else if (subtypeIC == "chargeWave3")
+            {
+                uint midParticleNumber = std::ceil(sitePositions.n_rows/2);
+                for (uint iPart = 0; iPart < midParticleNumber ; iPart++ )
+                {
+                    initConditions_upSpin[iPart] = true;
+                    initConditions_downSpin[iPart] = true;
+                }
+
+            }                    
 
         }
 
@@ -580,6 +602,10 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
 
         }
         else if (typeIC == "givenInFile")
+        {
+
+        }
+        else
         {
 
         }
@@ -1465,27 +1491,30 @@ Json::Value                    FHSystem::writeFHSystemJson()
     systemRoot["positions"] = systemName + ".xyz";
 
 //Initial condition
+    Json::Value jsonIC = Json::Value(Json::objectValue);
     switch (initialCondition)
     {
     case FHInitialConditionType::spinWave:
-        systemRoot["IC"] = "spinWave"; 
+        jsonIC["type"] = "givenDiagonal";
+        jsonIC["subtype"] = "spinWave";
         break;
     case FHInitialConditionType::chargeWave:
-        systemRoot["IC"] = "chargeWave"; 
+        jsonIC["type"] = "givenDiagonal";
+        jsonIC["subtype"] = "chargeWave";
         break;
     case FHInitialConditionType::quenched:
-        systemRoot["IC"] = "quenched"; 
+        jsonIC["type"] = "quenched";
         break;
     case FHInitialConditionType::groundState:
-        systemRoot["IC"] = "groundState"; 
+        jsonIC["type"] = "groundState";
         break;
     case FHInitialConditionType::givenDiagonal:
-        systemRoot["IC"] = "givenDiagonal"; 
+        jsonIC["type"] = "givenDiagonal"; 
         break;
     default:
         break;
     } 
-
+    systemRoot["IC"] = jsonIC;
 // Energy
     switch (tunnelingType)
     {

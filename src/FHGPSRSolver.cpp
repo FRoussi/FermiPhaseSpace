@@ -721,17 +721,21 @@ unsigned int tt = std::floor(nTraj/10);
         std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
-     if (writeResultsJson)
+    if (writeResultsJson)
     {
 
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
+            
+        resJson["t"] = rJson.writeLine(timeLine);
+
         Json::Value niiuJson(Json::arrayValue);
         for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
         {
             niiuJson.append(rJson.writeLineInReal(Nu.tube(iSite, iSite)));
         }
         resJson["Niiu"] = niiuJson;
+        
         Json::Value niidJson(Json::arrayValue);
         for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
         {

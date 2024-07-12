@@ -155,7 +155,8 @@ int main(int argc, char* argv[])
             std::cout << "- Computation of fTWA dynamic "<< std::endl;
             FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
             fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
-            //fTWASolver.writeResults("txt");
+            fTWASolver.setJsonFile(rootSim);
+            fTWASolver.writeResults("json");
             fTWASolver.initiateSolver();
             fTWASolver.setTimeParameters(param_tm, param_dt, param_sptp);
             fTWASolver.setfTWAParameters(param_nTraj);
@@ -173,6 +174,8 @@ int main(int argc, char* argv[])
             std::cout <<  "- Computation of GPSR dynamic "<< std::endl;
             FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
             GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
+            GPSRSolver.setJsonFile(rootSim);
+            GPSRSolver.writeResults("json");
             GPSRSolver.initiateSolver();
             GPSRSolver.setTimeParameters(param_tm, param_dt, param_sptp);
             GPSRSolver.setGPSRParameters(param_nTraj);
@@ -189,6 +192,8 @@ int main(int argc, char* argv[])
             std::cout <<  "- Computation of ED dynamic "<< std::endl;
             FHEDSolver EDSolver = FHEDSolver(&fhSystem);
             EDSolver.setResultFile(simName + "_ED_res", workFolder);
+            EDSolver.setJsonFile(rootSim);
+            EDSolver.writeResults("json");
             EDSolver.initiateSolver();
             EDSolver.setTimeParameters(param_tm, param_dt, param_sptp);
             EDSolver.runSimulation();

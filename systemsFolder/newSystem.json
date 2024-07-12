@@ -13,11 +13,11 @@
 		"EnergyU" : "onSite",
 		"EnergyV" : "None",
 		"IC" : 
-		{ 
-			"type" : "givenDiagonal",
-			"subtype" : "spinWave" 
+		{
+			"subtype" : "spinWave",
+			"type" : "givenDiagonal"
 		},
-		"parametersT" : 1.0,
+		"parametersT" : 0,
 		"parametersU" : 1.0,
 		"positions" : "newSystem.xyz"
 	}
