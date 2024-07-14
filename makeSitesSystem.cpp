@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
 {
 
 
-   cout << "== Writing a new FH system." << endl;
+
 
 
     string fileName = "newSystem";
@@ -316,6 +316,15 @@ int main(int argc, char* argv[])
     whatToRead wtr = whatToRead::nothing;
     bool isANumber = true;                          //<- is the current entry a number
 
+    if (argc < 2)
+    {
+        std::cout << "To make a new system :" << std::endl;
+        std::cout << "./makeSitesSystem <nameOfTheSystem> <geometryOfTheSites> <param1> <param2> ..." << std::endl;
+    }
+    else
+    {
+
+    cout << "== Writing a new FH system." << endl;
     for (int iArg = 1; iArg < argc ; iArg++)        //<- for each entry
     {
 
@@ -446,6 +455,6 @@ int main(int argc, char* argv[])
 
     cout << "== " << fileName << " system created with " << pos.size() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
     cout << "== Particle positions in " << fileFolder << "/" << fileName << ".xyz" << endl; 
-
+    }
     return 0;
 }
