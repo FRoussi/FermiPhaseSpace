@@ -169,23 +169,39 @@ void FHfTWASolver::runSimulation( )
     arma::cx_drowvec EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
 
+    arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat Nd_loc = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhou = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhod = arma::cx_dmat(nSites, nSites);
+
+    // White Noise Matrices :
+    arma::cx_dmat wnu = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    arma::cx_dmat wnd = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+     arma::cx_dmat wnM = arma::cx_dmat(nSites, nSites);
+     arma::cx_dmat wnM_up = arma::cx_dmat(nSites, nSites);
+     arma::cx_dmat wnM_down = arma::cx_dmat(nSites, nSites);
+
+
+
     #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
 
         double currentSimulationTime = 0;
-        arma::cx_dmat Nu_loc;
-        arma::cx_dmat Nd_loc;
-        arma::cx_dmat rhou;
-        arma::cx_dmat rhod;
 
-        // White Noise Matrices :
-        arma::cx_dmat wnu = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-        arma::cx_dmat wnd = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
         arma::arma_rng::set_seed_random();
-        arma::cx_dmat wnM = arma::cx_dmat(nSites, nSites, arma::fill::randn)/sqrt(2);
+        wnM = arma::cx_dmat(nSites, nSites, arma::fill::randn)/sqrt(2);
+        wnM_up = arma::symmatu(wnM);
+        wnM_down = arma::symmatl(wnM);
 
+        wnu = wnM_up % sqrtNoiseVarianceMatrixU;
+        wnd = wnM_down % sqrtNoiseVarianceMatrixD;
+
+
+
+/*
         for (unsigned int i = 0; i<nSites; i++)
         {
             for (unsigned int j = i+1; j<nSites; j++)
@@ -195,7 +211,7 @@ void FHfTWASolver::runSimulation( )
                 wnd(i,j) += wnM(j,i) * sqrtNoiseVarianceMatrixD(i,j);
                 wnd(j,i) += std::conj(wnM(j,i)) * sqrtNoiseVarianceMatrixD(j,i);
             }
-        }
+        }*/
 
 
 
@@ -254,7 +270,7 @@ void FHfTWASolver::runSimulation( )
     }
 
     // We add up all thread-local variables into the global ones :
-    #pragma omp critical
+   #pragma omp critical
     {
         rhou_t +=rhou_t_loc;
         rhod_t +=rhod_t_loc;

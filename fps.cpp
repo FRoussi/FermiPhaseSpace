@@ -1,8 +1,10 @@
 //#include <stdio>
 #include <iostream>
 #include <string>
-#include <armadillo>
 #include <omp.h>
+//#define ARMA_DONT_USE_OPENMP
+#include <armadillo>
+
 //#include <filesystem>
 
 #include "include/FHSystem.h"
@@ -23,15 +25,48 @@ int main(int argc, char* argv[])
    arma::arma_version ver;
    std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
 
+// Threads of openmp :
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
+
    if (env_OMP==NULL)
    {
       omp_set_num_threads(DEF_MAX_THREAD_NUM);
    }
+   else
+   {
+      std::cout << "   -- OMP_NUM_THREADS :        " << env_OMP << std::endl;
+   }
 
-  std::cout << "== OpenMP active, "  << std::endl; 
+  std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
   std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
   std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
+
+
+   char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
+
+   char* env_ARMA_OMP_1 = std::getenv("ARMA_USE_OPENMP");
+   char* env_ARMA_OMP_2 = std::getenv("ARMA_DONT_USE_OPENMP");
+   char* env_ARMA_OMP_3 = std::getenv("ARMA_OPENMP_THREADS");
+
+
+  std::cout << "== arma-openmp variables : " << std::endl;
+   if (env_ARMA_OMP_1!=NULL)
+   {
+        std::cout << "   -- ARMA_USE_OPENMP :        " << env_ARMA_OMP_1 << std::endl;
+   }
+      if (env_ARMA_OMP_2!=NULL)
+   {
+        std::cout << "   -- ARMA_DONT_USE_OPENMP :        " << env_ARMA_OMP_2 << std::endl;
+   }
+      if (env_ARMA_OMP_3!=NULL)
+   {
+        std::cout << "   -- ARMA_OPENMP_THREADS :        " << env_ARMA_OMP_3 << std::endl;
+   }
+
+
+
+// Threads used by openblas :
+   //openblas_set_num_threads(1);
 
 
    std::cout << "== Double precision :   2^ -" << std::numeric_limits<double>::digits10 << std::endl;

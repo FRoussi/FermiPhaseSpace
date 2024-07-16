@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+//#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
 #include <cmath>
 #include <iostream>

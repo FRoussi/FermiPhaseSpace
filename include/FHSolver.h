@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <armadillo>
+
 //#include <cmath>
 
 

@@ -4,8 +4,12 @@
 #include <string>
 #include <vector>
 #include <math.h>
+//#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
 #include <omp.h>
+
+
+
 
 
 #include "FHSolver.h"
