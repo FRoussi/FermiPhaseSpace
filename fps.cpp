@@ -37,7 +37,9 @@ int main(int argc, char* argv[])
       std::cout << "   -- OMP_NUM_THREADS :        " << env_OMP << std::endl;
    }
 
-  std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
+
+  //std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
+  std::cout << "== OpenMP active " << std::endl; 
   std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
   std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
 

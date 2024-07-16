@@ -3,8 +3,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <omp.h>
+
 //#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
+
 
 
 #include "FHSolver.h"
@@ -18,6 +21,7 @@ public:
     enum HFIntegrator
     {
         RungeKutta1,
+        RungeKutta1_Mem,
         RungeKutta2,
         RungeKutta4,
         RungeKutta4_38,
@@ -31,6 +35,7 @@ public:
 
 
     void                        step_RK1(double dt);
+    void                        step_RK1_Mem(double dt, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt);
     void                        step_RK2(double dt);
     void                        step_RK4(double dt);
     void                        step_RK4_38(double dt);

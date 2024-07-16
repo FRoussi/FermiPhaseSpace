@@ -1,10 +1,10 @@
 {
-	"method" : "fTWA",
+	"method" : "HF",
 	"parameters" : 
 	{
 		"dt" : 0.01,
 		"stepsPerTimePoints" : 1,
-		"t_max" : 2.0,
+		"t_max" : 100.0,
 		"n_traj" : 10000
 	},
 	"sim_name" : "grid_10",

@@ -36,7 +36,8 @@ void FHHFSolver::initiateSolver()
 {
 
     FHSystem::FHInitialConditionType initCondition = fhSystem->getInitialCondition();
-    integrator = HFIntegrator::RungeKutta4_38;
+    //integrator = HFIntegrator::RungeKutta4_38;
+    integrator = HFIntegrator::RungeKutta1_Mem;
 
     currentSimulationTime = 0;
 
@@ -130,6 +131,18 @@ void FHHFSolver::step_RK1(double dt)
 {
     arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat dNd_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+    derivative(currentSimulationTime, Nut, Ndt, dNu_dt, dNd_dt);
+
+    Nut = Nut + dNu_dt * dt ;
+    Ndt = Ndt + dNd_dt * dt ;
+}
+
+/// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
+/// @param dt the time step
+/// @return void
+void FHHFSolver::step_RK1_Mem(double dt, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt)
+{
 
     derivative(currentSimulationTime, Nut, Ndt, dNu_dt, dNd_dt);
 
@@ -267,6 +280,7 @@ void FHHFSolver::runSimulation( )
 {
 
 
+
     unsigned int nSites = fhSystem->getnSites();
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     arma::cx_dcube Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
@@ -274,6 +288,9 @@ void FHHFSolver::runSimulation( )
 
     Nut = Nu0;
     Ndt = Nd0;
+
+    arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+    arma::cx_dmat dNd_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
 // Simulation :
     for (unsigned int t = 0;  t<nTimePoints; t++)
@@ -287,16 +304,36 @@ void FHHFSolver::runSimulation( )
 
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
-            if      (integrator==HFIntegrator::RungeKutta1)     step_RK1(dt/nStepsPerTimePoint);
-            else if (integrator==HFIntegrator::RungeKutta2)     step_RK2(dt/nStepsPerTimePoint);
-            else if (integrator==HFIntegrator::RungeKutta4)     step_RK4(dt/nStepsPerTimePoint);
-            else if (integrator==HFIntegrator::RungeKutta4_38)  step_RK4_38(dt/nStepsPerTimePoint);
-            else if (integrator==HFIntegrator::RungeKutta45)    step_RK45(dt/nStepsPerTimePoint);
+            switch (integrator)
+            {
+            case HFIntegrator::RungeKutta1 :
+                step_RK1(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta1_Mem :
+                step_RK1_Mem(dt/nStepsPerTimePoint, dNu_dt, dNd_dt);
+                break;
+            case HFIntegrator::RungeKutta2 :
+                step_RK2(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta4 :
+                step_RK4(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta4_38 :
+                step_RK4_38(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta45 :
+                step_RK45(dt/nStepsPerTimePoint);
+                break;  
+            default:
+                break;
+            }
+
 
             currentSimulationTime += dt/nStepsPerTimePoint;
         }
  
     }
+
 
 
 // Computing other values :
