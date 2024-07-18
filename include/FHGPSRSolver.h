@@ -38,11 +38,11 @@ public:
     void                setGPSRParameters(unsigned int nTraj);
     void                initiateSolver();
 
-    void                step_Drift_RK2(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
-    void                step_Drift_RK4_38(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double dt, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
+    void                step_Drift_RK2(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double d_t, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
+    void                step_Drift_RK4_38(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double d_t, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
 
-    void                step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
-    void                step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double dt, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
+    void                step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double d_t, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
+    void                step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0, double d_t, arma::cx_dmat& drhou_Diff, arma::cx_dmat& drhod_Diff);
 
     arma::cx_dmat       diffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
     arma::cx_dmat       quarterDiffusionMatrix(const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double U0);
@@ -52,7 +52,7 @@ public:
     arma::cx_dmat       sqrtDecomposition(arma::cx_dmat& D);
     arma::cx_dmat       sqrtDecomposition_fromA(arma::cx_dmat& A);
     
-    void                step(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt);
+    void                step(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                runSimulation();
 
     const std::complex<double> jj       = std::complex<double>(0,1);

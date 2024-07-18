@@ -125,56 +125,56 @@ void FHHFSolver::setComputeMomenta(bool yn)
 }
 
 /// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHHFSolver::step_RK1(double dt)
+void FHHFSolver::step_RK1(double d_t)
 {
     arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat dNd_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
     derivative(currentSimulationTime, Nut, Ndt, dNu_dt, dNd_dt);
 
-    Nut = Nut + dNu_dt * dt ;
-    Ndt = Ndt + dNd_dt * dt ;
+    Nut = Nut + dNu_dt * d_t ;
+    Ndt = Ndt + dNd_dt * d_t ;
 }
 
 /// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHHFSolver::step_RK1_Mem(double dt, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt)
+void FHHFSolver::step_RK1_Mem(double d_t, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt)
 {
 
     derivative(currentSimulationTime, Nut, Ndt, dNu_dt, dNd_dt);
 
-    Nut = Nut + dNu_dt * dt ;
-    Ndt = Ndt + dNd_dt * dt ;
+    Nut = Nut + dNu_dt * d_t ;
+    Ndt = Ndt + dNd_dt * d_t ;
 }
 
 
 /// @brief Time step of a trajectory, computed with the 2nd order Runge-Kutta method.
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHHFSolver::step_RK2(double dt)
+void FHHFSolver::step_RK2(double d_t)
 {
     arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat dNd_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
     derivative(currentSimulationTime, Nut, Ndt, dNu_dt, dNd_dt);
 
-    arma::cx_dmat Nu_mid = Nut + dNu_dt * dt/2 ;
-    arma::cx_dmat Nd_mid = Ndt + dNd_dt * dt/2 ;
+    arma::cx_dmat Nu_mid = Nut + dNu_dt * d_t/2 ;
+    arma::cx_dmat Nd_mid = Ndt + dNd_dt * d_t/2 ;
 
-    derivative(currentSimulationTime + dt/2, Nu_mid, Nd_mid, dNu_dt, dNd_dt);
+    derivative(currentSimulationTime + d_t/2, Nu_mid, Nd_mid, dNu_dt, dNd_dt);
 
-    Nut = Nut + dNu_dt * dt ;
-    Ndt = Ndt + dNd_dt * dt ;
+    Nut = Nut + dNu_dt * d_t ;
+    Ndt = Ndt + dNd_dt * d_t ;
 }
 
 
 /// @brief Time step of a trajectory, computed with "original" 4th order Runge-Kutta method.
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHHFSolver::step_RK4(double dt)
+void FHHFSolver::step_RK4(double d_t)
 {
     arma::cx_dmat dNu_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat dNd_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -191,27 +191,27 @@ void FHHFSolver::step_RK4(double dt)
 // k1 : 
     derivative(currentSimulationTime, Nut, Ndt, dNu_dt_k1, dNd_dt_k1);
 // k2 : 0.5 | 0.5
-    arma::cx_dmat Nu_k1 = Nut + dNu_dt_k1 * dt/2 ;
-    arma::cx_dmat Nd_k1 = Ndt + dNd_dt_k1 * dt/2 ;
-    derivative(currentSimulationTime + dt/2, Nu_k1 , Nd_k1, dNu_dt_k2, dNd_dt_k2);
+    arma::cx_dmat Nu_k1 = Nut + dNu_dt_k1 * d_t/2 ;
+    arma::cx_dmat Nd_k1 = Ndt + dNd_dt_k1 * d_t/2 ;
+    derivative(currentSimulationTime + d_t/2, Nu_k1 , Nd_k1, dNu_dt_k2, dNd_dt_k2);
 // k3 : 0.5 |  0   0.5
-    arma::cx_dmat Nu_k2 = Nut + dNu_dt_k2 * dt/2 ;
-    arma::cx_dmat Nd_k2 = Ndt + dNd_dt_k2 * dt/2 ;
-    derivative(currentSimulationTime + dt/2, Nu_k2 , Nd_k2, dNu_dt_k3, dNd_dt_k3);
+    arma::cx_dmat Nu_k2 = Nut + dNu_dt_k2 * d_t/2 ;
+    arma::cx_dmat Nd_k2 = Ndt + dNd_dt_k2 * d_t/2 ;
+    derivative(currentSimulationTime + d_t/2, Nu_k2 , Nd_k2, dNu_dt_k3, dNd_dt_k3);
 // k3 : 1   |  0    0    1
-    arma::cx_dmat Nu_k3 = Nut + dNu_dt_k3 * dt ;
-    arma::cx_dmat Nd_k3 = Ndt + dNd_dt_k3 * dt ;
-    derivative(currentSimulationTime + dt, Nu_k3 , Nd_k3, dNu_dt_k4, dNd_dt_k4);
+    arma::cx_dmat Nu_k3 = Nut + dNu_dt_k3 * d_t ;
+    arma::cx_dmat Nd_k3 = Ndt + dNd_dt_k3 * d_t ;
+    derivative(currentSimulationTime + d_t, Nu_k3 , Nd_k3, dNu_dt_k4, dNd_dt_k4);
 // k4 :     |  1/6  2/6  2/6  1/6  
-    Nut = Nut + (dNu_dt_k1 + 2* dNu_dt_k2 + 2*dNu_dt_k3 + dNu_dt_k4) * dt/6;
-    Ndt = Ndt + (dNd_dt_k1 + 2* dNd_dt_k2 + 2*dNd_dt_k3 + dNd_dt_k4) * dt/6;
+    Nut = Nut + (dNu_dt_k1 + 2* dNu_dt_k2 + 2*dNu_dt_k3 + dNu_dt_k4) * d_t/6;
+    Ndt = Ndt + (dNd_dt_k1 + 2* dNd_dt_k2 + 2*dNd_dt_k3 + dNd_dt_k4) * d_t/6;
 }
 
 
 /// @brief Time step of a trajectory, computed with the "3/8 rule" 4th order Runge-Kutta method.
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHHFSolver::step_RK4_38(double dt)
+void FHHFSolver::step_RK4_38(double d_t)
 {
     arma::cx_dmat dNu_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat dNd_dt_k1 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
@@ -228,27 +228,27 @@ void FHHFSolver::step_RK4_38(double dt)
 // k1 :
     derivative(currentSimulationTime, Nut, Ndt, dNu_dt_k1, dNd_dt_k1);
 // k2 : 1/3  |  1/3
-    arma::cx_dmat Nu_k = Nut + dNu_dt_k1 * dt/3 ;
-    arma::cx_dmat Nd_k = Ndt + dNd_dt_k1 * dt/3 ;
-    derivative(currentSimulationTime + dt/3, Nu_k , Nd_k, dNu_dt_k2, dNd_dt_k2);
+    arma::cx_dmat Nu_k = Nut + dNu_dt_k1 * d_t/3 ;
+    arma::cx_dmat Nd_k = Ndt + dNd_dt_k1 * d_t/3 ;
+    derivative(currentSimulationTime + d_t/3, Nu_k , Nd_k, dNu_dt_k2, dNd_dt_k2);
 // k3 : 2/3  |  -1/3  1
-    Nu_k = Nut + (- dNu_dt_k1/3 + dNu_dt_k2) * dt ;
-    Nd_k = Ndt + (- dNd_dt_k1/3 + dNd_dt_k2) * dt ;
+    Nu_k = Nut + (- dNu_dt_k1/3 + dNu_dt_k2) * d_t ;
+    Nd_k = Ndt + (- dNd_dt_k1/3 + dNd_dt_k2) * d_t ;
     derivative(currentSimulationTime + 2*dt/3, Nu_k , Nd_k, dNu_dt_k3, dNd_dt_k3);
 // k3 :  1   |  1     -1    1
-    Nu_k = Nut + (dNu_dt_k1 - dNu_dt_k2 + dNu_dt_k3) * dt;
-    Nd_k = Ndt + (dNd_dt_k1 - dNd_dt_k2 + dNd_dt_k3) * dt;
-    derivative(currentSimulationTime + dt, Nu_k , Nd_k, dNu_dt_k4, dNd_dt_k4);
+    Nu_k = Nut + (dNu_dt_k1 - dNu_dt_k2 + dNu_dt_k3) * d_t;
+    Nd_k = Ndt + (dNd_dt_k1 - dNd_dt_k2 + dNd_dt_k3) * d_t;
+    derivative(currentSimulationTime + d_t, Nu_k , Nd_k, dNu_dt_k4, dNd_dt_k4);
 //    :      | 1/8    3/8   3/8   1
-    Nut = Nut + (dNu_dt_k1 + dNu_dt_k2*3 + dNu_dt_k3*3 + dNu_dt_k4) * dt/8;
-    Ndt = Ndt + (dNd_dt_k1 + dNd_dt_k2*3 + dNd_dt_k3*3 + dNd_dt_k4) * dt/8;
+    Nut = Nut + (dNu_dt_k1 + dNu_dt_k2*3 + dNu_dt_k3*3 + dNu_dt_k4) * d_t/8;
+    Ndt = Ndt + (dNd_dt_k1 + dNd_dt_k2*3 + dNd_dt_k3*3 + dNd_dt_k4) * d_t/8;
 }
 
 
 /// @brief ==NOT IMPLEMENTED== Time step of a trajectory, computed with the adaptive 4th/5th order Runge-Kutta method.
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHHFSolver::step_RK45(double dt)
+void FHHFSolver::step_RK45(double d_t)
 {
 }
 

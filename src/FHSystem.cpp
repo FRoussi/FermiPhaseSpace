@@ -113,399 +113,6 @@ FHSystem::FHSystem(int x, int y, int z)
 }
 
 
-FHSystem::FHSystem(std::string fileName, std::string folderName)
-{
-
-    enum troolean
-    {
-        yes,
-        no,
-        dontknow
-    };
-
-    enum WhatToRead
-    {
-        nothing,
-        positions,
-        symmetries,
-        energyParameter_U_constant,
-        energyParameter_U_bySite,
-        energyParameter_U_bySiteType,
-        energyParameter_U_GivenMatrix,
-        energyParameter_tH_NNConstant,
-        energyParameter_tH_GivenMatrix,
-        energyParameter_J,
-        diagonalIC_UpSpin,
-        diagonalIC_DownSpin,
-        numberOfParticles_UpSpin,
-        numberOfParticles_DownSpin
-    };
-
-    systemName = fileName;
-    systemFolder = folderName;
-    std::string fileAdressName = fileName; 
-    if (folderName !="")
-    {
-        fileAdressName = folderName + "/" + fileName;
-    }
-
-    UInteractionType = FHOppositeSpinInteractionType::Unone;
-    VInteractionType = FHSameSpinInteractionType::Vnone;
-    tunnelingType = FHTunnelingType::tHnone;
-    tJExCType = tJExchangeCouplingType::tJJnone;
-    externalPotentialType   = ExternalPotentialType::ExtPotNone;
-
-    WhatToRead whatToR =  WhatToRead::nothing;  
-    int nDim = -1;
-    troolean orbitalHaveNames = troolean::dontknow;
-    bool positionsReady = false;
-
-    std::ifstream systFile (fileAdressName);
-    if (systFile.is_open())
-    {
-        printf("== Reading %s \n", fileName.c_str());
-
-        std::vector<unsigned int>           orbitalTypes    = std::vector<unsigned int>();
-        std::vector<std::string>            orbitalNames    = std::vector<std::string>();
-        std::vector<std::vector<double>>    posVecVec       = std::vector<std::vector<double>>();
-        std::vector<std::vector<double>>    symVecVec       = std::vector<std::vector<double>>();
-        std::vector<unsigned int>           initCond_up     = std::vector<unsigned int>();
-        std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
-        std::vector<unsigned int>           particlesNumber(2, 0);
-
-        std::vector<double> Jvector                         = std::vector<double>();
-        std::vector<std::vector<double>> tHMatrix           = std::vector<std::vector<double>>();
-        std::vector<std::vector<double>> UMatrix            = std::vector<std::vector<double>>();
-
-
-        std::string line;
-        while (std::getline(systFile, line))
-        {
-           if (line == "#POSITIONS")                                                //<- ready to read the positions
-           {
-                whatToR = WhatToRead::positions;
-           }
-           else if (line == "#POSITIONS_END")                                       //<- the positions stored in "pos" 
-           {
-                arma::dmat sitePos = armaMatfromVectorsVector(posVecVec);
-                setPositions(sitePos);
-
-                if (orbitalHaveNames == troolean::yes)
-                {
-                    std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
-                    uint numberOfNames = 0;
-                    uint index = 0;
-                    for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
-                    {
-                        if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
-                        {
-                            orbitalTypes[nameInt] = index;
-                        }
-                        else
-                        {
-                            orbitalNameTypes.push_back(orbitalNames[nameInt]);
-                            orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
-                        }
-                    }
-                }
-
-                initiateEmptyEnergyMatrices();
-                positionsReady = true;
-                whatToR = WhatToRead::nothing;
-           }
-           else if (line == "#SYMMETRIES")
-           {
-                whatToR = WhatToRead::symmetries;
-           }
-           else if (line == "#SYMMETRIES_END")
-           {
-                arma::dmat symmetryArmaMatrix = armaMatfromVectorsVector(symVecVec);
-                setSymmetry(symmetryArmaMatrix);
-                whatToR = WhatToRead::nothing;
-           }
-           else if (line == "#INITIALCONDITIONS_GIVENDIAGONAL")
-           {
-                initialCondition = FHInitialConditionType::givenDiagonal;
-                whatToR = WhatToRead::diagonalIC_UpSpin;
-           }
-           else if (line == "#INITIALCONDITIONS_QUENCHED")
-           {
-                initialCondition = FHInitialConditionType::quenched;
-                whatToR = WhatToRead::numberOfParticles_UpSpin;
-           }
-           else if (line == "#ENERGYPARAMETER_U_CONSTANT")
-           {
-                whatToR = WhatToRead::energyParameter_U_constant;
-                UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
-           }
-           else if (line == "#ENERGYPARAMETER_U_BYSITE")
-           {
-                whatToR = WhatToRead::energyParameter_U_bySite;
-                UInteractionType = FHOppositeSpinInteractionType::UonSiteGivenDiagonal;
-           }
-           else if (line == "#ENERGYPARAMETER_U_BYSITETYPE")
-           {
-                whatToR = WhatToRead::energyParameter_U_bySiteType;
-                UInteractionType = FHOppositeSpinInteractionType::UonSiteBySiteType;
-           }
-           else if (line == "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS")
-           {
-                whatToR = WhatToRead::energyParameter_tH_NNConstant;
-                tunnelingType = FHTunnelingType::nearestNeighboursConstant; 
-           }
-           else if (line == "#ENERGYPARAMETER_tH_GIVENMATRIX")
-           {
-                whatToR = WhatToRead::energyParameter_tH_GivenMatrix;
-                tunnelingType = FHTunnelingType::tunnelingGivenMatrix;
-           }
-            else if (line == "#ENERGYPARAMETER_J")
-           {
-                whatToR = WhatToRead::energyParameter_J;
-           }
-           else switch (whatToR)
-           {
-            case WhatToRead::positions :  // Read positions
-            {
-
-                if (orbitalHaveNames == troolean::dontknow)
-                {
-                    std::stringstream st(line);
-                    std::string coordt;
-                    orbitalHaveNames = troolean::no;
-                    std::getline (st, coordt, ' ');
-                    try {
-                        std::stod(coordt);
-                    }catch(const std::invalid_argument& e)  {
-                        std::cout << "Orbitals have names !" << std::endl;
-                        orbitalHaveNames = troolean::yes;
-                    }
-                }
-
-                std::stringstream ss(line);
-                std::string coord;
-                std::vector<double> coordinates = std::vector<double>();
-
-                if (orbitalHaveNames == troolean::yes)
-                {
-                    std::getline (ss, coord, ' ');
-                    orbitalNames.push_back(coord);
-                }
-
-                while (std::getline (ss, coord, ' ')) 
-                {
-                    double d = std::stod(coord);
-                    coordinates.push_back(d);
-                }
-
-                if (nDim == -1)
-                {
-                    nDim = coordinates.size();
-                    posVecVec.push_back(coordinates);
-                }
-                else
-                {
-                    if (coordinates.size() == nDim)
-                    {
-                        posVecVec.push_back(coordinates);
-                    }
-                    else
-                    {
-                        printf("Dimension problem with line \"%s\"", line.c_str());
-                        return;
-                    }
-                }
-
-
-                break;
-            }
-            case WhatToRead::symmetries :
-            {
-                std::stringstream ss(line);
-                std::string coord;
-                std::vector<double> coordinates = std::vector<double>();
-                while (std::getline (ss, coord, ' ')) 
-                {
-                    double d = std::stod(coord);
-                    coordinates.push_back(d);
-                }
-                if (coordinates.size() == nDim)
-                {
-                    symVecVec.push_back(coordinates);
-                }
-                else
-                {
-                    printf("Dimension problem with line \"%s\"", line.c_str());
-                    return;
-                }
-            }
-            case WhatToRead::energyParameter_U_constant :
-            {
-                std::stringstream ss(line);
-                std::string U_string;
-                std::getline (ss, U_string, ' ');
-                double U0 = std::stod(U_string);
-                
-                setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
-                setUInteraction_OnSite(U0);
-                break;
-            }
-            case WhatToRead::energyParameter_U_bySite :
-            {
-                std::stringstream ss(line);
-                std::string U_string;
-                std::vector<double> Uvector = std::vector<double>();
-                while (std::getline (ss, U_string, ' ')) 
-                {
-                     Uvector.push_back(std::stod(U_string));
-                }     
-                arma::dvec Udiag = arma::dvec(Uvector);
-                setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteGivenDiagonal);
-                setUInteraction_GivenDiagonal(Udiag);
-                break;
-            }
-            case WhatToRead::energyParameter_U_bySiteType :
-            {
-
-                std::stringstream ss(line);
-                std::string site_name;
-                std::string U_value;
-                std::getline (ss, site_name, ' ');
-                std::getline (ss, U_value, ' ');
-                std::vector<std::string>::iterator itName = std::find(orbitalNames.begin(), orbitalNames.end(), site_name);
-                std::vector<double> Uvector = std::vector<double>(orbitalNames.size());
-                Uvector[itName - orbitalNames.begin()] = std::stod(U_value);          
-                break;
-            }
-            case WhatToRead::energyParameter_U_GivenMatrix :
-            {
-                std::stringstream ss(line);
-                std::string U_string;
-                std::vector<double> Uvector = std::vector<double>();
-                while (std::getline (ss, U_string, ' ')) 
-                {
-                     Uvector.push_back(std::stod(U_string));
-                }
-                UMatrix.push_back(Uvector);
-                if (UMatrix.size() == posVecVec.size())
-                {
-                    arma::dmat UM = armaMatfromVectorsVector(UMatrix);
-                    setUInteraction_GivenMatrix(UM);
-                }    
-                break;
-            }
-            case WhatToRead::energyParameter_tH_NNConstant :
-            {
-                std::stringstream ss(line);
-                std::string t_string;
-                std::getline (ss, t_string, ' ');
-                double tH1 = std::stod(t_string);
-                setTunneling_BetweenNeighbours(tH1);
-                break;
-            }
-            case WhatToRead::energyParameter_tH_GivenMatrix :
-            {
-                std::stringstream ss(line);
-                std::string t_string;
-                std::vector<double> tHvector = std::vector<double>();
-                while (std::getline (ss, t_string, ' ')) 
-                {
-                     tHvector.push_back(std::stod(t_string));
-                }
-                tHMatrix.push_back(tHvector);
-                if (tHMatrix.size() == posVecVec.size())
-                {
-                    arma::dmat tHM = armaMatfromVectorsVector(tHMatrix);
-                    setTunneling_GivenMatrix(tHM);
-                }    
-                break;
-            }
-            case WhatToRead::energyParameter_J :
-            {
-                break;
-            }
-           case WhatToRead::diagonalIC_UpSpin :  // Read  up spin particles
-           {
-                std::stringstream ss(line);
-                std::string siteN;
-                
-                while (std::getline(ss, siteN, ' '))            //<- We read the line word by word
-                {
-                    //std::cout << "Reading initial positions of up-spin particles, siteN = " << siteN << std::endl;
-                    initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
-                    particlesNumber[0]++;
-                }
-                whatToR = WhatToRead::diagonalIC_DownSpin;      //<- At the end, the up-spin particles positions have been read.
-                break;
-            }
-            case WhatToRead::diagonalIC_DownSpin :              //<- Else, if the down-spin particles positions have not been read yet
-            {
-                std::stringstream ss(line);
-                std::string siteN;
-                while (std::getline(ss, siteN, ' ')) 
-                {
-                    // std::cout << "Reading initial positions of down-spin particles, siteN = " << siteN << std::endl;
-                    initCond_down.push_back(std::stoi(siteN)); 
-                    particlesNumber[1]++;
-                }
-                whatToR = WhatToRead::nothing; 
-                break;
-            }
-            case WhatToRead::numberOfParticles_UpSpin :
-            {
-                std::stringstream ss(line);
-                std::string nPart;
-
-                std::getline(ss, nPart, ' ');
-                particlesNumber[0] = std::stoi(nPart);
-                whatToR = WhatToRead::numberOfParticles_DownSpin;
-            }
-            break;
-            case WhatToRead::numberOfParticles_DownSpin :
-            {
-                std::stringstream ss(line);
-                std::string nPart;
-
-                std::getline(ss, nPart, ' ');
-                particlesNumber[1] = std::stoi(nPart);
-                whatToR = WhatToRead::nothing;
-            }
-            break;
-
-
-           }
-        }
-
-        systFile.close();
-
-
-
-    if (initialCondition == FHInitialConditionType::givenDiagonal)
-    {
-            std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
-            initCond[0] = initCond_up;
-            initCond[1] = initCond_down;
-
-            setInitialConditionsDiagonal(initCond);
-    }
-    else if (initialCondition == FHInitialConditionType::quenched)
-    {
-        setInitialConditions(initialCondition, particlesNumber);
-    }
-
-
-    computeMatrices();
-
-    }
-    else
-    {
-        printf("Can't open %s", fileName.c_str());
-    }
-
-
-    originalJsonSystem = Json::Value();
-}
-
-
 
 
 FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
@@ -1582,6 +1189,504 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
 }
 
 
+
+FHSystem::~FHSystem()
+{
+
+}
+
+
+
+
+
+
+// Other functions
+
+
+
+
+
+std::complex<double> U_os_nij(double U0, double alpha, double d)
+{
+    double u = 0;
+    if (d==0.)
+        u = U0;
+    else if (alpha != -1)
+    {      
+        u = U0/pow(d,alpha);      
+    }
+    return std::complex<double>(u);
+}
+
+
+
+// OTHER FUNCTIONS
+
+/// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
+/// @param vecVec A vector of vector of double 
+/// @return The arma::dmat version of the vector
+arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec)
+{
+    arma::dmat mattrix = arma::dmat();
+    if (vecVec.size() > 0)
+    {
+        if (vecVec[0].size() > 0)
+        {
+            mattrix = arma::dmat(vecVec.size(), vecVec[0].size(), arma::fill::zeros);
+            for (uint iRow = 0; iRow < vecVec.size(); iRow ++)
+            {
+                for (uint iCol = 0; iCol < std::min(vecVec[iRow].size(), vecVec[0].size()); iCol ++)
+                {
+                    mattrix(iRow, iCol) = vecVec[iRow][iCol];
+                }
+            }
+        }
+    }
+
+    return mattrix;
+}
+
+/// @brief Check if a vector contains an element.
+/// @param w the element to look for
+/// @param v the vector of possibilities
+/// @return true if w is in v
+template <typename T>       bool isIn(T w, std::vector<T>& v)
+{
+
+        bool isInB = false;
+        unsigned int index = 0;
+        while ( (!isInB) && (index < v.size()) )
+        {
+            if (v[index] == w)  isInB = true;
+            index ++;
+        }
+
+        return isInB;
+}
+
+/// @brief Check if a vector contains an element.
+/// @param w the element to look for
+/// @param v the vector of possibilities
+/// @param firstIndex index of the first found element
+/// @return true if w is in v
+template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex)
+{
+    bool isInB = false;
+    unsigned int index = 0;
+    while ( (!isInB) && (index < v.size()) )
+    {
+        if (v[index] == w)  isInB = true;
+        index ++;
+    }
+    firstIndex = index-1;
+    return isInB;
+}
+
+
+
+
+
+
+// DEPRECIATED FUNCTIONS
+
+/*
+
+
+FHSystem::FHSystem(std::string fileName, std::string folderName)
+{
+
+    enum troolean
+    {
+        yes,
+        no,
+        dontknow
+    };
+
+    enum WhatToRead
+    {
+        nothing,
+        positions,
+        symmetries,
+        energyParameter_U_constant,
+        energyParameter_U_bySite,
+        energyParameter_U_bySiteType,
+        energyParameter_U_GivenMatrix,
+        energyParameter_tH_NNConstant,
+        energyParameter_tH_GivenMatrix,
+        energyParameter_J,
+        diagonalIC_UpSpin,
+        diagonalIC_DownSpin,
+        numberOfParticles_UpSpin,
+        numberOfParticles_DownSpin
+    };
+
+    systemName = fileName;
+    systemFolder = folderName;
+    std::string fileAdressName = fileName; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + fileName;
+    }
+
+    UInteractionType = FHOppositeSpinInteractionType::Unone;
+    VInteractionType = FHSameSpinInteractionType::Vnone;
+    tunnelingType = FHTunnelingType::tHnone;
+    tJExCType = tJExchangeCouplingType::tJJnone;
+    externalPotentialType   = ExternalPotentialType::ExtPotNone;
+
+    WhatToRead whatToR =  WhatToRead::nothing;  
+    int nDim = -1;
+    troolean orbitalHaveNames = troolean::dontknow;
+    bool positionsReady = false;
+
+    std::ifstream systFile (fileAdressName);
+    if (systFile.is_open())
+    {
+        printf("== Reading %s \n", fileName.c_str());
+
+        std::vector<unsigned int>           orbitalTypes    = std::vector<unsigned int>();
+        std::vector<std::string>            orbitalNames    = std::vector<std::string>();
+        std::vector<std::vector<double>>    posVecVec       = std::vector<std::vector<double>>();
+        std::vector<std::vector<double>>    symVecVec       = std::vector<std::vector<double>>();
+        std::vector<unsigned int>           initCond_up     = std::vector<unsigned int>();
+        std::vector<unsigned int>           initCond_down   = std::vector<unsigned int>();
+        std::vector<unsigned int>           particlesNumber(2, 0);
+
+        std::vector<double> Jvector                         = std::vector<double>();
+        std::vector<std::vector<double>> tHMatrix_vec           = std::vector<std::vector<double>>();
+        std::vector<std::vector<double>> UMatrix_vec            = std::vector<std::vector<double>>();
+
+
+        std::string line;
+        while (std::getline(systFile, line))
+        {
+           if (line == "#POSITIONS")                                                //<- ready to read the positions
+           {
+                whatToR = WhatToRead::positions;
+           }
+           else if (line == "#POSITIONS_END")                                       //<- the positions stored in "pos" 
+           {
+                arma::dmat sitePos = armaMatfromVectorsVector(posVecVec);
+                setPositions(sitePos);
+
+                if (orbitalHaveNames == troolean::yes)
+                {
+                    std::vector<std::string>            orbitalNameTypes    = std::vector<std::string>();
+                    uint numberOfNames = 0;
+                    uint index = 0;
+                    for (uint nameInt = 0; nameInt < orbitalNames.size(); nameInt++)
+                    {
+                        if (isIn( orbitalNames[nameInt], orbitalNameTypes, index))
+                        {
+                            orbitalTypes[nameInt] = index;
+                        }
+                        else
+                        {
+                            orbitalNameTypes.push_back(orbitalNames[nameInt]);
+                            orbitalTypes[nameInt] = orbitalNameTypes.size() - 1;
+                        }
+                    }
+                }
+
+                initiateEmptyEnergyMatrices();
+                positionsReady = true;
+                whatToR = WhatToRead::nothing;
+           }
+           else if (line == "#SYMMETRIES")
+           {
+                whatToR = WhatToRead::symmetries;
+           }
+           else if (line == "#SYMMETRIES_END")
+           {
+                arma::dmat symmetryArmaMatrix = armaMatfromVectorsVector(symVecVec);
+                setSymmetry(symmetryArmaMatrix);
+                whatToR = WhatToRead::nothing;
+           }
+           else if (line == "#INITIALCONDITIONS_GIVENDIAGONAL")
+           {
+                initialCondition = FHInitialConditionType::givenDiagonal;
+                whatToR = WhatToRead::diagonalIC_UpSpin;
+           }
+           else if (line == "#INITIALCONDITIONS_QUENCHED")
+           {
+                initialCondition = FHInitialConditionType::quenched;
+                whatToR = WhatToRead::numberOfParticles_UpSpin;
+           }
+           else if (line == "#ENERGYPARAMETER_U_CONSTANT")
+           {
+                whatToR = WhatToRead::energyParameter_U_constant;
+                UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
+           }
+           else if (line == "#ENERGYPARAMETER_U_BYSITE")
+           {
+                whatToR = WhatToRead::energyParameter_U_bySite;
+                UInteractionType = FHOppositeSpinInteractionType::UonSiteGivenDiagonal;
+           }
+           else if (line == "#ENERGYPARAMETER_U_BYSITETYPE")
+           {
+                whatToR = WhatToRead::energyParameter_U_bySiteType;
+                UInteractionType = FHOppositeSpinInteractionType::UonSiteBySiteType;
+           }
+           else if (line == "#ENERGYPARAMETER_tH_NEARESTNEIGHBORS")
+           {
+                whatToR = WhatToRead::energyParameter_tH_NNConstant;
+                tunnelingType = FHTunnelingType::nearestNeighboursConstant; 
+           }
+           else if (line == "#ENERGYPARAMETER_tH_GIVENMATRIX")
+           {
+                whatToR = WhatToRead::energyParameter_tH_GivenMatrix;
+                tunnelingType = FHTunnelingType::tunnelingGivenMatrix;
+           }
+            else if (line == "#ENERGYPARAMETER_J")
+           {
+                whatToR = WhatToRead::energyParameter_J;
+           }
+           else switch (whatToR)
+           {
+            case WhatToRead::positions :  // Read positions
+            {
+
+                if (orbitalHaveNames == troolean::dontknow)
+                {
+                    std::stringstream st(line);
+                    std::string coordt;
+                    orbitalHaveNames = troolean::no;
+                    std::getline (st, coordt, ' ');
+                    try {
+                        std::stod(coordt);
+                    }catch(const std::invalid_argument& e)  {
+                        std::cout << "Orbitals have names !" << std::endl;
+                        orbitalHaveNames = troolean::yes;
+                    }
+                }
+
+                std::stringstream ss(line);
+                std::string coord;
+                std::vector<double> coordinates = std::vector<double>();
+
+                if (orbitalHaveNames == troolean::yes)
+                {
+                    std::getline (ss, coord, ' ');
+                    orbitalNames.push_back(coord);
+                }
+
+                while (std::getline (ss, coord, ' ')) 
+                {
+                    double d = std::stod(coord);
+                    coordinates.push_back(d);
+                }
+
+                if (nDim == -1)
+                {
+                    nDim = coordinates.size();
+                    posVecVec.push_back(coordinates);
+                }
+                else
+                {
+                    if (coordinates.size() == nDim)
+                    {
+                        posVecVec.push_back(coordinates);
+                    }
+                    else
+                    {
+                        printf("Dimension problem with line \"%s\"", line.c_str());
+                        return;
+                    }
+                }
+
+
+                break;
+            }
+            case WhatToRead::symmetries :
+            {
+                std::stringstream ss(line);
+                std::string coord;
+                std::vector<double> coordinates = std::vector<double>();
+                while (std::getline (ss, coord, ' ')) 
+                {
+                    double d = std::stod(coord);
+                    coordinates.push_back(d);
+                }
+                if (coordinates.size() == nDim)
+                {
+                    symVecVec.push_back(coordinates);
+                }
+                else
+                {
+                    printf("Dimension problem with line \"%s\"", line.c_str());
+                    return;
+                }
+            }
+            case WhatToRead::energyParameter_U_constant :
+            {
+                std::stringstream ss(line);
+                std::string U_string;
+                std::getline (ss, U_string, ' ');
+                double U0 = std::stod(U_string);
+                
+                setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
+                setUInteraction_OnSite(U0);
+                break;
+            }
+            case WhatToRead::energyParameter_U_bySite :
+            {
+                std::stringstream ss(line);
+                std::string U_string;
+                std::vector<double> Uvector = std::vector<double>();
+                while (std::getline (ss, U_string, ' ')) 
+                {
+                     Uvector.push_back(std::stod(U_string));
+                }     
+                arma::dvec Udiag = arma::dvec(Uvector);
+                setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteGivenDiagonal);
+                setUInteraction_GivenDiagonal(Udiag);
+                break;
+            }
+            case WhatToRead::energyParameter_U_bySiteType :
+            {
+
+                std::stringstream ss(line);
+                std::string site_name;
+                std::string U_value;
+                std::getline (ss, site_name, ' ');
+                std::getline (ss, U_value, ' ');
+                std::vector<std::string>::iterator itName = std::find(orbitalNames.begin(), orbitalNames.end(), site_name);
+                std::vector<double> Uvector = std::vector<double>(orbitalNames.size());
+                Uvector[itName - orbitalNames.begin()] = std::stod(U_value);          
+                break;
+            }
+            case WhatToRead::energyParameter_U_GivenMatrix :
+            {
+                std::stringstream ss(line);
+                std::string U_string;
+                std::vector<double> Uvector = std::vector<double>();
+                while (std::getline (ss, U_string, ' ')) 
+                {
+                     Uvector.push_back(std::stod(U_string));
+                }
+                UMatrix_vec.push_back(Uvector);
+                if (UMatrix.size() == posVecVec.size())
+                {
+                    arma::dmat UM = armaMatfromVectorsVector(UMatrix_vec);
+                    setUInteraction_GivenMatrix(UM);
+                }    
+                break;
+            }
+            case WhatToRead::energyParameter_tH_NNConstant :
+            {
+                std::stringstream ss(line);
+                std::string t_string;
+                std::getline (ss, t_string, ' ');
+                double tH1 = std::stod(t_string);
+                setTunneling_BetweenNeighbours(tH1);
+                break;
+            }
+            case WhatToRead::energyParameter_tH_GivenMatrix :
+            {
+                std::stringstream ss(line);
+                std::string t_string;
+                std::vector<double> tHvector = std::vector<double>();
+                while (std::getline (ss, t_string, ' ')) 
+                {
+                     tHvector.push_back(std::stod(t_string));
+                }
+                tHMatrix_vec.push_back(tHvector);
+                if (tHMatrix_vec.size() == posVecVec.size())
+                {
+                    arma::dmat tHM = armaMatfromVectorsVector(tHMatrix_vec);
+                    setTunneling_GivenMatrix(tHM);
+                }    
+                break;
+            }
+            case WhatToRead::energyParameter_J :
+            {
+                break;
+            }
+           case WhatToRead::diagonalIC_UpSpin :  // Read  up spin particles
+           {
+                std::stringstream ss(line);
+                std::string siteN;
+                
+                while (std::getline(ss, siteN, ' '))            //<- We read the line word by word
+                {
+                    //std::cout << "Reading initial positions of up-spin particles, siteN = " << siteN << std::endl;
+                    initCond_up.push_back(std::stoi(siteN));    //<- And fill the inital condition vector with the site numbers
+                    particlesNumber[0]++;
+                }
+                whatToR = WhatToRead::diagonalIC_DownSpin;      //<- At the end, the up-spin particles positions have been read.
+                break;
+            }
+            case WhatToRead::diagonalIC_DownSpin :              //<- Else, if the down-spin particles positions have not been read yet
+            {
+                std::stringstream ss(line);
+                std::string siteN;
+                while (std::getline(ss, siteN, ' ')) 
+                {
+                    // std::cout << "Reading initial positions of down-spin particles, siteN = " << siteN << std::endl;
+                    initCond_down.push_back(std::stoi(siteN)); 
+                    particlesNumber[1]++;
+                }
+                whatToR = WhatToRead::nothing; 
+                break;
+            }
+            case WhatToRead::numberOfParticles_UpSpin :
+            {
+                std::stringstream ss(line);
+                std::string nPart;
+
+                std::getline(ss, nPart, ' ');
+                particlesNumber[0] = std::stoi(nPart);
+                whatToR = WhatToRead::numberOfParticles_DownSpin;
+            }
+            break;
+            case WhatToRead::numberOfParticles_DownSpin :
+            {
+                std::stringstream ss(line);
+                std::string nPart;
+
+                std::getline(ss, nPart, ' ');
+                particlesNumber[1] = std::stoi(nPart);
+                whatToR = WhatToRead::nothing;
+            }
+            break;
+
+
+           }
+        }
+
+        systFile.close();
+
+
+
+    if (initialCondition == FHInitialConditionType::givenDiagonal)
+    {
+            std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+            initCond[0] = initCond_up;
+            initCond[1] = initCond_down;
+
+            setInitialConditionsDiagonal(initCond);
+    }
+    else if (initialCondition == FHInitialConditionType::quenched)
+    {
+        setInitialConditions(initialCondition, particlesNumber);
+    }
+
+
+    computeMatrices();
+
+    }
+    else
+    {
+        printf("Can't open %s", fileName.c_str());
+    }
+
+
+    originalJsonSystem = Json::Value();
+}
+
+
+
+
 /// @brief Write an ASCII version of the Fermi-Hubbard System
 /// @param folderName emplacement of the folder
 void                    FHSystem::writeFHSystemBis(std::string folderName)
@@ -1777,94 +1882,5 @@ void                    FHSystem::writeFHSystemBis(std::string folderName)
 }
 
 
-FHSystem::~FHSystem()
-{
+*/
 
-}
-
-
-
-
-
-
-// Other functions
-
-
-
-
-
-std::complex<double> U_os_nij(double U0, double alpha, double d)
-{
-    double u = 0;
-    if (d==0.)
-        u = U0;
-    else if (alpha != -1)
-    {      
-        u = U0/pow(d,alpha);      
-    }
-    return std::complex<double>(u);
-}
-
-
-
-// OTHER FUNCTIONS
-
-/// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
-/// @param vecVec A vector of vector of double 
-/// @return The arma::dmat version of the vector
-arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec)
-{
-    arma::dmat mattrix = arma::dmat();
-    if (vecVec.size() > 0)
-    {
-        if (vecVec[0].size() > 0)
-        {
-            mattrix = arma::dmat(vecVec.size(), vecVec[0].size(), arma::fill::zeros);
-            for (uint iRow = 0; iRow < vecVec.size(); iRow ++)
-            {
-                for (uint iCol = 0; iCol < std::min(vecVec[iRow].size(), vecVec[0].size()); iCol ++)
-                {
-                    mattrix(iRow, iCol) = vecVec[iRow][iCol];
-                }
-            }
-        }
-    }
-
-    return mattrix;
-}
-
-/// @brief Check if a vector contains an element.
-/// @param w the element to look for
-/// @param v the vector of possibilities
-/// @return true if w is in v
-template <typename T>       bool isIn(T w, std::vector<T>& v)
-{
-
-        bool isInB = false;
-        unsigned int index = 0;
-        while ( (!isInB) && (index < v.size()) )
-        {
-            if (v[index] == w)  isInB = true;
-            index ++;
-        }
-
-        return isInB;
-}
-
-/// @brief Check if a vector contains an element.
-/// @param w the element to look for
-/// @param v the vector of possibilities
-/// @param firstIndex index of the first found element
-/// @return true if w is in v
-template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex)
-{
-    bool isInB = false;
-    unsigned int index = 0;
-    while ( (!isInB) && (index < v.size()) )
-    {
-        if (v[index] == w)  isInB = true;
-        index ++;
-    }
-    firstIndex = index-1;
-    return isInB;
-}

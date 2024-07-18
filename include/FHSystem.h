@@ -81,7 +81,7 @@ public:
     FHSystem();
     FHSystem(int x);
     FHSystem(int x, int y, int z);
-    FHSystem(std::string fileName, std::string folderName = "");
+  //  FHSystem(std::string fileName, std::string folderName = "");
     FHSystem(Json::Value rootSystem, std::string folderName = "");
 
 
@@ -174,7 +174,7 @@ public:
 
     Json::Value                         writeFHSystemJson();
     Json::Value                         getOriginalJsonSystem();
-    void                                writeFHSystemBis(std::string folderName = "");
+    //void                                writeFHSystemBis(std::string folderName = "");
 
 
 // External Potential

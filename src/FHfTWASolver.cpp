@@ -438,30 +438,30 @@ void FHfTWASolver::derivative(double currentSimulationTime, const arma::cx_dmat&
 /// @brief Time step of a trajectory, computed with the 2nd order Runge-Kutta method. 
 /// @param rhou the up-spin density matrix, to be updated
 /// @param rhod the down-spin density matrix , to be updated
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHfTWASolver::step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
+void FHfTWASolver::step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t)
 {
     arma::cx_dmat drhou_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     arma::cx_dmat drhod_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
 
     derivative(currentSimulationTime, rhou, rhod, drhou_dt, drhod_dt);
 
-    arma::cx_dmat rhou_mid = rhou + drhou_dt * dt/2 ;
-    arma::cx_dmat rhod_mid = rhod + drhod_dt * dt/2 ;
+    arma::cx_dmat rhou_mid = rhou + drhou_dt * d_t/2 ;
+    arma::cx_dmat rhod_mid = rhod + drhod_dt * d_t/2 ;
 
-    derivative(currentSimulationTime + dt/2, rhou_mid, rhod_mid, drhou_dt, drhod_dt);
+    derivative(currentSimulationTime + d_t/2, rhou_mid, rhod_mid, drhou_dt, drhod_dt);
 
-    rhou = rhou + drhou_dt * dt ;
-    rhod = rhod + drhod_dt * dt ;
+    rhou = rhou + drhou_dt * d_t ;
+    rhod = rhod + drhod_dt * d_t ;
 }
 
 /// @brief Time step of a trajectory, computed with the "3/8 rule" 4th order Runge-Kutta method.
 /// @param rhou the up-spin density matrix, to be updated
 /// @param rhod the down-spin density matrix , to be updated
-/// @param dt the time step
+/// @param d_t the time step
 /// @return void
-void FHfTWASolver::step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double dt)
+void FHfTWASolver::step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t)
 {
    unsigned int nSites = fhSystem->getnSites();
     arma::cx_dmat drhou_dt_k1 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -479,20 +479,20 @@ void FHfTWASolver::step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou
 // k1 :
     derivative(currentSimulationTime, rhou, rhod, drhou_dt_k1, drhod_dt_k1);
 // k2 : 1/3   |   1/3
-    arma::cx_dmat rhou_k = rhou + drhou_dt_k1 * dt/3 ;
-    arma::cx_dmat rhod_k = rhod + drhod_dt_k1 * dt/3 ;
-    derivative(currentSimulationTime + dt/3, rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
+    arma::cx_dmat rhou_k = rhou + drhou_dt_k1 * d_t/3 ;
+    arma::cx_dmat rhod_k = rhod + drhod_dt_k1 * d_t/3 ;
+    derivative(currentSimulationTime + d_t/3, rhou_k, rhod_k, drhou_dt_k2, drhod_dt_k2);
 // k3 : 2/3   |   -1/3    1
-    rhou_k = rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * dt ;
-    rhod_k = rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * dt ;
+    rhou_k = rhou + (- drhou_dt_k1 /3 + drhou_dt_k2) * d_t ;
+    rhod_k = rhod + (- drhod_dt_k1 /3 + drhod_dt_k2) * d_t ;
     derivative(currentSimulationTime + 2*dt/3, rhou_k, rhod_k, drhou_dt_k3, drhod_dt_k3);
 // k4 : 1     |    1      -1     1
-    rhou_k = rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * dt ;
-    rhod_k = rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * dt ;
-    derivative(currentSimulationTime + dt, rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
+    rhou_k = rhou + (drhou_dt_k1 - drhou_dt_k2 + drhou_dt_k3) * d_t ;
+    rhod_k = rhod + (drhod_dt_k1 - drhod_dt_k2 + drhod_dt_k3) * d_t ;
+    derivative(currentSimulationTime + d_t, rhou_k, rhod_k, drhou_dt_k4, drhod_dt_k4);
 
-    rhou = rhou + (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4) * dt / 8;
-    rhod = rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * dt / 8;
+    rhou = rhou + (drhou_dt_k1 + drhou_dt_k2*3 + drhou_dt_k3*3 + drhou_dt_k4) * d_t / 8;
+    rhod = rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * d_t / 8;
 }
 
 
