@@ -10,7 +10,7 @@ ResultWriterTxt::ResultWriterTxt(const std::string& fileName, const std::string&
     fileAdressName = resultFileName;
     if (resultFolder != "")
     {
-        fileAdressName = resultFolder + "/" + fileAdressName;
+        fileAdressName = resultFolder + fileAdressName;
     }
 
 }

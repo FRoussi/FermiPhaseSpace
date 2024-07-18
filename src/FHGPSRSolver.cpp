@@ -718,7 +718,7 @@ unsigned int tt = std::floor(nTraj/10);
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
 
-        std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
+        std::cout << "- Results writen in " << folderName << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -752,12 +752,12 @@ unsigned int tt = std::floor(nTraj/10);
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);
-        std::string fileAdressName = folderName + "/" + workName + ".json";
+        std::string fileAdressName = folderName + workName + ".json";
         std::ofstream resultFile(fileAdressName);
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results writen in " << folderName << "/" << workName << ".json" << std::endl;
+        std::cout << "- Results writen in " << folderName  << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

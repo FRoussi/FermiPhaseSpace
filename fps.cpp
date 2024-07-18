@@ -25,16 +25,27 @@ int main(int argc, char* argv[])
    arma::arma_version ver;
    std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
 
-// Threads of openmp :
+// Environment variables :
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
+   char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 
+   std::cout << "== Environment variables : "<< ver.as_string() << std::endl;
    if (env_OMP==NULL)
    {
       omp_set_num_threads(DEF_MAX_THREAD_NUM);
    }
    else
    {
-      std::cout << "   -- OMP_NUM_THREADS :        " << env_OMP << std::endl;
+      std::cout << "   -- OMP_NUM_THREADS      :        " << env_OMP << std::endl;
+   }
+
+   if (env_OPENBLAS_OMP==NULL)
+   {
+      std::cout << "   -- OPENBLAS_NUM_THREADS not defined, this could lead to slower parallelisation." << std::endl;
+   }
+   else
+   {
+      std::cout << "   -- OPENBLAS_NUM_THREADS :        " << env_OPENBLAS_OMP << std::endl;
    }
 
 
@@ -44,26 +55,7 @@ int main(int argc, char* argv[])
   std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
 
 
-   char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 
-   char* env_ARMA_OMP_1 = std::getenv("ARMA_USE_OPENMP");
-   char* env_ARMA_OMP_2 = std::getenv("ARMA_DONT_USE_OPENMP");
-   char* env_ARMA_OMP_3 = std::getenv("ARMA_OPENMP_THREADS");
-
-
-  std::cout << "== arma-openmp variables : " << std::endl;
-   if (env_ARMA_OMP_1!=NULL)
-   {
-        std::cout << "   -- ARMA_USE_OPENMP :        " << env_ARMA_OMP_1 << std::endl;
-   }
-      if (env_ARMA_OMP_2!=NULL)
-   {
-        std::cout << "   -- ARMA_DONT_USE_OPENMP :        " << env_ARMA_OMP_2 << std::endl;
-   }
-      if (env_ARMA_OMP_3!=NULL)
-   {
-        std::cout << "   -- ARMA_OPENMP_THREADS :        " << env_ARMA_OMP_3 << std::endl;
-   }
 
 
 
@@ -82,12 +74,16 @@ int main(int argc, char* argv[])
 
       std::string jsonFilePath = std::string(argv[1]);
       std::size_t botDirPos = jsonFilePath.find_last_of("/") ;
-      std::string workFolder = jsonFilePath.substr(0, botDirPos); // get directory
+      std::size_t fileNameSize = jsonFilePath.size() ;
+      std::string workFolder = "";
+      if (botDirPos < fileNameSize)
+      {
+         workFolder = jsonFilePath.substr(0, botDirPos+1); // get directory
+      }
       std::string work = jsonFilePath.substr(botDirPos + 1, jsonFilePath.length()); // get file
 
-        std::cout << "== Work file : " << work << std::endl;
-        std::cout << "== Work folder : " << workFolder << std::endl;
-
+      std::cout << "== Work file : " << work << std::endl;
+      std::cout << "== Work folder : " << workFolder << std::endl;
 
 
       enum task
@@ -119,7 +115,7 @@ int main(int argc, char* argv[])
 
       std::cout << "- Reading work file "<< instructionsFileName << std::endl;  
 
-      std::string file = workFolder + "/" + instructionsFileName;
+      std::string file = workFolder + instructionsFileName;
 
       std::ifstream instructionsFile = std::ifstream(file);
 

@@ -36,8 +36,8 @@ void FHHFSolver::initiateSolver()
 {
 
     FHSystem::FHInitialConditionType initCondition = fhSystem->getInitialCondition();
-    //integrator = HFIntegrator::RungeKutta4_38;
-    integrator = HFIntegrator::RungeKutta1_Mem;
+    integrator = HFIntegrator::RungeKutta4_38;
+    //integrator = HFIntegrator::RungeKutta1_Mem;
 
     currentSimulationTime = 0;
 
@@ -410,7 +410,7 @@ void FHHFSolver::runSimulation( )
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
 
-        std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
+        std::cout << "- Results writen in " << folderName << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -445,12 +445,12 @@ void FHHFSolver::runSimulation( )
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);
-        std::string fileAdressName = folderName + "/" + workName + ".json";
+        std::string fileAdressName = folderName  + workName + ".json";
         std::ofstream resultFile(fileAdressName);
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results writen in " << folderName  << "/" << workName << ".json" << std::endl;
+        std::cout << "- Results writen in " << folderName   << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

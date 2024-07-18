@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <omp.h>
+//#include <omp.h>
 
 //#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
