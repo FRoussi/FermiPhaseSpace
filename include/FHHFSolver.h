@@ -34,12 +34,12 @@ public:
     void                        setComputeMomenta(bool yn);
 
 
-    void                        step_RK1(double dt);
-    void                        step_RK1_Mem(double dt, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt);
-    void                        step_RK2(double dt);
-    void                        step_RK4(double dt);
-    void                        step_RK4_38(double dt);
-    void                        step_RK45(double dt);
+    void                        step_RK1(double d_t);
+    void                        step_RK1_Mem(double d_t, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt);
+    void                        step_RK2(double d_t);
+    void                        step_RK4(double d_t);
+    void                        step_RK4_38(double d_t);
+    void                        step_RK45(double d_t);
     void                        runSimulation();
 
 

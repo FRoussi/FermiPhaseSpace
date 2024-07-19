@@ -7,7 +7,8 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
-                "-g",              
+                "-g",         
+                "-v",    
                 "${workspaceFolder}/src/jsoncpp.cpp",
                 "${workspaceFolder}/src/FHSystem.cpp",
                 "${workspaceFolder}/src/FHExternalPotential.cpp",
@@ -21,7 +22,7 @@
                 "${workspaceFolder}/src/FHHFSolver.cpp",
                 "${workspaceFolder}/fps.cpp",
                 "-o",
-                "${fileDirname}/fps",
+                "${fileDirname}/fps",    
                 "-larmadillo",
                 "-fopenmp",
             ],

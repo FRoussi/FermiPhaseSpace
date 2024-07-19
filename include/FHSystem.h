@@ -147,6 +147,9 @@ public:
     void                                setSiteTypeNames(std::vector<std::string> typeNames);  
 
     void                                setSymmetry(arma::dmat symmetryVectors); 
+    void                                setNeighbourDistance(double neigbD); 
+    void                                setSamePointDistance(double samePointD); 
+
 
     void                                setInitialConditionsDiagonal(const std::vector<std::vector<unsigned int>>& initConditions);
     void                                setInitialConditions(FHInitialConditionType initialCondType);
@@ -170,7 +173,7 @@ public:
 
     void                                setName(std::string name);
 
-
+    void                                computeMatrices();
 
     Json::Value                         writeFHSystemJson();
     Json::Value                         getOriginalJsonSystem();
@@ -206,6 +209,9 @@ private:
     unsigned int                    upSpinParticleNumber;
     unsigned int                    downSpinParticleNumber;
 
+
+    double                          neighbourDistance = 1;
+    double                          samePointDistance = 0.001;
     arma::dmat                      distanceMatrix;
     std::vector<std::vector<bool>>  neighbourMatrix;
     std::vector<std::vector<bool>>  sameSiteMatrix;
@@ -235,7 +241,7 @@ private:
 
 
 
-    void                            computeMatrices();
+
 
 
 //    bool isIn(std::string w, std::vector<std::string> v);

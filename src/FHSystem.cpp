@@ -533,6 +533,20 @@ void                    FHSystem::setSymmetry(arma::dmat symVectors)
 }
 
 
+void                                FHSystem::setNeighbourDistance(double neigbD)
+{
+    neighbourDistance = neigbD;
+}
+
+
+void                                FHSystem::setSamePointDistance(double samePointD)
+{
+    samePointDistance = samePointD;
+}
+
+
+
+
 /// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
 /// @param diagonalInitConditions vectors of sites on which there is a up-spin/down-spin particle
 /// @return void
@@ -1056,11 +1070,11 @@ void                    FHSystem::computeMatrices()
         for (uint j=0; j<nSites; j++)
         {
             distanceMatrix(i, j) = computeDistance(i,j);
-            if (abs(distanceMatrix(i, j))< 0.0001)
+            if (abs(distanceMatrix(i, j))< samePointDistance)
             {
                 sameSiteMatrix[i][j] = true;
             }
-            if (abs(distanceMatrix(i, j) - 1)< 0.0001)
+            if (abs(distanceMatrix(i, j) - neighbourDistance) < samePointDistance)
             {
                 neighbourMatrix[i][j] = true;
             }
