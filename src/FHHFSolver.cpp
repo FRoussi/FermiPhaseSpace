@@ -410,7 +410,7 @@ void FHHFSolver::runSimulation( )
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
 
-        std::cout << "- Results writen in " << folderName << workName << ".txt" << std::endl;
+        std::cout << "- Results written in " << folderName << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -450,7 +450,7 @@ void FHHFSolver::runSimulation( )
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results writen in " << folderName   << workName << ".json" << std::endl;
+        std::cout << "- Results written in " << folderName   << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

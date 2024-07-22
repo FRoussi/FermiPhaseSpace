@@ -533,7 +533,7 @@ void FHEDSolver::runSimulation()
         results.writeLine("EtH", EtH);
         results.writeLine("E", E);
 
-        std::cout << "- Results writen in " << folderName << "/" << workName << ".txt" << std::endl;
+        std::cout << "- Results written in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -573,7 +573,7 @@ void FHEDSolver::runSimulation()
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results writen in " << folderName << workName << ".json" << std::endl;
+        std::cout << "- Results written in " << folderName << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

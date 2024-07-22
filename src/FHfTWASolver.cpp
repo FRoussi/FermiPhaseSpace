@@ -4,6 +4,7 @@
 FHfTWASolver::FHfTWASolver(FHSystem* fhS) : FHSolver(fhS)
 {
 
+    runMPI = false;
 
     unsigned int nSites = fhSystem->getnSites();
     arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
@@ -155,6 +156,35 @@ void FHfTWASolver::runSimulation( )
 
 
     arma::cx_dmat halfDiagMatrix = arma::cx_dmat(0.5 * arma::dmat(nSites, nSites, arma::fill::eye), arma::dmat(nSites, nSites, arma::fill::zeros)); //<- Matrix of diagnoal 1/2
+
+
+
+if (runMPI)
+{
+
+    MPI_Init(&argc_copy, &argv_copy);
+
+   int world_size;
+   MPI_Comm_size(MPI_COMM_WORLD, &world_size); // Get the number of processes
+
+   int world_rank;
+   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); // Get the rank of the process
+
+   char processor_name[MPI_MAX_PROCESSOR_NAME];
+   int name_len;
+   MPI_Get_processor_name(processor_name, &name_len); // Get the name of the processor
+
+   std::cout << "== OpenMPI active " << std::endl; 
+   std::cout << "   -- Number of processess :        " << world_size << std::endl;
+   std::cout << "   -- Rank of process      :        " << world_rank << std::endl;
+   std::cout << "   -- Processor name       :        " << processor_name << std::endl;
+ 
+   std::cout << "Hello world from processor " << processor_name << ", rank " 
+              << world_rank << " out of " << world_size << " processors\n";
+
+
+    MPI_Finalize();
+}
 
 // PARALLEL LOOP ON TRAJECTORIES
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
@@ -346,7 +376,7 @@ void FHfTWASolver::runSimulation( )
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
 
-         std::cout << "- Results writen in " << folderName  << workName << ".txt" << std::endl;
+         std::cout << "- Results written in " << folderName  << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -386,7 +416,7 @@ void FHfTWASolver::runSimulation( )
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results writen in " << folderName << workName << ".json" << std::endl;
+        std::cout << "- Results written in " << folderName << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)
@@ -495,6 +525,16 @@ void FHfTWASolver::step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou
     rhod = rhod + (drhod_dt_k1 + drhod_dt_k2*3 + drhod_dt_k3*3 + drhod_dt_k4) * d_t / 8;
 }
 
+
+// MPI functions
+void                        FHfTWASolver::set_run_MPI(bool yn, int argc, char** argv)
+{
+
+    runMPI = yn;
+    argc_copy = argc;
+    argv_copy = argv;
+
+}
 
 
 FHfTWASolver::~FHfTWASolver()

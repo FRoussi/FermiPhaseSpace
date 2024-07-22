@@ -8,7 +8,7 @@
 #include <armadillo>
 #include <omp.h>
 
-
+#include <mpi.h>
 
 
 
@@ -37,6 +37,8 @@ public:
     void                        step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                        runSimulation();
 
+    void                        set_run_MPI(bool yn, int argc, char** argv);
+
 
     void                        setComputeMomenta(bool yn);
 
@@ -45,6 +47,10 @@ public:
 private:
 
 
+// MPI parameters
+    bool                        runMPI;
+    int                         argc_copy;
+    char**                      argv_copy;
 
 // fTWA parameters :    
     unsigned int                nTraj;

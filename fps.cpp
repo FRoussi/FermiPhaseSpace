@@ -6,6 +6,7 @@
 //#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
 
+#include <mpi.h>
 
 //#include <filesystem>
 
@@ -26,6 +27,13 @@ int main(int argc, char* argv[])
 
    arma::arma_version ver;
    std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
+
+
+
+
+
+
+
 
 // Environment variables :
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
@@ -49,6 +57,8 @@ int main(int argc, char* argv[])
    {
       std::cout << "   -- OPENBLAS_NUM_THREADS :        " << env_OPENBLAS_OMP << std::endl;
    }
+
+
 
 
   //std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
@@ -195,6 +205,7 @@ int main(int argc, char* argv[])
             fTWASolver.initiateSolver();
             fTWASolver.setTimeParameters(param_tm, param_dt, param_sptp);
             fTWASolver.setfTWAParameters(param_nTraj);
+            fTWASolver.set_run_MPI(false, argc, argv);
             fTWASolver.runSimulation();
 
             break;
