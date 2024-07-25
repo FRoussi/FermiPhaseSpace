@@ -22,6 +22,7 @@
 int main(int argc, char* argv[])
 {
 
+
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
 
 
@@ -175,36 +176,29 @@ int main(int argc, char* argv[])
       {
       case dynamicMethod::HF:
       {
-            double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
-            double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
-            int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
+
 
             std::cout << "- Computation of HF dynamic " << std::endl;
             FHHFSolver hfSolver = FHHFSolver(&fhSystem);
             hfSolver.setResultFile(simName + "_HF_res", workFolder);
             hfSolver.setJsonFile(rootSim);
-            hfSolver.writeResults("json");
+            hfSolver.setResultsWriter("json");
             hfSolver.initiateSolver();
-            hfSolver.setTimeParameters(param_tm, param_dt, param_sptp);
+            hfSolver.setMethodParameters(rootSim["parameters"]);
             hfSolver.runSimulation();
 
             break;
       }   
       case dynamicMethod::fTWA:
       {
-            double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
-            double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
-            int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
-            int param_nTraj = rootSim["parameters"].get("n_traj", 10).asInt();
 
             std::cout << "- Computation of fTWA dynamic "<< std::endl;
             FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
             fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
             fTWASolver.setJsonFile(rootSim);
-            fTWASolver.writeResults("json");
+            fTWASolver.setResultsWriter("json");
             fTWASolver.initiateSolver();
-            fTWASolver.setTimeParameters(param_tm, param_dt, param_sptp);
-            fTWASolver.setfTWAParameters(param_nTraj);
+            fTWASolver.setMethodParameters(rootSim["parameters"]);
             fTWASolver.set_run_MPI(false, argc, argv);
             fTWASolver.runSimulation();
 
@@ -212,19 +206,15 @@ int main(int argc, char* argv[])
       }
       case dynamicMethod::GPSR:
       {
-            double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
-            double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
-            int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
-            int param_nTraj = rootSim["parameters"].get("n_traj", 10).asInt();
+
 
             std::cout <<  "- Computation of GPSR dynamic "<< std::endl;
             FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
             GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
             GPSRSolver.setJsonFile(rootSim);
-            GPSRSolver.writeResults("json");
+            GPSRSolver.setResultsWriter("json");
             GPSRSolver.initiateSolver();
-            GPSRSolver.setTimeParameters(param_tm, param_dt, param_sptp);
-            GPSRSolver.setGPSRParameters(param_nTraj);
+            GPSRSolver.setMethodParameters(rootSim["parameters"]);
             GPSRSolver.runSimulation();
 
             break;
@@ -239,7 +229,7 @@ int main(int argc, char* argv[])
             FHEDSolver EDSolver = FHEDSolver(&fhSystem);
             EDSolver.setResultFile(simName + "_ED_res", workFolder);
             EDSolver.setJsonFile(rootSim);
-            EDSolver.writeResults("json");
+            EDSolver.setResultsWriter("json");
             EDSolver.initiateSolver();
             EDSolver.setTimeParameters(param_tm, param_dt, param_sptp);
             EDSolver.runSimulation();

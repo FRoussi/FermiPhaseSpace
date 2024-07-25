@@ -29,18 +29,28 @@ public:
     FHfTWASolver(FHSystem* fhs);
 
 
+    void                        setIntegratorOrder(int order);
     void                        setfTWAParameters(unsigned int nTraj);
+    void                        setMethodParameters(Json::Value param);
+
+    void                        set_run_MPI(bool yn, int argc, char** argv);
+   
+    void                        setComputeMomenta(bool yn);
+
 
     void                        initiateSolver();
 
     void                        step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                        step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                        runSimulation();
+    void                        runSimulation_openMP();
+    void                        runSimulation_MPI();
 
-    void                        set_run_MPI(bool yn, int argc, char** argv);
-
-
-    void                        setComputeMomenta(bool yn);
+    void                        writeResults(arma::cx_dcube &Nu_t, arma::cx_dcube &Nd_t, 
+                                            arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
+                                            arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
+                                            arma::cx_drowvec &EU, arma::cx_drowvec &EtH, 
+                                            arma::cx_drowvec &E,std::vector<double> &timeLine);
 
     ~FHfTWASolver();
 
@@ -56,6 +66,7 @@ private:
     unsigned int                nTraj;
 
     // Integrator   
+    int                     integratorOrder;
     fTWAIntegrator              integrator;
 
 

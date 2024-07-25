@@ -429,6 +429,8 @@ int main(int argc, char* argv[])
     param["t_max"] = 2.;
     param["dt"] = 0.01;
     param["stepsPerTimePoints"] = 1;
+    param["n_traj"] = 100;
+    param["int_order"] = 4;
     simRoot["parameters"] = param;
 
     simRoot["system"] = newSystem.writeFHSystemJson();

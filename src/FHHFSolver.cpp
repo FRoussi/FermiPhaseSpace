@@ -15,8 +15,11 @@ FHHFSolver::FHHFSolver(FHSystem* fhS) : FHSolver(fhS)
     writeResultsJson = false;
     writeResultsHDF5 = false; */
 
+    currentSimulationTime = 0;
+    integratorOrder = 2;
+    integrator = HFIntegrator::RungeKutta2;
+    
 
-        
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
     J = fhSystem->getJMatrixPointer();
@@ -28,8 +31,48 @@ FHHFSolver::FHHFSolver(FHSystem* fhS) : FHSolver(fhS)
 
 
 
+void                        FHHFSolver::setIntegratorOrder(int order)
+{
+    switch (order)
+    {
+        case 1:
+        {
+            integratorOrder = 1;
+            integrator = HFIntegrator::RungeKutta1;
+            break;
+        }
+        case 2:
+        {
+            integratorOrder = 2;
+            integrator = HFIntegrator::RungeKutta2;
+            break;
+        }
+        case 4:
+        {
+            integratorOrder = 4;
+            integrator = HFIntegrator::RungeKutta4_38;
+            break;
+        }
+        default:
+        {
+            std::cout << "Integrator order " << order << " not implemented. Switching to default 2." << std::endl;
+            integratorOrder = 2;
+            integrator = HFIntegrator::RungeKutta2;
+            break;
+        }
+    }
 
+}
 
+void                        FHHFSolver::setMethodParameters(Json::Value param)
+{
+    double param_dt = param.get("dt", 0.01).asDouble();
+    double param_tm = param.get("t_max", 2).asDouble();
+    int param_sptp = param.get("stepsParTimePoints", 1).asInt();
+    int param_intOrder = param.get("int_order", 2).asInt();
+    setTimeParameters(param_tm, param_dt, param_sptp);
+    setIntegratorOrder(param_intOrder);
+}
 
 /// @brief Initiate the HF solver, compute the initial density matrix.
 void FHHFSolver::initiateSolver()

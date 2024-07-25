@@ -22,7 +22,7 @@ public:
     FHSolver(FHSystem* fhSystem);
 
     void        setResultFile(std::string workName, std::string folderNameName);
-    void        writeResults(std::string how, bool yn = true);
+    void        setResultsWriter(std::string how, bool yn = true);
     void        setTimeParameters(double t_max, double dt, uint nPerTS = 1);
     void        setComputeMomenta(bool yn);
     void        setTalkative(bool yn);

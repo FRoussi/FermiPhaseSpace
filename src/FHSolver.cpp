@@ -21,7 +21,7 @@ void FHSolver::setResultFile(std::string wN, std::string fN)
     talkative = false;
 }
 
-void                        FHSolver::writeResults(std::string how, bool yn)
+void                        FHSolver::setResultsWriter(std::string how, bool yn)
 {
     if (how  == "txt")
     {

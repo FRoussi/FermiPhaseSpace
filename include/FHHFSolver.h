@@ -33,6 +33,10 @@ public:
     void                        initiateSolver();
     void                        setComputeMomenta(bool yn);
 
+    void                        setIntegratorOrder(int order);
+    void                        setMethodParameters(Json::Value param);
+
+
 
     void                        step_RK1(double d_t);
     void                        step_RK1_Mem(double d_t, arma::cx_dmat & dNu_dt, arma::cx_dmat & dNd_dt);
@@ -51,6 +55,7 @@ private:
 // Time parameter
     double                  currentSimulationTime;
 
+    int                     integratorOrder;
     HFIntegrator            integrator;            //<-Integrator 
 
 

@@ -36,6 +36,8 @@ public:
 
 
     void                setGPSRParameters(unsigned int nTraj);
+    void                setIntegratorOrder(int order);
+    void                setMethodParameters(Json::Value param);
     void                initiateSolver();
 
     void                step_Drift_RK2(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, double d_t, arma::cx_dmat& drhou_Drift, arma::cx_dmat& drhod_Drift);
@@ -68,6 +70,7 @@ private:
 // GPSR parameters :
     unsigned int                    nTraj;
 
+    int                             driftIntegratorOrder;
     GPSRDriftIntegrator             driftIntegrator;
     GPSRDiffusionIntegrator         diffusionIntegrator;
 

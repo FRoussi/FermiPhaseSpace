@@ -5,7 +5,9 @@
 FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : FHSolver(fhS)
 {
 
-
+    nTraj = 1;
+    driftIntegrator = GPSRDriftIntegrator::RungeKutta2;
+    diffusionIntegrator =  GPSRDiffusionIntegrator::analytical;
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
@@ -15,12 +17,51 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : FHSolver(fhS)
 
     sqrtU =  arma::sqrt(*U);
 
-    driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38;
-    diffusionIntegrator = GPSRDiffusionIntegrator::numerical_rsvd;
+
 
 
 }
 
+
+void                        FHGPSRSolver::setIntegratorOrder(int order)
+{
+    switch (order)
+    {
+        case 2:
+        {
+            driftIntegratorOrder = 2;
+            driftIntegrator = GPSRDriftIntegrator::RungeKutta2 ;
+            break;
+        }
+        case 4:
+        {
+            driftIntegratorOrder = 4;
+            driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38 ;
+            break;
+        }
+        default:
+        {
+            std::cout << "Integrator order " << order << " not implemented. Switching to default 2." << std::endl;
+            driftIntegratorOrder = 2;
+            driftIntegrator = GPSRDriftIntegrator::RungeKutta2 ;
+            break;
+        }
+    }
+
+}
+
+void                        FHGPSRSolver::setMethodParameters(Json::Value param)
+{
+    double param_dt = param.get("dt", 0.01).asDouble();
+    double param_tm = param.get("t_max", 2).asDouble();
+    int param_sptp = param.get("stepsParTimePoints", 1).asInt();
+    int param_nTraj = param.get("n_traj", 10).asInt();
+    int param_intOrder = param.get("int_order", 2).asInt();
+
+    setTimeParameters(param_tm, param_dt, param_sptp);
+    setIntegratorOrder(param_intOrder);
+    setGPSRParameters(param_nTraj);
+}
 
 
 /// @brief Set GPSR simulation parameters.
@@ -37,7 +78,8 @@ void FHGPSRSolver::setGPSRParameters(unsigned int nT)
 void FHGPSRSolver::initiateSolver()
 {
 
-
+    driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38;
+    diffusionIntegrator = GPSRDiffusionIntegrator::numerical_rsvd;
 
     rhou0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     rhod0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
