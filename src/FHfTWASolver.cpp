@@ -179,7 +179,7 @@ void FHfTWASolver::setComputeMomenta(bool yn)
 /// @brief Launch simulation and write the results
 void FHfTWASolver::runSimulation( )
 {
-    std::cout << "- Start simulation" << std::endl;
+
     if (runMPI)
     {
         runSimulation_MPI();
@@ -196,6 +196,7 @@ void FHfTWASolver::runSimulation( )
 void FHfTWASolver::runSimulation_openMP( )
 {
 
+    std::cout << "- Start simulation" << std::endl;
     //printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
 
 
@@ -392,9 +393,10 @@ void FHfTWASolver::runSimulation_openMP( )
 void FHfTWASolver::runSimulation_MPI( )
 {
 
+
     //printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
 
-    MPI_Init(&argc_copy, &argv_copy);
+    //MPI_Init(&argc_copy, &argv_copy);
 
 
       int world_size;
@@ -406,6 +408,8 @@ void FHfTWASolver::runSimulation_MPI( )
    char processor_name[MPI_MAX_PROCESSOR_NAME];
    int name_len;
    MPI_Get_processor_name(processor_name, &name_len); // Get the name of the processor
+
+   std::cout << "- node " << world_rank << ". Start simulation" << std::endl;
 
    std::cout << "== OpenMPI active " << std::endl; 
    std::cout << "   -- Number of processess :        " << world_size << std::endl;
@@ -679,50 +683,49 @@ void FHfTWASolver::runSimulation_MPI( )
         delete [] E_received_buffer;
     }
 
-    MPI_Finalize();
+
     
 
 
-
-
-
-
+    if (world_rank == 0)
+    {
 
 // Computation of different observables :
-    arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
-
-    arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-    arma::cx_dmat Mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-
-    EU = EU/nTraj_arma;
-    EtH = EtH/nTraj_arma;
+        arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
     
-
-
-    arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
-
-    for (unsigned int t = 0; t < nTimePoints; t++)
-    {
-        Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-        Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-        N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-        N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-        if (computeMomenta)
+        arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    
+        arma::cx_dmat Mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dmat Mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    
+    
+        EU = EU/nTraj_arma;
+        EtH = EtH/nTraj_arma;
+        
+    
+    
+        arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
+    
+        for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
-            Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+            Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+            Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+            N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+            N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+            if (computeMomenta)
+            {
+                Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
+                Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+            }
         }
+    
+        arma::cx_drowvec E = EtH+ EU;
+    
+        writeResults(Nu, Nd, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
     }
-
-    arma::cx_drowvec E = EtH+ EU;
-
-    writeResults(Nu, Nd, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
 
 
 }

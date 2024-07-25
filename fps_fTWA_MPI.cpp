@@ -20,65 +20,71 @@ int main(int argc, char* argv[])
 {
 
 
-   std::cout << "--- Fermi-Hubbard Dynamic with fTWA and MPI --- " << std::endl;
+    MPI_Init(&argc, &argv);
 
 
-   arma::arma_version ver;
-   std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
+   int world_size;
+   MPI_Comm_size(MPI_COMM_WORLD, &world_size); // Get the number of processes
+
+   int world_rank;
+   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); // Get the rank of the process
+
+   char processor_name[MPI_MAX_PROCESSOR_NAME];
+   int name_len;
+   MPI_Get_processor_name(processor_name, &name_len); // Get the name of the processor
 
 
-
-// Environment variables :
-   char* env_OMP = std::getenv("OMP_NUM_THREADS");
-   char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
-
-   std::cout << "== Environment variables : "<< ver.as_string() << std::endl;
-   if (env_OMP==NULL)
+   if (world_rank == 0) //<- Main node will write nice things
    {
-      omp_set_num_threads(DEF_MAX_THREAD_NUM);
-   }
-   else
-   {
-      std::cout << "   -- OMP_NUM_THREADS      :        " << env_OMP << std::endl;
-   }
 
-   if (env_OPENBLAS_OMP==NULL)
-   {
-      std::cout << "   -- OPENBLAS_NUM_THREADS not defined, this could lead to slower parallelisation." << std::endl;
-   }
-   else
-   {
-      std::cout << "   -- OPENBLAS_NUM_THREADS :        " << env_OPENBLAS_OMP << std::endl;
-   }
+      std::cout << "== OpenMPI active " << std::endl; 
+      std::cout << "   -- Number of processess :        " << world_size << std::endl;
+
+      std::cout << "--- Fermi-Hubbard Dynamic with fTWA and MPI --- " << std::endl;
 
 
+      arma::arma_version ver;
+      std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
 
+   // Environment variables :
+      char* env_OMP = std::getenv("OMP_NUM_THREADS");
+      char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
+
+      std::cout << "== Environment variables : "<< ver.as_string() << std::endl;
+      if (env_OMP==NULL)
+      {
+         omp_set_num_threads(DEF_MAX_THREAD_NUM);
+      }
+      else
+      {
+         std::cout << "   -- OMP_NUM_THREADS      :        " << env_OMP << std::endl;
+      }
+
+      if (env_OPENBLAS_OMP==NULL)
+      {
+         std::cout << "   -- OPENBLAS_NUM_THREADS not defined, this could lead to slower parallelisation." << std::endl;
+      }
+      else
+      {
+         std::cout << "   -- OPENBLAS_NUM_THREADS :        " << env_OPENBLAS_OMP << std::endl;
+      }
 
   //std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
-  std::cout << "== OpenMP active " << std::endl; 
-  std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
-  std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
+      std::cout << "== OpenMP active " << std::endl; 
+      std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
+      std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
 
 
+      std::cout << "== Double precision :   2^ -" << std::numeric_limits<double>::digits10 << std::endl;
 
-
-
-
-// Threads used by openblas :
-   //openblas_set_num_threads(1);
-
-
-   std::cout << "== Double precision :   2^ -" << std::numeric_limits<double>::digits10 << std::endl;
-
-
-
+   }
 
    //std::string work = "2Sites.json";
    if (argc > 1)
    {
 
       std::string jsonFilePath = std::string(argv[1]);
-      std::size_t botDirPos = jsonFilePath.find_last_of("/") ;
+      std::size_t botDirPos = jsonFilePath.find_last_of("/");
       std::size_t fileNameSize = jsonFilePath.size() ;
       std::string workFolder = "";
       if (botDirPos < fileNameSize)
@@ -87,11 +93,12 @@ int main(int argc, char* argv[])
       }
       std::string work = jsonFilePath.substr(botDirPos + 1, jsonFilePath.length()); // get file
 
-      std::cout << "== Work file : " << work << std::endl;
-      std::cout << "== Work folder : " << workFolder << std::endl;
+      if (world_rank == 0)
+      {
+         std::cout << "== Work file : " << work << std::endl;
+         std::cout << "== Work folder : " << workFolder << std::endl;
 
-
-
+      }
 
 
       std::string instructionsFileName = work;
@@ -101,8 +108,7 @@ int main(int argc, char* argv[])
       bool systemLoaded;
       Json::Value rootSim;
 
-
-      std::cout << "- Reading work file "<< instructionsFileName << std::endl;  
+      std::cout << "- Reading work file "<< instructionsFileName << " , node " << world_rank << std::endl;  
 
       std::string file = workFolder + instructionsFileName;
 
@@ -125,7 +131,7 @@ int main(int argc, char* argv[])
       }
       else
       {
-         std::cout << instructionsFileName << " not found." << std::endl;
+         std::cout << instructionsFileName << " not found." <<  " node " << world_rank << std::endl;
       }
 
 
@@ -171,10 +177,18 @@ int main(int argc, char* argv[])
    }
    else
    {
+      if (world_rank == 0)
+      {
          std::cout << "- Need a json file. "  << std::endl;
+      }
    }
 
+   if (world_rank == 0)
+   {
+      std::cout <<"- Program closing." << std::endl;
+   }
 
-   std::cout <<"- Program closing." << std::endl;
+   MPI_Finalize();
+   
    return 0;
 }

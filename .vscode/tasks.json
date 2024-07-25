@@ -32,7 +32,37 @@
                 "$gcc"
             ],
             "group":  "build",
-            "detail": "Global compile and run. compiler: /usr/bin/g++, openmp."
+            "detail": "Global compile and run. compiler: /usr/bin/mpic++, openmp."
+        },
+        {
+            "type": "cppbuild",
+            "label": "mpic++ build of the fTWA solver, MPI version.",
+            "command": "/usr/bin/mpic++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",   
+                "${workspaceFolder}/src/jsoncpp.cpp",
+                "${workspaceFolder}/src/FHSystem.cpp",
+                "${workspaceFolder}/src/FHExternalPotential.cpp",
+                "${workspaceFolder}/src/FHExternalPotentialPulse.cpp",
+                "${workspaceFolder}/src/FHSolver.cpp",
+                "${workspaceFolder}/src/ResultWriterTxt.cpp",
+                "${workspaceFolder}/src/ResultWriterJson.cpp",
+                "${workspaceFolder}/src/FHfTWASolver.cpp",
+                "${workspaceFolder}/fps_fTWA_MPI.cpp",
+                "-o",
+                "${fileDirname}/fps_fTWA_MPI",    
+                "-larmadillo",
+                "-fopenmp",
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group":  "build",
+            "detail": "fTWA compile. compiler: /usr/bin/mpic++, openmp, mpi."
         },
         {
             "type": "cppbuild",
@@ -62,7 +92,7 @@
                 "$gcc"
             ],
             "group":  "build",
-            "detail": "Global compile and run. compiler: /usr/bin/g++, openmp."
+            "detail": "HF compile. compiler: /usr/bin/g++, openmp."
         },
         {
             "type": "cppbuild",
