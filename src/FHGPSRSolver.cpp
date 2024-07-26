@@ -829,7 +829,7 @@ bool rsvd(arma::cx_dmat& U, arma::dvec& s, arma::cx_dmat& V, arma::cx_dmat& D, u
     bool successSVD = true; 
     
                                                     // MATLAB version
-    unsigned int M = D.n_rows;
+    //unsigned int M = D.n_rows;
     unsigned int N = D.n_cols;                      //<- [M,N] = arma::size(D);
 
     //unsigned int P = std::min(2*K,N);               //<- P = min(2*K,N);

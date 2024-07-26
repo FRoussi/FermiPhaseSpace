@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
    char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 
-   std::cout << "== Environment variables : "<< ver.as_string() << std::endl;
+   std::cout << "== Environment variables : " << std::endl;
    if (env_OMP==NULL)
    {
       omp_set_num_threads(DEF_MAX_THREAD_NUM);
@@ -62,8 +62,8 @@ int main(int argc, char* argv[])
 
 
 
-  //std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
-  std::cout << "== OpenMP active " << std::endl; 
+  std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
+  //std::cout << "== OpenMP active " << std::endl; 
   std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
   std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
 
@@ -95,8 +95,9 @@ int main(int argc, char* argv[])
       }
       std::string work = jsonFilePath.substr(botDirPos + 1, jsonFilePath.length()); // get file
 
-      std::cout << "== Work file : " << work << std::endl;
-      std::cout << "== Work folder : " << workFolder << std::endl;
+      std::cout << "== Loading data : " << std::endl;
+      std::cout << "   -- Work file : " << work << std::endl;
+      std::cout << "   -- Work folder : " << workFolder << std::endl;
 
 
       enum task
@@ -126,7 +127,7 @@ int main(int argc, char* argv[])
       Json::Value rootSim;
 
 
-      std::cout << "- Reading work file "<< instructionsFileName << std::endl;  
+      std::cout << "   -- Reading work file "<< instructionsFileName << std::endl;  
 
       std::string file = workFolder + instructionsFileName;
 
@@ -168,7 +169,7 @@ int main(int argc, char* argv[])
       Json::Value systemJSON = rootSim.get("system", "");
       fhSystem = FHSystem(systemJSON, workFolder);
       systemLoaded = true;
-      std::cout << "- System loaded" << std::endl;
+      std::cout << "   -- System loaded" << std::endl;
 
       const auto startSimTime{std::chrono::steady_clock::now()};
 
@@ -178,7 +179,7 @@ int main(int argc, char* argv[])
       {
 
 
-            std::cout << "- Computation of HF dynamic " << std::endl;
+            std::cout << "== Computation of HF dynamic " << std::endl;
             FHHFSolver hfSolver = FHHFSolver(&fhSystem);
             hfSolver.setResultFile(simName + "_HF_res", workFolder);
             hfSolver.setJsonFile(rootSim);
@@ -192,7 +193,7 @@ int main(int argc, char* argv[])
       case dynamicMethod::fTWA:
       {
 
-            std::cout << "- Computation of fTWA dynamic "<< std::endl;
+            std::cout << "== Computation of fTWA dynamic "<< std::endl;
             FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
             fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
             fTWASolver.setJsonFile(rootSim);
@@ -208,7 +209,7 @@ int main(int argc, char* argv[])
       {
 
 
-            std::cout <<  "- Computation of GPSR dynamic "<< std::endl;
+            std::cout <<  "== Computation of GPSR dynamic "<< std::endl;
             FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
             GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
             GPSRSolver.setJsonFile(rootSim);
@@ -225,7 +226,7 @@ int main(int argc, char* argv[])
             double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
             int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
 
-            std::cout <<  "- Computation of ED dynamic "<< std::endl;
+            std::cout <<  "== Computation of ED dynamic "<< std::endl;
             FHEDSolver EDSolver = FHEDSolver(&fhSystem);
             EDSolver.setResultFile(simName + "_ED_res", workFolder);
             EDSolver.setJsonFile(rootSim);
@@ -247,16 +248,16 @@ int main(int argc, char* argv[])
 
 
 
-      std::cout << "- Computation time : " << elapsed_seconds.count() << " s." << std::endl;
+      std::cout << "== Computation time : " << elapsed_seconds.count() << " s." << std::endl;
 
 
    }
    else
    {
-         std::cout << "- Need a json file. "  << std::endl;
+         std::cout << "Need a json file. "  << std::endl;
    }
 
 
-   std::cout <<"- Program closing." << std::endl;
+   std::cout <<"== Program closing." << std::endl;
    return 0;
 }

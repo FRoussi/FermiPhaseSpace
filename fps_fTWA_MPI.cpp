@@ -37,8 +37,7 @@ int main(int argc, char* argv[])
    if (world_rank == 0) //<- Main node will write nice things
    {
 
-      std::cout << "== OpenMPI active " << std::endl; 
-      std::cout << "   -- Number of processess :        " << world_size << std::endl;
+ 
 
       std::cout << "--- Fermi-Hubbard Dynamic with fTWA and MPI --- " << std::endl;
 
@@ -50,7 +49,7 @@ int main(int argc, char* argv[])
       char* env_OMP = std::getenv("OMP_NUM_THREADS");
       char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 
-      std::cout << "== Environment variables : "<< ver.as_string() << std::endl;
+      std::cout << "== Environment variables : " << std::endl;
       if (env_OMP==NULL)
       {
          omp_set_num_threads(DEF_MAX_THREAD_NUM);
@@ -69,8 +68,11 @@ int main(int argc, char* argv[])
          std::cout << "   -- OPENBLAS_NUM_THREADS :        " << env_OPENBLAS_OMP << std::endl;
       }
 
-  //std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
-      std::cout << "== OpenMP active " << std::endl; 
+     std::cout << "== OpenMPI active , version " << std::to_string(OMPI_MAJOR_VERSION) << "." << std::to_string(OMPI_MINOR_VERSION) << "." << std::to_string(OMPI_RELEASE_VERSION) << std::endl; 
+      std::cout << "   -- Number of nodes :        " << world_size << std::endl;
+
+  std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
+      //std::cout << "== OpenMP active " << std::endl; 
       std::cout << "   -- Number of processors :        " << omp_get_num_procs() << std::endl;
       std::cout << "   -- Number of threads available : " << omp_get_max_threads() << std::endl;
 
@@ -95,8 +97,9 @@ int main(int argc, char* argv[])
 
       if (world_rank == 0)
       {
-         std::cout << "== Work file : " << work << std::endl;
-         std::cout << "== Work folder : " << workFolder << std::endl;
+         std::cout << "== Loading data : " << std::endl;
+         std::cout << "   -- Work file : " << work << std::endl;
+         std::cout << "   -- Work folder : " << workFolder << std::endl;
 
       }
 
@@ -108,7 +111,10 @@ int main(int argc, char* argv[])
       bool systemLoaded;
       Json::Value rootSim;
 
-      std::cout << "- Reading work file "<< instructionsFileName << " , node " << world_rank << std::endl;  
+      if (world_rank == 0)
+      {
+         std::cout << "   -- Reading work file " << instructionsFileName << std::endl;  
+      }
 
       std::string file = workFolder + instructionsFileName;
 
@@ -142,26 +148,39 @@ int main(int argc, char* argv[])
       std::string stringMethod = rootSim.get("method", "HF").asString();
 
 
-
-
       Json::Value systemJSON = rootSim.get("system", "");
-      fhSystem = FHSystem(systemJSON, workFolder);
+      if (world_rank==0)
+      {
+         fhSystem = FHSystem(systemJSON, workFolder);
+      }
+      else
+      {
+         fhSystem = FHSystem(systemJSON, workFolder, false);
+      }
+
       systemLoaded = true;
-      std::cout << "- System loaded" << std::endl;
+      if (world_rank==0)
+      {
+         std::cout << "   -- System loaded" << std::endl;
+      }
+  
 
       const auto startSimTime{std::chrono::steady_clock::now()};
 
 
+      if (world_rank==0)
+      {
+            std::cout << "== Computation of fTWA dynamic "<< std::endl;
+      }
 
-            std::cout << "- Computation of fTWA dynamic "<< std::endl;
-            FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
-            fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
-            fTWASolver.setJsonFile(rootSim);
-            fTWASolver.setResultsWriter("json");
-            fTWASolver.initiateSolver();
-            fTWASolver.setMethodParameters(rootSim["parameters"]);
-            fTWASolver.set_run_MPI(true, argc, argv);
-            fTWASolver.runSimulation();
+      FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
+      fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
+      fTWASolver.setJsonFile(rootSim);
+      fTWASolver.setResultsWriter("json");
+      fTWASolver.initiateSolver();
+      fTWASolver.setMethodParameters(rootSim["parameters"]);
+      fTWASolver.set_run_MPI(true, argc, argv);
+      fTWASolver.runSimulation();
 
 
 
@@ -169,9 +188,11 @@ int main(int argc, char* argv[])
 
       const std::chrono::duration<double> elapsed_seconds{endSimTime - startSimTime};
 
+      if (world_rank ==0)
+      {
+         std::cout << "== Computation time : " << elapsed_seconds.count() << " s." << std::endl;
+      }
 
-
-      std::cout << "- Computation time : " << elapsed_seconds.count() << " s." << std::endl;
 
 
    }
@@ -179,13 +200,13 @@ int main(int argc, char* argv[])
    {
       if (world_rank == 0)
       {
-         std::cout << "- Need a json file. "  << std::endl;
+         std::cout << "Need a json file. "  << std::endl;
       }
    }
 
    if (world_rank == 0)
    {
-      std::cout <<"- Program closing." << std::endl;
+      std::cout <<"== Program closing." << std::endl;
    }
 
    MPI_Finalize();

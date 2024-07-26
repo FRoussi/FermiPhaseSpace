@@ -386,8 +386,8 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EU =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EtH =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec nPartU =  arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec nPartD =  arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
     for (unsigned int t = 0;  t<nTimePoints; t++)
     {
 
@@ -395,8 +395,8 @@ void FHHFSolver::runSimulation( )
         Ndt = Nd.slice(t);
         Niiu.col(t) = Nut.diag();
         Niid.col(t) = Ndt.diag();
-        nPartU(t) = std::real(arma::trace(Nut));
-        nPartD(t) = std::real(arma::trace(Ndt));
+        nPartU_t(t) = std::real(arma::trace(Nut));
+        nPartD_t(t) = std::real(arma::trace(Ndt));
 
         EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
         EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);

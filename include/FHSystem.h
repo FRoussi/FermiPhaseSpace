@@ -78,11 +78,11 @@ public:
 
 // CONSTRUCTORS
 
-    FHSystem();
-    FHSystem(int x);
-    FHSystem(int x, int y, int z);
+    FHSystem(bool talk = true);
+    FHSystem(int x, bool talk = true);
+    FHSystem(int x, int y, int z, bool talk = true);
   //  FHSystem(std::string fileName, std::string folderName = "");
-    FHSystem(Json::Value rootSystem, std::string folderName = "");
+    FHSystem(Json::Value rootSystem, std::string folderName, bool talk = true);
 
 
 // GETTERS
@@ -241,7 +241,7 @@ private:
 
 
 
-
+    bool talkative;
 
 
 //    bool isIn(std::string w, std::vector<std::string> v);

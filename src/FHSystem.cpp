@@ -1,8 +1,10 @@
 #include "../include/FHSystem.h"
 
 
-FHSystem::FHSystem()
+FHSystem::FHSystem(bool talk)
 {
+
+    talkative = talk;
 
     arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
 
@@ -28,8 +30,10 @@ FHSystem::FHSystem()
 }
 
 
-FHSystem::FHSystem(int x)
+FHSystem::FHSystem(int x, bool talk)
 {
+    talkative = talk;
+
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
     {
@@ -65,9 +69,10 @@ FHSystem::FHSystem(int x)
 }
 
 
-FHSystem::FHSystem(int x, int y, int z)
+FHSystem::FHSystem(int x, int y, int z, bool talk)
 {
 
+    talkative = talk;
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
     for (int i_z = 0; i_z < z; i_z++)
@@ -115,8 +120,10 @@ FHSystem::FHSystem(int x, int y, int z)
 
 
 
-FHSystem::FHSystem(Json::Value rootSystem, std::string folderName)
+FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 {
+
+    talkative = talk;
 
     originalJsonSystem = rootSystem;
 // Positions
@@ -958,7 +965,10 @@ void                    FHSystem::readPositions(std::string xyzFile)
 
     if (nPart == positions3.size())
     {
-        std::cout << "- Position file read, " << nPart << " particles." << std::endl;
+        if (talkative)
+        {
+            std::cout << "   -- Position file read, " << nPart << " particles." << std::endl;
+        }
         setPositions(armaMatfromVectorsVector(positions3));
     }
     else

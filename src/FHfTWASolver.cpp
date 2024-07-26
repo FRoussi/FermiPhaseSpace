@@ -196,7 +196,7 @@ void FHfTWASolver::runSimulation( )
 void FHfTWASolver::runSimulation_openMP( )
 {
 
-    std::cout << "- Start simulation" << std::endl;
+    std::cout << "   -- Start simulation" << std::endl;
     //printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
 
 
@@ -328,7 +328,7 @@ void FHfTWASolver::runSimulation_openMP( )
         unsigned int tt = std::floor(nTraj/10);
         if ((i_traj%tt) == 0)
         {
-            std::cout << "  -- Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
+            std::cout << "     - Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
         }
 
     }
@@ -393,13 +393,7 @@ void FHfTWASolver::runSimulation_openMP( )
 void FHfTWASolver::runSimulation_MPI( )
 {
 
-
-    //printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
-
-    //MPI_Init(&argc_copy, &argv_copy);
-
-
-      int world_size;
+   int world_size;
    MPI_Comm_size(MPI_COMM_WORLD, &world_size); // Get the number of processes
 
    int world_rank;
@@ -409,17 +403,8 @@ void FHfTWASolver::runSimulation_MPI( )
    int name_len;
    MPI_Get_processor_name(processor_name, &name_len); // Get the name of the processor
 
-   std::cout << "- node " << world_rank << ". Start simulation" << std::endl;
 
-   std::cout << "== OpenMPI active " << std::endl; 
-   std::cout << "   -- Number of processess :        " << world_size << std::endl;
-   std::cout << "   -- Rank of process      :        " << world_rank << std::endl;
-   std::cout << "   -- Processor name       :        " << processor_name << std::endl;
- 
-   std::cout << "Hello world from processor " << processor_name << ", rank " 
-              << world_rank << " out of " << world_size << " processors\n";
 
-    std::cout << "MPI thread (node) " << world_rank << " knows n_traj = " << nTraj << std::endl;
 
 
 
@@ -456,10 +441,10 @@ void FHfTWASolver::runSimulation_MPI( )
     }
 
 
-     std::cout << "MPI thread (node) " << world_rank << " will computues trajectories from " << trajNumberSplits[world_rank] << " to " << trajNumberSplits[world_rank+1] -1 << std::endl;
-
+    std::cout << "   -- MPI node " << world_rank << " will compute trajectories from " << trajNumberSplits[world_rank] << " to " << trajNumberSplits[world_rank+1] -1 << std::endl;
 // SCATTER important variables :
 
+    const auto startThreadSimTime{std::chrono::steady_clock::now()};
 
 // PARALLEL LOOP ON TRAJECTORIES
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
@@ -569,7 +554,7 @@ void FHfTWASolver::runSimulation_MPI( )
             unsigned int tt = std::floor(nTraj/10);
             if ((i_traj%tt) == 0)
             {
-                std::cout << "  -- Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << " of node " << world_rank <<  std::endl;    
+                std::cout << "     - Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << " of node " << world_rank <<  std::endl;    
             }
 
         }
@@ -588,7 +573,18 @@ void FHfTWASolver::runSimulation_MPI( )
     }
 
 
-    // SENDING datas from different nodes to node 0 :
+    const auto endThreadSimTime{std::chrono::steady_clock::now()};
+
+    const std::chrono::duration<double> thread_elapsed_seconds{endThreadSimTime - startThreadSimTime};
+
+    std::cout << "   -- Computation of node " << world_rank << " ended, computation time : " << thread_elapsed_seconds.count() << " s." << std::endl;
+    
+
+    if ((world_size>0) &&  (world_rank == 0))
+    {
+        std::cout << "   -- Gathering results in node 0 : " << std::endl;
+    }
+
 
     // Making array buffers in node 0
     std::complex<double> *rho_received_buffer;
@@ -607,10 +603,14 @@ void FHfTWASolver::runSimulation_MPI( )
 
         if (world_rank == procIndex)         //<- Sending rho_u
         {
+            std::cout << "     - Node " << procIndex << " sending data to node 0." << std::endl;
+            //std::cout << "     - Node " << procIndex << " sending rho_u to node 0." << std::endl;
             MPI_Send(rhou_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
         }
         if (world_rank == 0)                //<- Receiving rho_u
         {   
+            std::cout << "     - Node 0 receiving data from node " << procIndex << "." << std::endl;
+            //std::cout << "     - Node 0 receiving rho_u from node " << procIndex << "." << std::endl;
             MPI_Recv(rho_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             arma::cx_dcube rho_received_arma = arma::cx_dcube(rho_received_buffer, nSites, nSites, nTimePoints); 
             rhou_t +=  rho_received_arma;
@@ -619,11 +619,12 @@ void FHfTWASolver::runSimulation_MPI( )
 
         if (world_rank == procIndex)         //<- Sending rho_d
         {
+            //std::cout << "     - Node " << procIndex << " sending rho_d to node 0." << std::endl;
             MPI_Send(rhod_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
         }
         if (world_rank == 0)                //<- Receiving rho_d
         {   
-
+            //std::cout << "     - Node 0 receiving rho_d from node " << procIndex << "." << std::endl;
             MPI_Recv(rho_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             arma::cx_dcube rho_received_arma = arma::cx_dcube(rho_received_buffer, nSites, nSites, nTimePoints); 
             rhod_t +=  rho_received_arma;
@@ -632,10 +633,12 @@ void FHfTWASolver::runSimulation_MPI( )
 
         if (world_rank == procIndex)         //<- Sending rho2ii_u
         {
+            //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
             MPI_Send(rho2iiu.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
         }
         if (world_rank == 0)        //<- Receiving rho2ii_u
         {   
+            //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
             MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
             rho2iiu += rhoii_received_arma;
@@ -643,34 +646,40 @@ void FHfTWASolver::runSimulation_MPI( )
 
         if (world_rank == procIndex)         //<- Sending rho2ii_d
         {
+            //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
             MPI_Send(rho2iid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
         }
         if (world_rank == 0)        //<- Receiving rho2ii_d
         {   
-                MPI_Recv(rhoii_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
-                rho2iiu += rhoii_received_arma;          
+            //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
+            MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
+            rho2iiu += rhoii_received_arma;          
         }
 
         if (world_rank == procIndex)         //<- Sending EU
         {
+            //std::cout << "     - Node " << procIndex << " sending EU to node 0." << std::endl;
             MPI_Send(EU.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
         }
         if (world_rank == 0)        //<- Receiving EU
         {   
+            //std::cout << "     - Node 0 receiving EU from node " << procIndex << "." << std::endl;
             MPI_Recv(E_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nSites); 
+            arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nTimePoints); 
             EU += E_received_arma;
         }
 
         if (world_rank == procIndex)         //<- Sending EtH
         {
+            //std::cout << "     - Node " << procIndex << " sending EtH to node 0." << std::endl;
             MPI_Send(EtH.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
         }
         if (world_rank == 0)        //<- Receiving EtH
         {   
+            //std::cout << "     - Node 0 receiving EtH from node " << procIndex << "." << std::endl;
             MPI_Recv(E_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nSites); 
+            arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nTimePoints); 
             EtH += E_received_arma;
         }
 
@@ -734,10 +743,6 @@ void FHfTWASolver::runSimulation_MPI( )
 void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_drowvec &EU, arma::cx_drowvec &EtH, arma::cx_drowvec &E,std::vector<double> &timeLine)
 {
 
-    uint nSites = fhSystem->getnSites();
-
-
-
     // Writing the results :
     if (writeResultsTxt)
     {
@@ -767,7 +772,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
 
-         std::cout << "- Results written in " << folderName  << workName << ".txt" << std::endl;
+         std::cout << "== Results written in " << folderName  << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -807,7 +812,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results written in " << folderName << workName << ".json" << std::endl;
+        std::cout << "== Results written in " << folderName << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)
