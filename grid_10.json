@@ -1,0 +1,26 @@
+{
+	"method" : "fTWA",
+	"parameters" : 
+	{
+		"dt" : 0.01,
+		"stepsPerTimePoints" : 1,
+		"t_max" : 2,
+		"n_traj" : 100,
+		"int_order" : 4
+	},
+	"sim_name" : "grid_10",
+	"system" : 
+	{
+		"EnergyT" : "nearestNeighbours",
+		"EnergyU" : "onSite",
+		"EnergyV" : "None",
+		"IC" : 
+		{ 
+			"type" : "givenDiagonal",
+			"subtype" : "spinWave"
+		},
+		"parametersT" : -1.0,
+		"parametersU" : 1.0,
+		"positions" : "grid_10.xyz"
+	}
+}
