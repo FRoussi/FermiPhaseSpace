@@ -47,6 +47,7 @@ public:
     void                        runSimulation_MPI();
 
     void                        writeResults(arma::cx_dcube &Nu_t, arma::cx_dcube &Nd_t, 
+                                            arma::cx_dmat &Niiu_t, arma::cx_dmat &Niid_t, 
                                             arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
                                             arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
                                             arma::cx_drowvec &EU, arma::cx_drowvec &EtH, 
@@ -66,7 +67,7 @@ private:
     unsigned int                nTraj;
 
     // Integrator   
-    int                     integratorOrder;
+    int                         integratorOrder;
     fTWAIntegrator              integrator;
 
 

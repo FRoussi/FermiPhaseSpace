@@ -326,25 +326,68 @@ void FHHFSolver::runSimulation( )
 
     unsigned int nSites = fhSystem->getnSites();
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
-    arma::cx_dcube Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dcube Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
 
     Nut = Nu0;
     Ndt = Nd0;
 
-    arma::cx_dmat dNu_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
-    arma::cx_dmat dNd_dt = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
+
+    arma::cx_dcube Nu;
+    arma::cx_dcube Nd;
+    arma::cx_dmat Niiu;
+    arma::cx_dmat Niid;
+    arma::cx_dmat Mkku;
+    arma::cx_dmat Mkkd;
+    arma::cx_drowvec EU;
+    arma::cx_drowvec EtH;
+    arma::cx_drowvec E;
+    arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
+    nPartU_t(0) = std::real(arma::trace(Nut));
+    nPartD_t(0) = std::real(arma::trace(Ndt));
+
+    if (saveWholeDMatrix)
+    {
+        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nu.slice(0) = Nut;
+        Nd.slice(0) = Ndt;
+    }
+    if (saveDiagDMatrix)
+    {
+        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niiu.col(0) = Nut.diag();
+        Niid.col(0) = Ndt.diag();
+    }
+    if (saveMomenta)
+    {
+        Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        if (computeMomenta)
+        {
+            arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
+            arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
+            Mkku.col(0) = Mu.diag();
+            Mkkd.col(0) = Md.diag();
+        }
+    }
+    if (saveEnergies)
+    {
+        EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH(0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+        EU(0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+    }
+
+
+    arma::cx_dmat dNu_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    arma::cx_dmat dNd_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
 
 // Simulation :
-    for (unsigned int t = 0;  t<nTimePoints; t++)
+    for (unsigned int t = 1;  t< nTimePoints; t++)
     {
-        timeLine[t] = t*dt;
-        Nu.slice(t) = Nut;
-        Nd.slice(t) = Ndt;
-
-
-
-
+        
         for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
         {
             switch (integrator)
@@ -371,47 +414,54 @@ void FHHFSolver::runSimulation( )
                 break;
             }
 
-
             currentSimulationTime += dt/nStepsPerTimePoint;
         }
- 
-    }
 
+        // Save Values :
+        timeLine[t] = t*dt;
+        nPartU_t(t) = std::real(arma::trace(Nut));
+        nPartD_t(t) = std::real(arma::trace(Ndt));
+        //std::cout << "Save Matrix" << std::endl;
+        if (saveWholeDMatrix)
+        {
+            Nu.slice(t) = Nut;
+            Nd.slice(t) = Ndt;
+        }
+        //std::cout << "Save Diag" << std::endl;
+        if (saveDiagDMatrix)
+        {
+            Niiu.col(t) = Nut.diag();
+            Niid.col(t) = Ndt.diag();
+        }
+        if (saveDiag2DMatrix)
+        {
+        }
+        if (saveMomenta)
+        {
+            if (computeMomenta)
+            {
+                arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
+                arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
+                Mkku.col(t) = Mu.diag();
+                Mkkd.col(t) = Md.diag();
+            }
+        }
+        //std::cout << "Save En, t " << t << std::endl;
+        if (saveEnergies)
+        {
+            EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+            EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        }
+        
+    }
 
 
 // Computing other values :
-    arma::cx_dmat Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EU =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EtH =  arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
-    for (unsigned int t = 0;  t<nTimePoints; t++)
+//std::cout << "Save En tot" << std::endl;
+    if (saveEnergies)
     {
-
-        Nut = Nu.slice(t);
-        Ndt = Nd.slice(t);
-        Niiu.col(t) = Nut.diag();
-        Niid.col(t) = Ndt.diag();
-        nPartU_t(t) = std::real(arma::trace(Nut));
-        nPartD_t(t) = std::real(arma::trace(Ndt));
-
-        EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-        EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
-
-        if (computeMomenta)
-        {
-            arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
-            arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
-            Mkku.col(t) = Mu.diag();
-            Mkkd.col(t) = Md.diag();
-        }
-
+       E = EU + EtH;
     }
-
-    arma::cx_drowvec E = EU + EtH;
 
     if (talkative)
     {
@@ -429,31 +479,41 @@ void FHHFSolver::runSimulation( )
         results.newResults();
 
         results.writeLine("t", timeLine);
-        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-        {
-            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
-        }
-        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-        {
-            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
-        }
-        if (computeMomenta)
+        if (saveDiagDMatrix)
         {
             for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
             {
-                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mkku.row(iSite));
+                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
             }
             for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
             {
-                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mkkd.row(iSite));
+                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
             }
-
         }
-        results.writeLineInReal("EU", EU);
-        results.writeLineInReal("EtH", EtH);
-        results.writeLineInReal("E", E);
+        if (saveMomenta)
+        {
+            if (computeMomenta)
+            {
+                for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+                {
+                    results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mkku.row(iSite));
+                }
+                for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+                {
+                    results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mkkd.row(iSite));
+                }
 
-        std::cout << "- Results written in " << folderName << workName << ".txt" << std::endl;
+            }
+        }
+        if (saveEnergies)
+        {
+            results.writeLineInReal("EU", EU);
+            results.writeLineInReal("EtH", EtH);
+            results.writeLineInReal("E", E);
+        }
+
+
+        std::cout << "== Results written in " << folderName << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -465,24 +525,30 @@ void FHHFSolver::runSimulation( )
         Json::Value tJson(Json::objectValue);
         tJson["t"] = rJson.writeLine(timeLine);
 
-        Json::Value niiuJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
+        if (saveDiagDMatrix)
         {
-            niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
+        
+            Json::Value niiuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
+            {
+                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
+            }
+            resJson["Niiu"] = niiuJson;
+            Json::Value niidJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
+            {
+                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
+            }
+            resJson["Niid"] = niidJson;
         }
-        resJson["Niiu"] = niiuJson;
-        Json::Value niidJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
+        if (saveEnergies)
         {
-            niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLineInReal(EU);
+            EJson["tH"] = rJson.writeLineInReal(EtH);
+            EJson["tot"] = rJson.writeLineInReal(E);
+            resJson["E"] = EJson;
         }
-        resJson["Niid"] = niidJson;
-
-        Json::Value EJson(Json::objectValue);
-        EJson["U"] = rJson.writeLineInReal(EU);
-        EJson["tH"] = rJson.writeLineInReal(EtH);
-        EJson["tot"] = rJson.writeLineInReal(E);
-        resJson["E"] = EJson;
 
 
         Json::StreamWriterBuilder wbuilder;
@@ -493,7 +559,7 @@ void FHHFSolver::runSimulation( )
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results written in " << folderName   << workName << ".json" << std::endl;
+        std::cout << "== Results written in " << folderName   << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

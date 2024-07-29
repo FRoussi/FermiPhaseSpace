@@ -28,6 +28,13 @@ public:
     void        setTalkative(bool yn);
     void        setJsonFile(Json::Value file);
 
+    void                    setSaveWholeDMatrix(bool yn);
+    void                    setSaveDiagDMatrix(bool yn);
+    void                    setSaveDiag2DMatrix(bool yn);
+    void                    setSaveMomenta(bool yn);
+    void                    setSaveEnergies(bool yn);
+
+
     void        initiateSolver();
 
 
@@ -48,6 +55,13 @@ protected:
     bool                    writeResultsTxt;
     bool                    writeResultsJson;
     bool                    writeResultsHDF5;
+
+    bool                    saveWholeDMatrix;
+    bool                    saveDiagDMatrix;
+    bool                    saveDiag2DMatrix;
+    bool                    saveMomenta;
+    bool                    saveEnergies;
+
     std::string             workName;                     //<- A name for the work, for the results file
     std::string             folderName;                   //<- A name for the work folder, for the results file
 

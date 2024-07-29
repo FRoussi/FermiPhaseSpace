@@ -47,8 +47,6 @@ int main(int argc, char* argv[])
 
 
 
-
-
 // Threads used by openblas :
    //openblas_set_num_threads(1);
 
@@ -72,8 +70,9 @@ int main(int argc, char* argv[])
       }
       std::string work = jsonFilePath.substr(botDirPos + 1, jsonFilePath.length()); // get file
 
-      std::cout << "== Work file : " << work << std::endl;
-      std::cout << "== Work folder : " << workFolder << std::endl;
+      std::cout << "== Loading data : " << std::endl;
+      std::cout << "   -- Work file : " << work << std::endl;
+      std::cout << "   -- Work folder : " << workFolder << std::endl;
 
 
 
@@ -86,7 +85,7 @@ int main(int argc, char* argv[])
       Json::Value rootSim;
 
 
-      std::cout << "- Reading work file "<< instructionsFileName << std::endl;  
+      std::cout << "   -- Reading work file "<< instructionsFileName << std::endl;  
 
       std::string file = workFolder + instructionsFileName;
 
@@ -125,13 +124,13 @@ int main(int argc, char* argv[])
       Json::Value systemJSON = rootSim.get("system", "");
       fhSystem = FHSystem(systemJSON, workFolder);
       systemLoaded = true;
-      std::cout << "- System loaded" << std::endl;
+      std::cout << "   -- System loaded" << std::endl;
 
       const auto startSimTime{std::chrono::steady_clock::now()};
 
 
 
-      std::cout << "- Computation of HF dynamic " << std::endl;
+      std::cout << "== Computation of HF dynamic " << std::endl;
       FHHFSolver hfSolver = FHHFSolver(&fhSystem);
       hfSolver.setResultFile(simName + "_HF_res", workFolder);
       hfSolver.setJsonFile(rootSim);
@@ -148,7 +147,7 @@ int main(int argc, char* argv[])
 
 
 
-      std::cout << "- Computation time : " << elapsed_seconds.count() << " s." << std::endl;
+      std::cout << "== Computation time : " << elapsed_seconds.count() << " s." << std::endl;
 
 
    }
@@ -158,6 +157,6 @@ int main(int argc, char* argv[])
    }
 
 
-   std::cout <<"- Program closing." << std::endl;
+   std::cout <<"== Program closing." << std::endl;
    return 0;
 }

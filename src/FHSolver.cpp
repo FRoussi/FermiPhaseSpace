@@ -12,6 +12,12 @@ FHSolver::FHSolver(FHSystem *fhS)
     writeResultsJson = false;
     writeResultsHDF5 = false;
 
+    saveWholeDMatrix = false;
+    saveDiagDMatrix = true;
+    saveDiag2DMatrix = true;
+    saveMomenta = false;
+    saveEnergies = true;
+
 }
 
 void FHSolver::setResultFile(std::string wN, std::string fN)
@@ -36,6 +42,13 @@ void                        FHSolver::setResultsWriter(std::string how, bool yn)
         writeResultsHDF5 = yn;
     }
 }
+
+
+void FHSolver::setSaveWholeDMatrix(bool yn)     {saveWholeDMatrix = yn;};
+void FHSolver::setSaveDiagDMatrix(bool yn)      {saveDiagDMatrix = yn;};
+void FHSolver::setSaveDiag2DMatrix(bool yn)     {saveDiag2DMatrix = yn;};
+void FHSolver::setSaveMomenta(bool yn)          {saveMomenta = yn;};
+void FHSolver::setSaveEnergies(bool yn)         {saveEnergies = yn;};
 
 void FHSolver::setTimeParameters(double t_max, double d_t, uint nPerTS)
 {

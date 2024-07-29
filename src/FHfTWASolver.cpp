@@ -204,14 +204,36 @@ void FHfTWASolver::runSimulation_openMP( )
     
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
-    arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dcube rhod_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dcube rhou_t; 
+    arma::cx_dcube rhod_t;
+    arma::cx_dmat rhoiiu;
+    arma::cx_dmat rhoiid;
+    arma::cx_dmat rho2iiu;
+    arma::cx_dmat rho2iid;
+    arma::cx_drowvec EU;  
+    arma::cx_drowvec EtH; 
 
-    arma::cx_dmat rho2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat rho2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    if (saveWholeDMatrix)
+    {
+        rhou_t      = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        rhod_t      = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiagDMatrix)
+    {
+        rhoiiu    = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiid    = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiag2DMatrix)
+    {
+        rho2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rho2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveEnergies)
+    {
+        EU          = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    }
 
-    arma::cx_drowvec EU   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EtH  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
 
    // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
@@ -226,14 +248,38 @@ void FHfTWASolver::runSimulation_openMP( )
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
 {
     // Local (in threads) versions of important variables :
-    arma::cx_dcube rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dcube rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
 
-    arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dcube rhou_t_loc;
+    arma::cx_dcube rhod_t_loc; 
+    arma::cx_dmat rhoiiu_loc; 
+    arma::cx_dmat rhoiid_loc; 
+    arma::cx_dmat rho2iiu_loc; 
+    arma::cx_dmat rho2iid_loc; 
+    arma::cx_drowvec EU_loc;   
+    arma::cx_drowvec EtH_loc;  
 
-    arma::cx_drowvec EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+
+    if (saveWholeDMatrix)
+    {
+        rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiagDMatrix)
+    {
+        rhoiiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiag2DMatrix)
+    {
+        rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveEnergies)
+    {
+        EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    }
+
 
     arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
     arma::cx_dmat Nd_loc = arma::cx_dmat(nSites, nSites);
@@ -265,17 +311,6 @@ void FHfTWASolver::runSimulation_openMP( )
         wnM_up.reset();
 
 
-/*
-        for (unsigned int i = 0; i<nSites; i++)
-        {
-            for (unsigned int j = i+1; j<nSites; j++)
-            {               
-                wnu(i,j) += wnM(i,j) * sqrtNoiseVarianceMatrixU(i,j);
-                wnu(j,i) += std::conj(wnM(i,j)) * sqrtNoiseVarianceMatrixU(j,i);
-                wnd(i,j) += wnM(j,i) * sqrtNoiseVarianceMatrixD(i,j);
-                wnd(j,i) += std::conj(wnM(j,i)) * sqrtNoiseVarianceMatrixD(j,i);
-            }
-        }*/
 
 
 
@@ -304,15 +339,28 @@ void FHfTWASolver::runSimulation_openMP( )
         {   
             // We first store the density in the thread-local variables  
             timeLine[t] = t*dt;                                     //<- time line, stored too many times. To Fix ?
-            rhou_t_loc.slice(t) = rhou_t_loc.slice(t) + rhou;       //<- Up-spin density matrix
-            rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;       //<- Down-spin density matrix
-            rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
-            rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
-
-            Nu_loc =  rhou + halfDiagMatrix;
-            Nd_loc =  rhod + halfDiagMatrix;
-            EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-            EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+            if (saveWholeDMatrix)
+            {
+                rhou_t_loc.slice(t) +=  rhou;       //<- Up-spin density matrix
+                rhod_t_loc.slice(t) +=  rhod;       //<- Down-spin density matrix
+            }
+            if (saveDiagDMatrix)
+            {
+                rhoiiu_loc.col(t) += rhou.diag();
+                rhoiid_loc.col(t) += rhod.diag();
+            }
+            if (saveDiag2DMatrix)
+            {
+                rho2iiu_loc.col(t) += arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
+                rho2iid_loc.col(t) += arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
+            }
+            if (saveEnergies)
+            {
+                Nu_loc =  rhou + halfDiagMatrix;
+                Nd_loc =  rhod + halfDiagMatrix;
+                EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+                EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+            }
 
             // We do 'nStepsPerTimePoint' simulation steps
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
@@ -336,56 +384,109 @@ void FHfTWASolver::runSimulation_openMP( )
     // We add up all thread-local variables into the global ones :
    #pragma omp critical
     {
-        rhou_t +=rhou_t_loc;
-        rhod_t +=rhod_t_loc;
-        rho2iiu +=rho2iiu_loc;
-        rho2iid +=rho2iid_loc;
-        EU += EU_loc;
-        EtH += EtH_loc;
+        if (saveWholeDMatrix)
+        {
+            rhou_t += rhou_t_loc;
+            rhod_t += rhod_t_loc;
+        }
+        if (saveDiagDMatrix)
+        {
+            rhoiiu += rhoiiu_loc;
+            rhoiid += rhoiid_loc;
+        }
+        if (saveDiag2DMatrix)
+        {
+            rho2iiu += rho2iiu_loc;
+            rho2iid += rho2iid_loc;
+        }
+        if (saveEnergies)
+        {
+            EU += EU_loc;
+            EtH += EtH_loc;
+        }
+
     }
 
 
 }
 
-
+    //std::cout << "Computation of observables" << std::endl;
 // Computation of different observables :
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
-    arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-    arma::cx_dmat Mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-
-    EU = EU/nTraj_arma;
-    EtH = EtH/nTraj_arma;
-    
+    arma::cx_dcube Nu;      
+    arma::cx_dcube Nd   ;   
+    arma::cx_dmat Niiu  ;   
+    arma::cx_dmat Niid  ;   
+    arma::cx_dmat N2iiu  ;  
+    arma::cx_dmat N2iid ;   
+    arma::cx_dmat Mkku  ;   
+    arma::cx_dmat Mkkd  ;   
+    arma::cx_drowvec E;
 
 
-    arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
-
-    for (unsigned int t = 0; t < nTimePoints; t++)
+    if (saveWholeDMatrix)
     {
-        Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-        Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-        N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-        N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-        if (computeMomenta)
+        //std::cout << "Computation of N" << std::endl;
+        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
-            Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+            Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+            Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
         }
     }
+    if (saveDiagDMatrix)
+    {
+        //std::cout << "Computation of Nii" << std::endl;
+        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        for (unsigned int t = 0; t < nTimePoints; t++)
+        {
+            Niiu.col(t) = rhoiiu.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
+            Niid.col(t) = rhoiid.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
+        }
+    }
+    if (saveDiag2DMatrix)
+    {
+        N2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        N2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        for (unsigned int t = 0; t < nTimePoints; t++)
+        {
+            N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + (rhoiiu.col(t) + arma::conj(rhoiiu.col(t)))/ arma::cx_double(2*nTraj,0) + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
+            N2iid.col(t) = rho2iid.col(t) / nTraj_arma + (rhoiid.col(t) + arma::conj(rhoiid.col(t)))/ arma::cx_double(2*nTraj,0) + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
+        }
+    }
+    if (saveMomenta)
+    {
+        Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
+        if (computeMomenta)
+        {
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
+                Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+            }
+        }
+    }
+    if (saveEnergies)
+    {
+        EU = EU/nTraj_arma;
+        EtH = EtH/nTraj_arma;
+        E = EtH+ EU;
+    }
 
-    arma::cx_drowvec E = EtH+ EU;
+    
 
-    writeResults(Nu, Nd, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
 
 
 }
+
+
+
 
 
 
@@ -407,21 +508,39 @@ void FHfTWASolver::runSimulation_MPI( )
 
 
 
-
     unsigned int nSites = fhSystem->getnSites();
     
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
-    arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dcube rhod_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dcube rhou_t; 
+    arma::cx_dcube rhod_t;
+    arma::cx_dmat rhoiiu;
+    arma::cx_dmat rhoiid;
+    arma::cx_dmat rho2iiu;
+    arma::cx_dmat rho2iid;
+    arma::cx_drowvec EU;  
+    arma::cx_drowvec EtH; 
 
-    arma::cx_dmat rho2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat rho2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-    arma::cx_drowvec EU   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_drowvec EtH  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-
-   // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    if (saveWholeDMatrix)
+    {
+        rhou_t      = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        rhod_t      = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiagDMatrix)
+    {
+        rhoiiu    = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiid    = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiag2DMatrix)
+    {
+        rho2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rho2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveEnergies)
+    {
+        EU          = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    }
 
 
     arma::cx_dmat halfDiagMatrix = arma::cx_dmat(0.5 * arma::dmat(nSites, nSites, arma::fill::eye), arma::dmat(nSites, nSites, arma::fill::zeros)); //<- Matrix of diagnoal 1/2
@@ -450,23 +569,41 @@ void FHfTWASolver::runSimulation_MPI( )
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
     {
         // Local (in threads) versions of important variables :
-        arma::cx_dcube rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        arma::cx_dcube rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-
-        arma::cx_dmat rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        arma::cx_dmat rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-        arma::cx_drowvec EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        arma::cx_drowvec EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-
-        arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
-        arma::cx_dmat Nd_loc = arma::cx_dmat(nSites, nSites);
-        arma::cx_dmat rhou = arma::cx_dmat(nSites, nSites);
-        arma::cx_dmat rhod = arma::cx_dmat(nSites, nSites);
+    arma::cx_dcube rhou_t_loc;
+    arma::cx_dcube rhod_t_loc; 
+    arma::cx_dmat rhoiiu_loc; 
+    arma::cx_dmat rhoiid_loc; 
+    arma::cx_dmat rho2iiu_loc; 
+    arma::cx_dmat rho2iid_loc; 
+    arma::cx_drowvec EU_loc;   
+    arma::cx_drowvec EtH_loc;  
 
 
+    if (saveWholeDMatrix)
+    {
+        rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiagDMatrix)
+    {
+        rhoiiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveDiag2DMatrix)
+    {
+        rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveEnergies)
+    {
+        EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    }
 
-
+    arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat Nd_loc = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhou = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhod = arma::cx_dmat(nSites, nSites);
 
 
     #pragma omp for 
@@ -530,15 +667,28 @@ void FHfTWASolver::runSimulation_MPI( )
             {   
                 // We first store the density in the thread-local variables  
                 timeLine[t] = t*dt;                                     //<- time line, stored too many times. To Fix ?
-                rhou_t_loc.slice(t) = rhou_t_loc.slice(t) + rhou;       //<- Up-spin density matrix
-                rhod_t_loc.slice(t) = rhod_t_loc.slice(t) + rhod;       //<- Down-spin density matrix
-                rho2iiu_loc.col(t) = rho2iiu_loc.col(t) + arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
-                rho2iid_loc.col(t) = rho2iid_loc.col(t) + arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
-
-                Nu_loc =  rhou + halfDiagMatrix;
-                Nd_loc =  rhod + halfDiagMatrix;
-                EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+                if (saveWholeDMatrix)
+                {
+                    rhou_t_loc.slice(t) +=  rhou;       //<- Up-spin density matrix
+                    rhod_t_loc.slice(t) +=  rhod;       //<- Down-spin density matrix
+                }
+                if (saveDiagDMatrix)
+                {
+                    rhoiiu_loc.col(t) += rhou.diag();
+                    rhoiid_loc.col(t) += rhod.diag();
+                }
+                if (saveDiag2DMatrix)
+                {
+                    rho2iiu_loc.col(t) += arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
+                    rho2iid_loc.col(t) += arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
+                }
+                if (saveEnergies)
+                {
+                    Nu_loc =  rhou + halfDiagMatrix;
+                    Nd_loc =  rhod + halfDiagMatrix;
+                    EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+                    EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+                }
 
                 // We do 'nStepsPerTimePoint' simulation steps
                 for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
@@ -562,12 +712,26 @@ void FHfTWASolver::runSimulation_MPI( )
         // We add up all thread-local variables into the global ones :
     #pragma omp critical
         {
-            rhou_t +=rhou_t_loc;
-            rhod_t +=rhod_t_loc;
-            rho2iiu +=rho2iiu_loc;
-            rho2iid +=rho2iid_loc;
-            EU += EU_loc;
-            EtH += EtH_loc;
+            if (saveWholeDMatrix)
+            {
+                rhou_t += rhou_t_loc;
+                rhod_t += rhod_t_loc;
+            }
+            if (saveDiagDMatrix)
+            {
+                rhoiiu += rhoiiu_loc;
+                rhoiid += rhoiid_loc;
+            }
+            if (saveDiag2DMatrix)
+            {
+                rho2iiu += rho2iiu_loc;
+                rho2iid += rho2iid_loc;
+            }
+            if (saveEnergies)
+            {
+                EU += EU_loc;
+                EtH += EtH_loc;
+            }
         }
 
     }
@@ -600,88 +764,130 @@ void FHfTWASolver::runSimulation_MPI( )
     // For each secondary  node : 
     for (uint procIndex = 1; procIndex < world_size; procIndex++)
     {
-
-        if (world_rank == procIndex)         //<- Sending rho_u
+        if (saveWholeDMatrix)
         {
-            std::cout << "     - Node " << procIndex << " sending data to node 0." << std::endl;
-            //std::cout << "     - Node " << procIndex << " sending rho_u to node 0." << std::endl;
-            MPI_Send(rhou_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-        }
-        if (world_rank == 0)                //<- Receiving rho_u
-        {   
-            std::cout << "     - Node 0 receiving data from node " << procIndex << "." << std::endl;
-            //std::cout << "     - Node 0 receiving rho_u from node " << procIndex << "." << std::endl;
-            MPI_Recv(rho_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dcube rho_received_arma = arma::cx_dcube(rho_received_buffer, nSites, nSites, nTimePoints); 
-            rhou_t +=  rho_received_arma;
+            if (world_rank == procIndex)         //<- Sending rho_u
+            {           
+                //std::cout << "     - Node " << procIndex << " sending rho_u to node 0." << std::endl;
+                MPI_Send(rhou_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)                //<- Receiving rho_u
+            {   
+                //std::cout << "     - Node 0 receiving rho_u from node " << procIndex << "." << std::endl;
+                MPI_Recv(rho_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dcube rho_received_arma = arma::cx_dcube(rho_received_buffer, nSites, nSites, nTimePoints); 
+                rhou_t +=  rho_received_arma;
+            }
+        
+
+            if (world_rank == procIndex)         //<- Sending rho_d
+            {
+                //std::cout << "     - Node " << procIndex << " sending rho_d to node 0." << std::endl;
+                MPI_Send(rhod_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)                //<- Receiving rho_d
+            {   
+                //std::cout << "     - Node 0 receiving rho_d from node " << procIndex << "." << std::endl;
+                MPI_Recv(rho_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dcube rho_received_arma = arma::cx_dcube(rho_received_buffer, nSites, nSites, nTimePoints); 
+                rhod_t +=  rho_received_arma;
+            }
+
         }
     
 
-        if (world_rank == procIndex)         //<- Sending rho_d
-        {
-            //std::cout << "     - Node " << procIndex << " sending rho_d to node 0." << std::endl;
-            MPI_Send(rhod_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-        }
-        if (world_rank == 0)                //<- Receiving rho_d
-        {   
-            //std::cout << "     - Node 0 receiving rho_d from node " << procIndex << "." << std::endl;
-            MPI_Recv(rho_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dcube rho_received_arma = arma::cx_dcube(rho_received_buffer, nSites, nSites, nTimePoints); 
-            rhod_t +=  rho_received_arma;
-        }
     
-
-        if (world_rank == procIndex)         //<- Sending rho2ii_u
+        if (saveDiagDMatrix)
         {
-            //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
-            MPI_Send(rho2iiu.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-        }
-        if (world_rank == 0)        //<- Receiving rho2ii_u
-        {   
-            //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
-            MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
-            rho2iiu += rhoii_received_arma;
-        }
+            if (world_rank == procIndex)         //<- Sending rhoii_u
+            {
+                std::cout << "     - Node " << procIndex << " sending data to node 0." << std::endl;
+                //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
+                MPI_Send(rhoiiu.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving rhoii_u
+            {   
+                std::cout << "     - Node 0 receiving data from node " << procIndex << "." << std::endl;
+                //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
+                MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
+                rhoiiu += rhoii_received_arma;
+            }
 
-        if (world_rank == procIndex)         //<- Sending rho2ii_d
-        {
-            //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
-            MPI_Send(rho2iid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-        }
-        if (world_rank == 0)        //<- Receiving rho2ii_d
-        {   
-            //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
-            MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
-            rho2iiu += rhoii_received_arma;          
-        }
-
-        if (world_rank == procIndex)         //<- Sending EU
-        {
-            //std::cout << "     - Node " << procIndex << " sending EU to node 0." << std::endl;
-            MPI_Send(EU.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-        }
-        if (world_rank == 0)        //<- Receiving EU
-        {   
-            //std::cout << "     - Node 0 receiving EU from node " << procIndex << "." << std::endl;
-            MPI_Recv(E_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nTimePoints); 
-            EU += E_received_arma;
+            if (world_rank == procIndex)         //<- Sending rhoii_d
+            {
+                //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
+                MPI_Send(rhoiid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving rhoii_d
+            {   
+                //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
+                MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
+                rhoiid += rhoii_received_arma;          
+            }
         }
 
-        if (world_rank == procIndex)         //<- Sending EtH
+        if (saveDiag2DMatrix)
         {
-            //std::cout << "     - Node " << procIndex << " sending EtH to node 0." << std::endl;
-            MPI_Send(EtH.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+     
+            if (world_rank == procIndex)         //<- Sending rho2ii_u
+            {
+                //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
+                MPI_Send(rho2iiu.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving rho2ii_u
+            {   
+                //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
+                MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
+                rho2iiu += rhoii_received_arma;
+            }
+
+            if (world_rank == procIndex)         //<- Sending rho2ii_d
+            {
+                //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
+                MPI_Send(rho2iid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving rho2ii_d
+            {   
+                //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
+                MPI_Recv(rhoii_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat rhoii_received_arma = arma::cx_dmat(rhoii_received_buffer, nSites, nTimePoints); 
+                rho2iid += rhoii_received_arma;          
+            }
+
         }
-        if (world_rank == 0)        //<- Receiving EtH
-        {   
-            //std::cout << "     - Node 0 receiving EtH from node " << procIndex << "." << std::endl;
-            MPI_Recv(E_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nTimePoints); 
-            EtH += E_received_arma;
+
+        if (saveEnergies)
+        {
+            if (world_rank == procIndex)         //<- Sending EU
+            {
+                //std::cout << "     - Node " << procIndex << " sending EU to node 0." << std::endl;
+                MPI_Send(EU.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving EU
+            {   
+                //std::cout << "     - Node 0 receiving EU from node " << procIndex << "." << std::endl;
+                MPI_Recv(E_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nTimePoints); 
+                EU += E_received_arma;
+            }
+
+            if (world_rank == procIndex)         //<- Sending EtH
+            {
+                //std::cout << "     - Node " << procIndex << " sending EtH to node 0." << std::endl;
+                MPI_Send(EtH.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving EtH
+            {   
+                //std::cout << "     - Node 0 receiving EtH from node " << procIndex << "." << std::endl;
+                MPI_Recv(E_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat E_received_arma = arma::cx_drowvec(E_received_buffer, nTimePoints); 
+                EtH += E_received_arma;
+            }
         }
+
 
     }
 
@@ -700,47 +906,78 @@ void FHfTWASolver::runSimulation_MPI( )
     {
 
 // Computation of different observables :
-        arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
-    
-        arma::cx_dcube Nu       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        arma::cx_dcube Nd       = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        arma::cx_dmat N2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        arma::cx_dmat N2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    
-        arma::cx_dmat Mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        arma::cx_dmat Mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    
-    
-        EU = EU/nTraj_arma;
-        EtH = EtH/nTraj_arma;
-        
-    
-    
-        arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
-    
+
+    arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
+   arma::cx_dcube Nu;      
+    arma::cx_dcube Nd   ;   
+    arma::cx_dmat Niiu  ;   
+    arma::cx_dmat Niid  ;   
+    arma::cx_dmat N2iiu  ;  
+    arma::cx_dmat N2iid ;   
+    arma::cx_dmat Mkku  ;   
+    arma::cx_dmat Mkkd  ;   
+    arma::cx_drowvec E;
+
+
+    if (saveWholeDMatrix)
+    {
+        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
             Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
             Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-            N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-            N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-            if (computeMomenta)
+        }
+        }
+        if (saveDiagDMatrix)
+        {
+            Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            for (unsigned int t = 0; t < nTimePoints; t++)
             {
-                Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
-                Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+                Niiu.col(t) = rhoiiu.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
+                Niid.col(t) = rhoiid.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
             }
         }
+        if (saveDiag2DMatrix)
+        {
+            N2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            N2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+                N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+            }
+        }
+        if (saveMomenta)
+        {
+            Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
+            if (computeMomenta)
+            {
+                for (unsigned int t = 0; t < nTimePoints; t++)
+                {
+                    Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
+                    Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+                }
+            }
+        }
+        if (saveEnergies)
+        {
+            EU = EU/nTraj_arma;
+            EtH = EtH/nTraj_arma;
+            E = EtH+ EU;
+        }
     
-        arma::cx_drowvec E = EtH+ EU;
-    
-        writeResults(Nu, Nd, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
+       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
     }
 
 
 }
 
 
-void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_drowvec &EU, arma::cx_drowvec &EtH, arma::cx_drowvec &E,std::vector<double> &timeLine)
+void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_drowvec &EU, arma::cx_drowvec &EtH, arma::cx_drowvec &E,std::vector<double> &timeLine)
 {
 
     // Writing the results :
@@ -749,14 +986,18 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         ResultWriterTxt results = ResultWriterTxt(workName, folderName);
         results.newResults();
         results.writeLine("t", timeLine);
-        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+        if (saveDiagDMatrix)
         {
-            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Nu.tube(iSite, iSite));
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
+            }
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
+            }
         }
-        for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-        {
-            results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Nd.tube(iSite, iSite));
-        }
+
         if (computeMomenta)
         {/*
             for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
@@ -768,9 +1009,13 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
                 results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mkkd.row(kMom));
             }*/
         }
-        results.writeLineInReal("EU", EU);
-        results.writeLineInReal("EtH", EtH);
-        results.writeLineInReal("E", E);
+        if (saveEnergies)
+        {
+            results.writeLineInReal("EU", EU);
+            results.writeLineInReal("EtH", EtH);
+            results.writeLineInReal("E", E);
+        }
+
 
          std::cout << "== Results written in " << folderName  << workName << ".txt" << std::endl;
     }
@@ -784,25 +1029,32 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         Json::Value tJson(Json::objectValue);
         tJson["t"] = rJson.writeLine(timeLine);
 
-        Json::Value niiuJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        if (saveDiagDMatrix)
         {
-            niiuJson.append(rJson.writeLineInReal(Nu.tube(iSite, iSite)));
+            Json::Value niiuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
+            }
+            resJson["Niiu"] = niiuJson;
+            Json::Value niidJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
+            }
+            resJson["Niid"] = niidJson;
         }
-        resJson["Niiu"] = niiuJson;
-        Json::Value niidJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+
+        if (saveEnergies)
         {
-            niidJson.append(rJson.writeLineInReal(Nd.tube(iSite, iSite)));
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLineInReal(EU);
+            EJson["tH"] = rJson.writeLineInReal(EtH);
+            EJson["tot"] = rJson.writeLineInReal(E);
+            resJson["E"] = EJson;
         }
-        resJson["Niid"] = niidJson;
 
 
-        Json::Value EJson(Json::objectValue);
-        EJson["U"] = rJson.writeLineInReal(EU);
-        EJson["tH"] = rJson.writeLineInReal(EtH);
-        EJson["tot"] = rJson.writeLineInReal(E);
-        resJson["E"] = EJson;
 
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
