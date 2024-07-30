@@ -744,7 +744,7 @@ void FHfTWASolver::runSimulation_MPI( )
     std::cout << "   -- Computation of node " << world_rank << " ended, computation time : " << thread_elapsed_seconds.count() << " s." << std::endl;
     
 
-    if ((world_size>0) &&  (world_rank == 0))
+    if ((world_size>1) &&  (world_rank == 0))
     {
         std::cout << "   -- Gathering results in node 0 : " << std::endl;
     }
@@ -905,6 +905,8 @@ void FHfTWASolver::runSimulation_MPI( )
     if (world_rank == 0)
     {
 
+       // std::cout << "Computin results" << std::endl;
+
 // Computation of different observables :
 
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
@@ -933,20 +935,22 @@ void FHfTWASolver::runSimulation_MPI( )
         {
             Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
             Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            arma::cx_dcolvec col1Half = arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
             for (unsigned int t = 0; t < nTimePoints; t++)
             {
-                Niiu.col(t) = rhoiiu.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
-                Niid.col(t) = rhoiid.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
+                Niiu.col(t) = rhoiiu.col(t) / nTraj_arma + col1Half;
+                Niid.col(t) = rhoiid.col(t) / nTraj_arma + col1Half;
             }
         }
         if (saveDiag2DMatrix)
         {
             N2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
             N2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            arma::cx_dcolvec col1Quarter = arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
             for (unsigned int t = 0; t < nTimePoints; t++)
             {
-                N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + ((rhou_t.slice(t)).diag() + arma::conj((rhou_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
-                N2iid.col(t) = rho2iid.col(t) / nTraj_arma + ((rhod_t.slice(t)).diag() + arma::conj((rhod_t.slice(t)).diag()))/ arma::cx_double(2*nTraj,0) + arma::cx_dmat(nSites, 1, arma::fill::ones) / arma::cx_double(4,0);
+                N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + (rhoiiu.col(t) + arma::conj(rhoiiu.col(t)))/ arma::cx_double(2*nTraj,0) + col1Quarter;
+                N2iid.col(t) = rho2iid.col(t) / nTraj_arma + (rhoiid.col(t) + arma::conj(rhoiid.col(t)))/ arma::cx_double(2*nTraj,0) + col1Quarter;
             }
         }
         if (saveMomenta)
@@ -969,7 +973,7 @@ void FHfTWASolver::runSimulation_MPI( )
             EtH = EtH/nTraj_arma;
             E = EtH+ EU;
         }
-    
+    //std::cout << "Wrintin results" << std::endl;
        writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
     }
 
