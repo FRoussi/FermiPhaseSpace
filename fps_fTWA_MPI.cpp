@@ -68,7 +68,8 @@ int main(int argc, char* argv[])
          std::cout << "   -- OPENBLAS_NUM_THREADS :        " << env_OPENBLAS_OMP << std::endl;
       }
 
-     std::cout << "== OpenMPI active , version " << std::to_string(OMPI_MAJOR_VERSION) << "." << std::to_string(OMPI_MINOR_VERSION) << "." << std::to_string(OMPI_RELEASE_VERSION) << std::endl; 
+     //std::cout << "== OpenMPI active , version " << std::to_string(OMPI_MAJOR_VERSION) << "." << std::to_string(OMPI_MINOR_VERSION) << "." << std::to_string(OMPI_RELEASE_VERSION) << std::endl; 
+      std::cout << "== MPI active"  << std::endl;
       std::cout << "   -- Number of nodes :        " << world_size << std::endl;
 
   std::cout << "== OpenMP active, version "  << std::to_string(_OPENMP) << std::endl; 
