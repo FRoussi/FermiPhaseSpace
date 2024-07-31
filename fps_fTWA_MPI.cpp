@@ -11,7 +11,7 @@
 //#include <filesystem>
 
 #include "include/FHSystem.h"
-#include "include/FHfTWASolver.h"
+#include "include/FHfTWAMPISolver.h"
 #include "include/json/json.h"
 
 #define DEF_MAX_THREAD_NUM 4
@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
             std::cout << "== Computation of fTWA dynamic "<< std::endl;
       }
 
-      FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
+      FHfTWAMPISolver fTWASolver = FHfTWAMPISolver(&fhSystem);
       fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
       fTWASolver.setJsonFile(rootSim);
       fTWASolver.setResultsWriter("json");

@@ -4,7 +4,7 @@
         {
             "type": "cppbuild",
             "label": "g++ build all files and run",
-            "command": "/usr/bin/mpic++",
+            "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",   
@@ -32,7 +32,7 @@
                 "$gcc"
             ],
             "group":  "build",
-            "detail": "Global compile and run. compiler: /usr/bin/mpic++, openmp."
+            "detail": "Global compile and run. compiler: /usr/bin/g++, openmp."
         },
         {
             "type": "cppbuild",
@@ -49,6 +49,7 @@
                 "${workspaceFolder}/src/ResultWriterTxt.cpp",
                 "${workspaceFolder}/src/ResultWriterJson.cpp",
                 "${workspaceFolder}/src/FHfTWASolver.cpp",
+                "${workspaceFolder}/src/FHfTWAMPISolver.cpp",
                 "${workspaceFolder}/fps_fTWA_MPI.cpp",
                 "-o",
                 "${fileDirname}/fps_fTWA_MPI",    

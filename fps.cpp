@@ -6,7 +6,6 @@
 //#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
 
-#include <mpi.h>
 
 //#include <filesystem>
 
@@ -200,7 +199,6 @@ int main(int argc, char* argv[])
             fTWASolver.setResultsWriter("json");
             fTWASolver.initiateSolver();
             fTWASolver.setMethodParameters(rootSim["parameters"]);
-            fTWASolver.set_run_MPI(false, argc, argv);
             fTWASolver.runSimulation();
 
             break;

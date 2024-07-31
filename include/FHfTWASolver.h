@@ -8,7 +8,6 @@
 #include <armadillo>
 #include <omp.h>
 
-#include <mpi.h>
 
 
 
@@ -33,7 +32,7 @@ public:
     void                        setfTWAParameters(unsigned int nTraj);
     void                        setMethodParameters(Json::Value param);
 
-    void                        set_run_MPI(bool yn, int argc, char** argv);
+
    
     void                        setComputeMomenta(bool yn);
 
@@ -43,8 +42,6 @@ public:
     void                        step_RK2(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                        step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                        runSimulation();
-    void                        runSimulation_openMP();
-    void                        runSimulation_MPI();
 
     void                        writeResults(arma::cx_dcube &Nu_t, arma::cx_dcube &Nd_t, 
                                             arma::cx_dmat &Niiu_t, arma::cx_dmat &Niid_t, 
@@ -55,13 +52,10 @@ public:
 
     ~FHfTWASolver();
 
-private:
+protected:
 
 
-// MPI parameters
-    bool                        runMPI;
-    int                         argc_copy;
-    char**                      argv_copy;
+
 
 // fTWA parameters :    
     unsigned int                nTraj;
