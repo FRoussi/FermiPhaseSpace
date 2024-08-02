@@ -526,8 +526,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
 
-        Json::Value tJson(Json::objectValue);
-        tJson["t"] = rJson.writeLine(timeLine);
+        resJson["t"] = rJson.writeLine(timeLine);
 
         if (saveDiagDMatrix)
         {

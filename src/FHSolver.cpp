@@ -44,11 +44,11 @@ void                        FHSolver::setResultsWriter(std::string how, bool yn)
 }
 
 
-void FHSolver::setSaveWholeDMatrix(bool yn)     {saveWholeDMatrix = yn;};
-void FHSolver::setSaveDiagDMatrix(bool yn)      {saveDiagDMatrix = yn;};
-void FHSolver::setSaveDiag2DMatrix(bool yn)     {saveDiag2DMatrix = yn;};
-void FHSolver::setSaveMomenta(bool yn)          {saveMomenta = yn;};
-void FHSolver::setSaveEnergies(bool yn)         {saveEnergies = yn;};
+void FHSolver::setSaveWholeDMatrix(bool yn)     {saveWholeDMatrix = yn;}
+void FHSolver::setSaveDiagDMatrix(bool yn)      {saveDiagDMatrix = yn;}
+void FHSolver::setSaveDiag2DMatrix(bool yn)     {saveDiag2DMatrix = yn;}
+void FHSolver::setSaveMomenta(bool yn)          {saveMomenta = yn;}
+void FHSolver::setSaveEnergies(bool yn)         {saveEnergies = yn;}
 
 void FHSolver::setTimeParameters(double t_max, double d_t, uint nPerTS)
 {
