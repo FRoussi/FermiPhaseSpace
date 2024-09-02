@@ -178,6 +178,7 @@ int main(int argc, char* argv[])
       fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
       fTWASolver.setJsonFile(rootSim);
       fTWASolver.setResultsWriter("json");
+      fTWASolver.setResultsSaved(rootSim["results"]);
       fTWASolver.initiateSolver();
       fTWASolver.setMethodParameters(rootSim["parameters"]);
       fTWASolver.set_run_MPI(true, argc, argv);

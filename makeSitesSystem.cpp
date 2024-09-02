@@ -437,7 +437,7 @@ int main(int argc, char* argv[])
 
     Json::Value res;
     res["diagDMatrix"] = true;
-    res["diag2DMatrix"] = true;
+    res["diag2DMatrix"] = false;
     res["wholeDMatrix"] = false;
     res["momenta"] = false;
     res["energies"] = true;

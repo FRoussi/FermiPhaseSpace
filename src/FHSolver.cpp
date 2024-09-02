@@ -46,7 +46,7 @@ void                        FHSolver::setResultsWriter(std::string how, bool yn)
 void                        FHSolver::setResultsSaved(Json::Value res)
 {
     saveDiagDMatrix = res.get("diagDMatrix", true).asBool();
-    saveDiag2DMatrix = res.get("diag2DMatrix", true).asBool();
+    saveDiag2DMatrix = res.get("diag2DMatrix", false).asBool();
     saveWholeDMatrix = res.get("wholeDMatrix", false).asBool();
     saveMomenta = res.get("momenta", false).asBool();
     saveEnergies = res.get("energies", true).asBool();
