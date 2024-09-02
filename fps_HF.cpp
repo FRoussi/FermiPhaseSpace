@@ -135,6 +135,7 @@ int main(int argc, char* argv[])
       hfSolver.setResultFile(simName + "_HF_res", workFolder);
       hfSolver.setJsonFile(rootSim);
       hfSolver.setResultsWriter("json");
+      hfSolver.setResultsSaved(rootSim["results"]);
       hfSolver.initiateSolver();
       hfSolver.setMethodParameters(rootSim["parameters"]);
       hfSolver.runSimulation();

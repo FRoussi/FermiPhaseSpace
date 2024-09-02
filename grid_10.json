@@ -22,5 +22,13 @@
 		"parametersT" : -1.0,
 		"parametersU" : 1.0,
 		"positions" : "grid_10.xyz"
+	},
+	"results" : 
+	{
+		"diagDMatrix" : true,
+		"diag2DMatrix" : true,
+		"wholeDMatrix" : false,
+		"momenta" : false,
+		"energies" : true
 	}
 }

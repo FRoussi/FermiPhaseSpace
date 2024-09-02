@@ -1,12 +1,20 @@
 {
-	"method" : "GPSR",
+	"method" : "HF",
 	"parameters" : 
 	{
 		"dt" : 0.01,
+		"int_order" : 4,
+		"n_traj" : 1000,
 		"stepsPerTimePoints" : 1,
-		"t_max" : 2.0,
-		"n_traj" : 100,
-		"int_order" : 4
+		"t_max" : 2.0
+	},
+	"results" : 
+	{
+		"diag2DMatrix" : true,
+		"diagDMatrix" : true,
+		"energies" : true,
+		"momenta" : false,
+		"wholeDMatrix" : false
 	},
 	"sim_name" : "coolgrid",
 	"system" : 
@@ -16,8 +24,8 @@
 		"EnergyV" : "None",
 		"IC" : 
 		{
-			"type" : "givenDiagonal",
-			"subtype" : "spinWave3"
+			"subtype" : "spinWave",
+			"type" : "givenDiagonal"
 		},
 		"parametersT" : -1.0,
 		"parametersU" : 1.0,

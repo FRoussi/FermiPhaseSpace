@@ -435,6 +435,14 @@ int main(int argc, char* argv[])
 
     simRoot["system"] = newSystem.writeFHSystemJson();
 
+    Json::Value res;
+    res["diagDMatrix"] = true;
+    res["diag2DMatrix"] = true;
+    res["wholeDMatrix"] = false;
+    res["momenta"] = false;
+    res["energies"] = true;
+    simRoot["results"] = res;
+
     
     //std::cout << simRoot << std::endl;
 

@@ -28,6 +28,7 @@ public:
     void        setTalkative(bool yn);
     void        setJsonFile(Json::Value file);
 
+void                        setResultsSaved(Json::Value res);
     void                    setSaveWholeDMatrix(bool yn);
     void                    setSaveDiagDMatrix(bool yn);
     void                    setSaveDiag2DMatrix(bool yn);
