@@ -23,7 +23,7 @@
                 "-o",
                 "${fileDirname}/fps",    
                 "-larmadillo",
-                "-fopenmp",
+                "-fopenmp"
             ],
             "options": {
                 "cwd": "${fileDirname}"
