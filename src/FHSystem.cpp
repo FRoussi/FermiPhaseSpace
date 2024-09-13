@@ -205,7 +205,41 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
                     initConditions_downSpin[iPart] = true;
                 }
 
-            }                    
+            }         
+
+            else if (subtypeIC == "givenInJson")
+            {
+                Json::Value ICNu = jsonIC["IC_NuDiag"];
+                if (ICNu.isArray())
+                {
+                    for (uint iSite = 0; iSite < std::min((uint)ICNu.size(), (uint)sitePositions.n_rows); iSite++)
+                    {
+                        initConditions_upSpin[iSite] = ICNu[iSite].asBool();
+                    }
+                }
+                Json::Value ICNd = jsonIC["IC_NdDiag"];
+                if (ICNd.isArray())
+                {
+                    for (uint iSite = 0; iSite < std::min((uint)ICNd.size(), (uint)sitePositions.n_rows); iSite++)
+                    {
+                        initConditions_downSpin[iSite] = ICNd[iSite].asBool();
+                    }
+                }
+            }   
+
+            else if (subtypeIC == "givenInFile")
+            {
+                std::string initConditions_fileName = jsonIC.get("IC_fileName", "").asString();
+                if (initConditions_fileName == "")
+                {
+                    std::cout << "Initial condition file not written in Json entry." << std::endl;
+                }
+                else 
+                {
+                    std::cout << "Reading Initial condition in " << initConditions_fileName << "." << std::endl;
+                }
+
+            }        
 
         }
 
@@ -226,7 +260,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     }
     else
     {
-        std::cout << "No Initial condition in the json file." << std::endl;  
+        std::cout << "No Initial condition in the json file.  " << std::endl;  
     }
 
 // Tunneling Energy
