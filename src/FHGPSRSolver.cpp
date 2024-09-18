@@ -214,8 +214,8 @@ void FHGPSRSolver::step_Diffusion(const arma::cx_dmat& rhou, const arma::cx_dmat
 
     std::complex<double> cst = std::sqrt(U0 * jj);
 
-    drhou_Diff = cst * ( rhou * W1 * rhou_H             + rhou_H * W2 * rhou );
-    drhod_Diff = cst * ( rhod * arma::conj(W1) * rhod_H + rhod_H * arma::conj(W2) * rhod );
+    drhou_Diff = cst * ( rhou_H * W1 * rhou             + jj * rhou * W2 * rhou_H );
+    drhod_Diff = cst * ( rhod_H * arma::conj(W1) * rhod + jj * rhod * arma::conj(W2) * rhod_H );
 }
 
 
