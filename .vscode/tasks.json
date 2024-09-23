@@ -119,6 +119,31 @@
             ],
             "group":"build",
             "detail": "Compile the system maker: /usr/bin/g++."
+        },
+        {
+            "type": "cppbuild",
+            "label": "g++ build the Wannier Tools writer",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g", 
+                "${workspaceFolder}/src/jsoncpp.cpp",
+                "${workspaceFolder}/src/FHExternalPotential.cpp",
+                "${workspaceFolder}/src/FHExternalPotentialPulse.cpp",
+                "${workspaceFolder}/src/FHSystem.cpp",
+                "${workspaceFolder}/makeWannierFile.cpp",
+                "-o",
+                "${fileDirname}/makeWannierFile",
+                "-larmadillo"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group":"build",
+            "detail": "Compile the system maker: /usr/bin/g++."
         }
     ]
 }

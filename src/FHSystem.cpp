@@ -5,6 +5,7 @@ FHSystem::FHSystem(bool talk)
 {
 
     talkative = talk;
+    isPeriodicBool = false;
 
     arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
 
@@ -33,6 +34,7 @@ FHSystem::FHSystem(bool talk)
 FHSystem::FHSystem(int x, bool talk)
 {
     talkative = talk;
+    isPeriodicBool = false;
 
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
@@ -73,6 +75,7 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
 {
 
     talkative = talk;
+    isPeriodicBool = false;
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
     for (int i_z = 0; i_z < z; i_z++)
@@ -119,12 +122,11 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
 
 
 
-
 FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 {
 
     talkative = talk;
-
+    isPeriodicBool = false;
     originalJsonSystem = rootSystem;
 // Positions
     std::string positionFile = rootSystem.get("positions", "").asString();
@@ -341,14 +343,14 @@ std::string                                 FHSystem::getSiteName(uint site)
 }
 
 
-bool                                        FHSystem::isSymmetric()
+bool                                        FHSystem::isPeriodic()
 {
-    return (symmetryVectors.n_rows > 0);
+    return isPeriodicBool;
 }
 
-arma::dmat                                  FHSystem::getSymmetryMatrix()
+arma::dmat                                  FHSystem::getLatticeMatrix()
 {
-    return symmetryVectors;
+    return latticeMatrix;
 }
 
 bool                                        FHSystem::isSystemTimeDependant()
@@ -364,16 +366,16 @@ double                                      FHSystem::computeDistance(uint iSite
 {
     arma::drowvec dVec = sitePositions.row(iSite) - sitePositions.row(jSite); 
     double d = arma::norm(dVec);
-    if (isSymmetric())
+    if (isPeriodic())
     {
-        uint symmetryNumber3 = pow(symmetryVectors.n_rows,3);                                                   //<- Number of vector to check : nSym^3
+        uint symmetryNumber3 = pow(latticeMatrix.n_rows,3);                                                   //<- Number of vector to check : nSym^3
 
         for (uint lCombination = 0; lCombination < symmetryNumber3; lCombination++)                             //<- for every vector to check
         {
             arma::drowvec dVecSym = dVec;
             for (uint kDim = 0; kDim < sitePositions.n_cols ; kDim ++)                                          //<- vecSym = vec + sum_k [-1,0,1] * sym(k) 
             {
-                dVecSym += ((((uint)std::floor(lCombination/pow(3,kDim))) % 3) - 1) * symmetryVectors.row(kDim);
+                dVecSym += ((((uint)std::floor(lCombination/pow(3,kDim))) % 3) - 1) * latticeMatrix.row(kDim);
             } 
             d = std::min(d, arma::norm(dVecSym));                                                               //<- We replace if its norm is smaller
         } 
@@ -558,19 +560,32 @@ void                    FHSystem::setSiteTypeNames(std::vector<std::string> type
 
 void                    FHSystem::setSymmetry(arma::dmat symVectors)
 {
-    if (symVectors.n_cols != sitePositions.n_cols)
+    if ((symVectors.n_cols != 3)&& (symVectors.n_rows != 3))
     {
-        std::cout << "Symmetry vectors have a wrong dimension number." << std::endl;
-    }
-    else if (symVectors.n_rows > sitePositions.n_cols)
-    {
-        std::cout << "Symmetry vectors are too numerous for the system's dimension." << std::endl;
+        std::cout << "We want a 3x3 lattice matrix" << std::endl;
     }
     else
     {
-        symmetryVectors = symVectors;
+        isPeriodicBool = true;
+        latticeMatrix = symVectors;
+        inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
+        if (!isInv)
+        {
+            std::cout << "Caution : the lattice matrix is singular." << std::endl;
+        }
     }
 
+    if (latticeZeroVector.n_rows !=3)
+    {
+        latticeZeroVector = arma::dvec(3, arma::fill::zeros);
+    }
+
+}
+
+void                                FHSystem::setLatticeZero(arma::dvec latticeZ)
+{
+    latticeZeroVector = latticeZ;
 }
 
 
@@ -1268,13 +1283,12 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         datFile << "        " << 9 <<  "  ! NRPTS: number of R points" << std::endl;  
         datFile << "    1    1    1    1    1    1    1    1    1" << std::endl; 
 
-
-        std::cout.precision(6);
+        //std::cout << std::fixed;
         for (uint iSite = 0; iSite < nSites; iSite ++ )
         {
             for (uint jSite = 0; jSite < nSites; jSite ++ )
             {
-                datFile << "    0    0    0    " << iSite+1 << "    " << jSite+1 << "    " << getTunnelingEnergy(iSite, jSite).real() << "    " << (double)0     << std::endl; 
+                datFile << "    0    0    0    " << iSite+1 << "    " << jSite+1 << "    " <<  std::to_string(getTunnelingEnergy(iSite, jSite).real()) << "    " << std::to_string((double)0) << std::endl; 
             }
         }
 

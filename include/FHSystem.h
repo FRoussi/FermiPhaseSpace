@@ -95,8 +95,8 @@ public:
     bool                                sitesHaveNames();
     std::string                         getSiteName(uint site);
     // system symmetry
-    bool                                isSymmetric();
-    arma::dmat                          getSymmetryMatrix();
+    bool                                isPeriodic();
+    arma::dmat                          getLatticeMatrix();
 
     // 
     bool                                isSystemTimeDependant();
@@ -146,7 +146,8 @@ public:
     bool                                setSiteTypes(arma::uvec sTypes);
     void                                setSiteTypeNames(std::vector<std::string> typeNames);  
 
-    void                                setSymmetry(arma::dmat symmetryVectors); 
+    void                                setSymmetry(arma::dmat latticeMat); 
+    void                                setLatticeZero(arma::dvec latticeZ);
     void                                setNeighbourDistance(double neigbD); 
     void                                setSamePointDistance(double samePointD); 
 
@@ -180,6 +181,7 @@ public:
     //void                                writeFHSystemBis(std::string folderName = "");
 
 
+
 // External Potential
     void                                makePotential_pulse();
     void                                readPotential(std::string fileName, std::string folderName = "");
@@ -187,6 +189,14 @@ public:
 // XYZ file
     void                readPositions(std::string xyzFile);
     void                writePositions(std::string xyzFile, std::string folderName = "");
+
+// WannierTools
+
+    void writeWannierToolsDatFile(std::string wtDatFile, std::string folderName = "");
+    void writeWannierToolsInBandFile(std::string wtIBFile, std::string folderName = "");
+    void writeWannierToolsDosFile(std::string wtDosFile, std::string folderName = "");
+    void writeWannierToolsInBandUnfoldFile(std::string wtIBUFile, std::string folderName = "");
+
 
 // INITIATION
     void                                initiateEmptyEnergyMatrices();
@@ -202,8 +212,11 @@ private:
     std::vector<std::string>        siteTypeNames;
     std::vector<std::string>        siteNames;
 
-// SYMMETRIES
-    arma::dmat                      symmetryVectors;
+// LATTICE
+    bool                            isPeriodicBool;
+    arma::dmat                      latticeMatrix;
+    arma::dmat                      inverseLatticeMatrix;
+    arma::dvec                      latticeZeroVector;
 
 // PARTICLES
     unsigned int                    upSpinParticleNumber;
