@@ -1248,6 +1248,70 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
 
 
 
+
+ void FHSystem::writeWannierToolsDatFile(std::string wtDatFile, std::string folderName)
+ {
+    std::string fileAdressName = wtDatFile; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + wtDatFile;
+    }
+
+    uint nSites = getnSites();
+
+    std::ofstream datFile(fileAdressName);
+    if (datFile.is_open())
+    {
+
+        datFile << "  ! HmnR file from sparse hr file" << std::endl; 
+        datFile << "        " << nSites <<  "  ! Num_wann: number of wannier orbitals" << std::endl;       
+        datFile << "        " << 9 <<  "  ! NRPTS: number of R points" << std::endl;  
+        datFile << "    1    1    1    1    1    1    1    1    1" << std::endl; 
+
+
+        std::cout.precision(6);
+        for (uint iSite = 0; iSite < nSites; iSite ++ )
+        {
+            for (uint jSite = 0; jSite < nSites; jSite ++ )
+            {
+                datFile << "    0    0    0    " << iSite+1 << "    " << jSite+1 << "    " << getTunnelingEnergy(iSite, jSite).real() << "    " << (double)0     << std::endl; 
+            }
+        }
+
+
+
+
+        datFile.close();
+    }
+
+
+ }
+
+ void FHSystem::writeWannierToolsInBandFile(std::string wtIBFile, std::string folderName)
+ {
+ }
+
+ void FHSystem::writeWannierToolsDosFile(std::string wtDosFile, std::string folderName)
+ {
+ }
+
+ void FHSystem::writeWannierToolsInBandUnfoldFile(std::string wtIBUFile, std::string folderName)
+ {
+ }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 FHSystem::~FHSystem()
 {
 
