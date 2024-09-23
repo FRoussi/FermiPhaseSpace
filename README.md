@@ -5,7 +5,7 @@
 The FermiPhaseSpace code computes solutions of the time-dependent Schrodinger equation on a Fermi-Hubbard system.
 
 
-- $ x + y $
+- $` x + y `$
 
 
 ---- Capitaine Docteur Frousse
