@@ -105,8 +105,17 @@ int main(int argc, char* argv[])
         fhSystem = FHSystem(systemJSON, workFolder);
 
         std::string wannierDatFileName = fileName + ".dat";
-        cout << "Write Wannier file " << wannierDatFileName <<  endl; 
+        std::string wannierIBFileName = fileName + ".in-band";
+        std::string wannierDOSFileName = fileName + ".in-dos";
+        std::string wannierIBUFileName = fileName + ".in-bandunfold";
+        cout << "Write Wannier Dat file : " << wannierDatFileName <<  endl; 
         fhSystem.writeWannierToolsDatFile(wannierDatFileName, "");
+        cout << "Write Wannier IB file : " << wannierIBFileName <<  endl; 
+        fhSystem.writeWannierToolsInBandFile(wannierIBFileName, wannierDatFileName, "");
+        cout << "Write Wannier DOS file : " << wannierDOSFileName <<  endl; 
+        fhSystem.writeWannierToolsDosFile(wannierDOSFileName, wannierDatFileName, "");
+        cout << "Write Wannier IBU file : " << wannierIBUFileName <<  endl; 
+        fhSystem.writeWannierToolsInBandUnfoldFile(wannierIBUFileName, wannierDatFileName, "");
         cout << "afini" << endl; 
    }
    else

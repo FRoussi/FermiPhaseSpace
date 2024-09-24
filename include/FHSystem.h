@@ -91,12 +91,15 @@ public:
     unsigned int                        getnDimension();
     arma::drowvec                       getSitePosition(uint iSite);
     double                              getCoordinate(uint dim, uint pos);
+    arma::drowvec                       getLatticeSitePosition(uint iSite);
+    double                              getLatticeCoordinate(uint dim, uint pos);
     // site names
     bool                                sitesHaveNames();
     std::string                         getSiteName(uint site);
     // system symmetry
     bool                                isPeriodic();
     arma::dmat                          getLatticeMatrix();
+    arma::drowvec                       getLatticeZeroVector();
 
     // 
     bool                                isSystemTimeDependant();
@@ -147,7 +150,7 @@ public:
     void                                setSiteTypeNames(std::vector<std::string> typeNames);  
 
     void                                setSymmetry(arma::dmat latticeMat); 
-    void                                setLatticeZero(arma::dvec latticeZ);
+    void                                setLatticeZero(arma::drowvec latticeZ);
     void                                setNeighbourDistance(double neigbD); 
     void                                setSamePointDistance(double samePointD); 
 
@@ -193,9 +196,10 @@ public:
 // WannierTools
 
     void writeWannierToolsDatFile(std::string wtDatFile, std::string folderName = "");
-    void writeWannierToolsInBandFile(std::string wtIBFile, std::string folderName = "");
-    void writeWannierToolsDosFile(std::string wtDosFile, std::string folderName = "");
-    void writeWannierToolsInBandUnfoldFile(std::string wtIBUFile, std::string folderName = "");
+    void writeWannierToolsInBandFile(std::string wtIBFile, std::string wtDatFile, std::string folderName = "");
+    void writeWannierToolsDosFile(std::string wtDosFile, std::string wtDatFile, std::string folderName = "");
+    void writeWannierToolsInBandUnfoldFile(std::string wtIBUFile, std::string wtDatFile, std::string folderName = "");
+    void WannierToolsSystemInofStream(std::ofstream& wannierFileStream);
 
 
 // INITIATION
@@ -216,7 +220,7 @@ private:
     bool                            isPeriodicBool;
     arma::dmat                      latticeMatrix;
     arma::dmat                      inverseLatticeMatrix;
-    arma::dvec                      latticeZeroVector;
+    arma::drowvec                   latticeZeroVector;
 
 // PARTICLES
     unsigned int                    upSpinParticleNumber;

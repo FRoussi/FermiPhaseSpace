@@ -8,7 +8,7 @@
 		"n_traj" : 100,
 		"int_order" : 4
 	},
-	"sim_name" : "grid_10",
+	"sim_name" : "sym_grid_10",
 	"system" : 
 	{
 		"EnergyT" : "nearestNeighbours",
@@ -25,9 +25,9 @@
 		"periodic" : true,
 		"latticeMatrix" : 
 		[
-			[1,0,0],
-			[0,1,0],
-			[0,0,1]
+			[10,0,0],
+			[0,20,0],
+			[0,0,20]
 		],
 		"latticeZero" : [0,0,0]
 	},

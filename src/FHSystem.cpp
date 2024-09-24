@@ -5,7 +5,11 @@ FHSystem::FHSystem(bool talk)
 {
 
     talkative = talk;
+
     isPeriodicBool = false;
+    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
 
     arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
 
@@ -27,6 +31,9 @@ FHSystem::FHSystem(bool talk)
     VInteractionType        = FHSameSpinInteractionType::Vnone;
     tJExCType               = tJExchangeCouplingType::tJJnone;
     externalPotentialType   = ExternalPotentialType::ExtPotNone;
+
+
+
     
 }
 
@@ -34,7 +41,11 @@ FHSystem::FHSystem(bool talk)
 FHSystem::FHSystem(int x, bool talk)
 {
     talkative = talk;
+
     isPeriodicBool = false;
+    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
 
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
@@ -75,7 +86,12 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
 {
 
     talkative = talk;
+
     isPeriodicBool = false;
+    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
     for (int i_z = 0; i_z < z; i_z++)
@@ -126,7 +142,12 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 {
 
     talkative = talk;
+
     isPeriodicBool = false;
+    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+
     originalJsonSystem = rootSystem;
 // Positions
     std::string positionFile = rootSystem.get("positions", "").asString();
@@ -294,6 +315,37 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         VInteractionType = FHSameSpinInteractionType::Vnone;
     }
 
+
+// Periodicity
+    isPeriodicBool = rootSystem.get("periodic", false).asBool();
+    if (isPeriodicBool)
+    {
+        Json::Value latMat = rootSystem["latticeMatrix"];
+        for (uint i = 0; i<3; i++)
+        {
+            Json::Value latRow = latMat[i]; 
+            for (uint j = 0; j<3; j++)
+            {
+                latticeMatrix(i,j) = latRow[j].asDouble();
+            }
+        }
+
+        Json::Value latRow = rootSystem["latticeZero"];
+        for (uint j = 0; j<3; j++)
+        {
+            latticeZeroVector(j) = latRow[j].asDouble();
+        }
+
+        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
+        if (!isInv)
+        {
+            std::cout << "Caution : the lattice matrix is singular." << std::endl;
+        }
+
+        
+    }
+
+
 }
 
 
@@ -305,25 +357,56 @@ unsigned int                                FHSystem::getnSites()
     return sitePositions.n_rows;
 }
 
+/// @brief getter - number of dimension (we always work in dim 3 though)
+/// @return number of dimensions (if not 3, weird)
 unsigned int                                FHSystem::getnDimension()
 {
     return sitePositions.n_cols;
 }
 
-arma::drowvec                               FHSystem::getSitePosition(uint site)
+/// @brief getter - position row vector of site 'iSite'
+/// @param iSite a site number 
+/// @return row vector of coordinates
+arma::drowvec                               FHSystem::getSitePosition(uint iSite)
 {
-    return sitePositions.row(site);
+    return sitePositions.row(iSite);
 }
 
 /// @brief getter - coordinate of a site
 /// @param dim coordinate dimension
-/// @param pos site number
-/// @return coordinate of site 'pos'in dimension 'dim'
+/// @param iSite site number
+/// @return coordinate of site 'iSite'in dimension 'dim'
 double                                      FHSystem::getCoordinate(uint dim, uint iSite)
 { 
     if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
     {
         return sitePositions(iSite, dim);
+    } 
+    else
+    {
+        return 0;
+    }
+}
+
+/// @brief getter - relative position row vector of site 'iSite'
+/// @param iSite a site number 
+/// @return row vector of relative coordinates
+arma::drowvec                       FHSystem::getLatticeSitePosition(uint iSite)
+{
+    //std::cout << sitePositions.row(iSite) << std::endl;
+    //std::cout << inverseLatticeMatrix << std::endl;
+   // std::cout << latticeZeroVector << std::endl;
+    arma::drowvec pos = sitePositions.row(iSite) - latticeZeroVector;
+   // std::cout << inverseLatticeMatrix * pos.t() << std::endl;
+    return (inverseLatticeMatrix * pos.t()).t();
+}
+
+double                              FHSystem::getLatticeCoordinate(uint dim, uint iSite)
+{
+    if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
+    {
+        arma::drowvec v = getLatticeSitePosition(iSite);
+        return v[dim];
     } 
     else
     {
@@ -337,9 +420,10 @@ bool                                        FHSystem::sitesHaveNames()
         return (siteTypes.n_rows == sitePositions.n_rows);
 }
 
-std::string                                 FHSystem::getSiteName(uint site)
+std::string                                 FHSystem::getSiteName(uint iSite)
 {
-    return siteTypeNames[siteTypes[site]];
+    //return siteTypeNames[siteTypes[site]];
+    return siteNames[iSite];
 }
 
 
@@ -351,6 +435,11 @@ bool                                        FHSystem::isPeriodic()
 arma::dmat                                  FHSystem::getLatticeMatrix()
 {
     return latticeMatrix;
+}
+
+arma::drowvec                        FHSystem::getLatticeZeroVector()
+{
+    return latticeZeroVector;
 }
 
 bool                                        FHSystem::isSystemTimeDependant()
@@ -578,12 +667,12 @@ void                    FHSystem::setSymmetry(arma::dmat symVectors)
 
     if (latticeZeroVector.n_rows !=3)
     {
-        latticeZeroVector = arma::dvec(3, arma::fill::zeros);
+        latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     }
 
 }
 
-void                                FHSystem::setLatticeZero(arma::dvec latticeZ)
+void                                FHSystem::setLatticeZero(arma::drowvec latticeZ)
 {
     latticeZeroVector = latticeZ;
 }
@@ -1279,8 +1368,8 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
     {
 
         datFile << "  ! HmnR file from sparse hr file" << std::endl; 
-        datFile << "        " << nSites <<  "  ! Num_wann: number of wannier orbitals" << std::endl;       
-        datFile << "        " << 9 <<  "  ! NRPTS: number of R points" << std::endl;  
+        datFile << "\t\t" << nSites <<  "\t! Num_wann: number of wannier orbitals" << std::endl;       
+        datFile << "\t\t" << 9 <<  "\t! NRPTS: number of R points" << std::endl;  
         datFile << "    1    1    1    1    1    1    1    1    1" << std::endl; 
 
         //std::cout << std::fixed;
@@ -1292,26 +1381,234 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
             }
         }
 
-
-
-
         datFile.close();
     }
 
-
  }
 
- void FHSystem::writeWannierToolsInBandFile(std::string wtIBFile, std::string folderName)
+ void FHSystem::writeWannierToolsInBandFile(std::string wtIBFile, std::string wtDatFile, std::string folderName)
  {
+    std::string fileAdressName = wtIBFile; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + wtIBFile;
+    }
+
+    uint nSites = getnSites();
+
+    std::ofstream IBStream(fileAdressName);
+    if (IBStream.is_open())
+    {
+        IBStream << "&TB_FILE" << std::endl; 
+        IBStream << " Hrfile = \'" << wtDatFile <<  "\'" << std::endl << "/" << std::endl << std::endl ;   
+
+        IBStream << "!> bulk band structure calculation flag" << std::endl << "&CONTROL" << std::endl << "BulkBand_calc    = T" << std::endl << "/" << std::endl << std::endl ;
+
+        IBStream << " &SYSTEM" << std::endl;
+        IBStream << "NumOccupied =  " << 10 << "     \t! NumOccupied" << std::endl;
+        IBStream << "SOC = " << 0 << "               \t! without" << std::endl;
+        IBStream << "E_FERMI =  0.00     \t! e-fermi" << std::endl;
+        IBStream << "/" << std::endl << std::endl;
+
+        IBStream << "&PARAMETERS" << std::endl;
+        IBStream << "E_arc = 0.00        \t! obtained NumSelectedEigenVals bands close to E_arc" << std::endl;
+        IBStream << "Nk1 = " << 41 << "          \t! number k points" << std::endl;
+        IBStream << "/" << std::endl << std::endl;
+
+        WannierToolsSystemInofStream(IBStream);
+        
+        IBStream.close();
+    }
  }
 
- void FHSystem::writeWannierToolsDosFile(std::string wtDosFile, std::string folderName)
+ void FHSystem::writeWannierToolsDosFile(std::string wtDosFile, std::string wtDatFile, std::string folderName)
  {
+    std::string fileAdressName = wtDosFile; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + wtDosFile;
+    }
+
+    uint nSites = getnSites();
+
+    std::ofstream DOSStream(fileAdressName);
+    if (DOSStream.is_open())
+    {
+        DOSStream << "&TB_FILE" << std::endl; 
+        DOSStream << " Hrfile = \'" << wtDatFile <<  "\'" << std::endl << "/" << std::endl << std::endl ;   
+
+        DOSStream << "!> bulk band structure calculation flag" << std::endl << "&CONTROL" << std::endl << "DOS_calc    = T" << std::endl << "/" << std::endl << std::endl ;
+
+        DOSStream << " &SYSTEM" << std::endl;
+        DOSStream << "NumOccupied =  " << 10 << "      \t! NumOccupied" << std::endl;
+        DOSStream << "SOC = " << 0 << "                \t! without" << std::endl;
+        DOSStream << "E_FERMI =  0.00        \t! e-fermi" << std::endl;
+        DOSStream << "/" << std::endl;
+
+        DOSStream << "&PARAMETERS" << std::endl;
+        DOSStream << "Eta_arc = "     << std::to_string(0.05)     << "   \t! infinite small value, like brodening" << std::endl;
+        DOSStream << "E_arc = "       << std::to_string(0.00)     << "   \t! obtained NumSelectedEigenVals bands close to E_arc" << std::endl;
+        DOSStream << "OmegaNum = "    << std::to_string(401)      << "   \t! omega number" << std::endl;
+        DOSStream << "OmegaMin = "    << std::to_string(-0.3)     << "   \t! energy interval" << std::endl;
+        DOSStream << "OmegaMax = "    << std::to_string(0.3)      << "   \t! energy interval" << std::endl;
+        DOSStream << "Nk1 = "         << std::to_string(41)       << "   \t! number k points" << std::endl;
+        DOSStream << "Nk2 = "         << std::to_string(41)       << "   \t! number k points" << std::endl;
+        DOSStream << "/" << std::endl << std::endl;
+
+        WannierToolsSystemInofStream(DOSStream);
+        
+        DOSStream.close();
+    }
  }
 
- void FHSystem::writeWannierToolsInBandUnfoldFile(std::string wtIBUFile, std::string folderName)
+ void FHSystem::writeWannierToolsInBandUnfoldFile(std::string wtIBUFile, std::string wtDatFile, std::string folderName)
  {
+        std::string fileAdressName = wtIBUFile; 
+    if (folderName !="")
+    {
+        fileAdressName = folderName + "/" + wtIBUFile;
+    }
+
+    uint nSites = getnSites();
+
+    std::ofstream IBUStream(fileAdressName);
+    if (IBUStream.is_open())
+    {
+        IBUStream << "&TB_FILE" << std::endl; 
+        IBUStream << " Hrfile = \'" << wtDatFile <<  "\'" << std::endl << "/" << std::endl << std::endl ;   
+
+        IBUStream << "!> bulk band structure calculation flag" << std::endl << "&CONTROL" << std::endl;
+        IBUStream << "BulkBand_calc    = T" << std::endl;
+        IBUStream << "BulkFS_plane_calc    = F" << std::endl;
+        IBUStream << "BulkBand_Unfold_line_calc    = T" << std::endl;
+        IBUStream << "BulkBand_Unfold_plane_calc    = F" << std::endl;
+        IBUStream << "/" << std::endl << std::endl ;
+
+        IBUStream << " &SYSTEM" << std::endl;
+        IBUStream << "NumOccupied =  " << 10 << "     \t! NumOccupied" << std::endl;
+        IBUStream << "SOC = " << 0 << "               \t! without" << std::endl;
+        IBUStream << "E_FERMI =  0.00       \t! e-fermi" << std::endl;
+        IBUStream << "/" << std::endl;
+
+        IBUStream << "&PARAMETERS" << std::endl;
+        IBUStream << "Eta_arc = "           << std::to_string(0.05)     << "   \t! infinite small value, like brodening" << std::endl;
+        IBUStream << "E_arc = "             << std::to_string(0.00)     << "   \t! obtained NumSelectedEigenVals bands close to E_arc" << std::endl;
+        IBUStream << "OmegaNum_unfold = "   << std::to_string(600)      << "   \t! omega number" << std::endl;
+        IBUStream << "OmegaMin = "          << std::to_string(-13)      << "   \t! energy interval" << std::endl;
+        IBUStream << "OmegaMax = "          << std::to_string(7)        << "   \t! energy interval" << std::endl;
+        IBUStream << "Nk1 = "               << std::to_string(41)       << "   \t! number k points" << std::endl;
+        IBUStream << "Nk2 = "               << std::to_string(41)       << "   \t! number k points" << std::endl;
+        IBUStream << "/" << std::endl << std::endl;
+
+        WannierToolsSystemInofStream(IBUStream);
+        
+        IBUStream.close();
+    }
  }
+
+ void FHSystem::WannierToolsSystemInofStream(std::ofstream& wannierFileStream)
+ {
+        uint nSites = getnSites();
+        uint nProjectors_unfold = 2;
+
+
+        wannierFileStream << "LATTICE" << std::endl << "Angstrom" << std::endl;
+        for (uint i = 0; i < 3; i++)
+        {
+            for (uint j = 0; j < 3; j++)
+            {
+                 wannierFileStream << "       " << std::to_string(latticeMatrix(i,j));
+            }
+            wannierFileStream << std::endl;
+        }
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "ATOM_POSITIONS" << std::endl << "           " << nSites << std::endl;
+        wannierFileStream << "Direct" << std::endl;
+        for (uint iSite = 0; iSite < nSites; iSite++ )
+        {
+
+            arma::drowvec latPos = getLatticeSitePosition(iSite);
+            wannierFileStream << getSiteName(iSite);
+            for (uint j = 0; j<3; j++)
+            {
+                wannierFileStream << "      " << std::to_string(latPos(j));
+            } 
+            wannierFileStream << std::endl;
+        }
+
+        wannierFileStream << "PROJECTORS" << std::endl << "           " << nSites << "*1" << std::endl;
+        for (uint iSite = 0; iSite < nSites; iSite++ )
+        {
+            wannierFileStream << getSiteName(iSite) << " pz" << std::endl;;
+        }
+
+        wannierFileStream << std::endl << std::endl ;
+
+        wannierFileStream << "LATTICE_UNFOLD" << std::endl << "Angstrom" << std::endl;
+        for (uint i = 0; i < 3; i++)
+        {
+            for (uint j = 0; j < 3; j++)
+            {
+                 wannierFileStream << "       " << std::to_string(latticeMatrix(i,j));
+            }
+            wannierFileStream << std::endl;
+        }
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "ATOM_POSITION_UNFOLD" << std::endl << nProjectors_unfold << std::endl << "Direct" << std::endl;
+        for (uint iSite = 0; iSite < nProjectors_unfold; iSite++ )
+        {
+            arma::drowvec latPos = getLatticeSitePosition(iSite);
+            wannierFileStream << getSiteName(iSite);
+            for (uint j = 0; j<3; j++)
+            {
+                wannierFileStream << "      " << std::to_string(latPos(j));
+            } 
+            wannierFileStream << std::endl;
+        }
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "PROJECTORS_UNFOLD" << std::endl << nProjectors_unfold << "*1" << "         ! number of projectors" << std::endl;
+        for (uint iSite = 0; iSite < nProjectors_unfold; iSite++ )
+        {
+            wannierFileStream << getSiteName(iSite) << " pz" << std::endl;;
+        }
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "SELECTED_ATOMS" << std::endl;
+        wannierFileStream << 1 << std::endl;
+        wannierFileStream << "1-2" << std::endl;
+        wannierFileStream << std::endl;
+
+
+        wannierFileStream << "SURFACE" << std::endl;
+        wannierFileStream << "  "<< 1 << " " << 0 << " " << 0 << std::endl;
+        wannierFileStream << "  "<< 0 << " " << 1 << " " << 0 << std::endl;
+        wannierFileStream << "  "<< 0 << " " << 0 << " " << 1 << std::endl;
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "KPATH_BULK            ! k point path" << std::endl;
+        wannierFileStream << "3              ! number of k line only for bulk band" << std::endl;
+        wannierFileStream << "   M   0.00000  0.50000  0.00000   K   0.33333  0.66667  0.00000" << std::endl;
+        wannierFileStream << "   K   0.33333  0.66667  0.00000   G   0.00000  0.00000  0.00000" << std::endl;
+        wannierFileStream << "   G   0.00000  0.00000  0.00000   M   0.00000  0.50000  0.00000" << std::endl;
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "KPLANE_BULK" << std::endl;
+        wannierFileStream << "0.00  0.00  0.00   ! center of the k plane" << std::endl;
+        wannierFileStream << "2.00  0.00  0.00   ! The first vector to define 3d k space plane" << std::endl;
+        wannierFileStream << "0.00  2.00  0.00   ! The second vector to define 3d k space plane" << std::endl;
+        wannierFileStream << std::endl;
+
+        wannierFileStream << "KCUBE_BULK" << std::endl;
+        wannierFileStream << "0.00  0.00  0.00   ! Original point for 3D k plane" << std::endl;
+        wannierFileStream << "1.00  0.00  0.00   ! The first vector to define 3d k space plane" << std::endl;
+        wannierFileStream << "0.00  1.00  0.00   ! The second vector to define 3d k space plane" << std::endl;
+        wannierFileStream << "0.00  0.00  1.00   ! The third vector to define 3d k cube" << std::endl;
+
+
+}
 
 
 
