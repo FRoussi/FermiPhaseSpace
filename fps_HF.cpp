@@ -80,7 +80,6 @@ int main(int argc, char* argv[])
       std::string instructionsFileName = work;
       std::stringstream instructionsStream("");
       std::string systemFileName;
-      FHSystem fhSystem;
       bool systemLoaded;
       Json::Value rootSim;
 
@@ -122,7 +121,7 @@ int main(int argc, char* argv[])
 
 
       Json::Value systemJSON = rootSim.get("system", "");
-      fhSystem = FHSystem(systemJSON, workFolder);
+      FHSystem fhSystem = FHSystem(systemJSON, workFolder);
       systemLoaded = true;
       std::cout << "   -- System loaded" << std::endl;
 

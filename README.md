@@ -1,4 +1,4 @@
-## THAT IS MY COOL PROJECT
+# THAT IS MY COOL PROJECT
 
 ## Fermions Phase-Space Representation methods
 
@@ -6,9 +6,7 @@
 
 The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger equation on a Fermi-Hubbard system.
 
-
 - $` \frac{\partial}{\partial t} \ket{\Psi} = -\frac{i}{\hbar} H \ket{\Psi}`$
-
 
 ### Usage
 
@@ -22,10 +20,8 @@ The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger e
 
 #### makeWannierFile
 
-
-### Acknowledgements 
+### Acknowledgements
 
 Thanks ME
-
 
 ---- Capitaine Docteur Frousse

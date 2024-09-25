@@ -161,6 +161,45 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     readPositions(positionFile);
 
 
+// Periodicity
+    isPeriodicBool = rootSystem.get("periodic", false).asBool();
+
+    Json::Value latMat = rootSystem["latticeMatrix"];
+    if (latMat != Json::Value::null)
+    {
+        for (uint i = 0; i<3; i++)
+        {
+            Json::Value latRow = latMat[i]; 
+            for (uint j = 0; j<3; j++)
+            {
+                latticeMatrix(i,j) = latRow[j].asDouble();
+            }
+        }
+        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
+        if (!isInv)
+        {
+            std::cout << "Caution : the lattice matrix is singular." << std::endl;
+        }
+    }
+    
+    Json::Value latRow = rootSystem["latticeZero"];
+    if (latRow != Json::Value::null)
+    {
+        for (uint j = 0; j<3; j++)
+        {
+            latticeZeroVector(j) = latRow[j].asDouble();
+        }
+    }
+
+    
+
+    if (isPeriodicBool)
+    {
+        computeMatrices();   
+    }
+
+
+
     initiateEmptyEnergyMatrices();
 
 
@@ -316,34 +355,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     }
 
 
-// Periodicity
-    isPeriodicBool = rootSystem.get("periodic", false).asBool();
-    if (isPeriodicBool)
-    {
-        Json::Value latMat = rootSystem["latticeMatrix"];
-        for (uint i = 0; i<3; i++)
-        {
-            Json::Value latRow = latMat[i]; 
-            for (uint j = 0; j<3; j++)
-            {
-                latticeMatrix(i,j) = latRow[j].asDouble();
-            }
-        }
 
-        Json::Value latRow = rootSystem["latticeZero"];
-        for (uint j = 0; j<3; j++)
-        {
-            latticeZeroVector(j) = latRow[j].asDouble();
-        }
-
-        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
-        if (!isInv)
-        {
-            std::cout << "Caution : the lattice matrix is singular." << std::endl;
-        }
-
-        
-    }
 
 
 }
@@ -455,19 +467,22 @@ double                                      FHSystem::computeDistance(uint iSite
 {
     arma::drowvec dVec = sitePositions.row(iSite) - sitePositions.row(jSite); 
     double d = arma::norm(dVec);
+    //std::cout << isPeriodic() << std::endl;
     if (isPeriodic())
     {
-        uint symmetryNumber3 = pow(latticeMatrix.n_rows,3);                                                   //<- Number of vector to check : nSym^3
-
-        for (uint lCombination = 0; lCombination < symmetryNumber3; lCombination++)                             //<- for every vector to check
+        for (int zSym = -1; zSym < 2; zSym++)                             //<- symmetries in z
         {
-            arma::drowvec dVecSym = dVec;
-            for (uint kDim = 0; kDim < sitePositions.n_cols ; kDim ++)                                          //<- vecSym = vec + sum_k [-1,0,1] * sym(k) 
+            for (int ySym = -1; ySym < 2; ySym++)                         //<- symmetries in y
             {
-                dVecSym += ((((uint)std::floor(lCombination/pow(3,kDim))) % 3) - 1) * latticeMatrix.row(kDim);
-            } 
-            d = std::min(d, arma::norm(dVecSym));                                                               //<- We replace if its norm is smaller
-        } 
+                for (int xSym = -1; xSym < 2; xSym++)                     //<- symmetries in x
+                {
+                    arma::drowvec dVecSym = dVec + xSym * latticeMatrix.col(0).t() + ySym * latticeMatrix.col(1).t() + zSym * latticeMatrix.col(2).t(); //<- new vector with one of the symmetric lattice
+                    d = std::min(d, arma::norm(dVecSym));                   //<- we take the minimum of them all
+                    //std::cout << xSym << "  " << ySym << "  " << zSym << "  " << arma::norm(dVecSym) << "   " << d << std::endl;
+                }
+            }
+        }
+            
     }
 
     return d;
@@ -1228,6 +1243,9 @@ void                    FHSystem::computeMatrices()
             }
         }
     }
+
+
+    //std::cout << distanceMatrix << std::endl;
 }
 
 
@@ -1258,6 +1276,15 @@ Json::Value                    FHSystem::writeFHSystemJson()
     Json::Value systemRoot;
 //Positions
     systemRoot["positions"] = systemName + ".xyz";
+
+// Periodicity
+    systemRoot["periodic"] = false;
+    Json::Value zeroVecJson(Json::arrayValue);
+    Json::Value zeroMatJson(Json::arrayValue);
+    for (uint i = 0; i<3; i++)  zeroVecJson[i] = 0;
+    for (uint i = 0; i<3; i++)  zeroMatJson[i] = zeroVecJson;
+    systemRoot["latticeMatrix"] = zeroMatJson;
+    systemRoot["latticeZero"] = zeroVecJson;
 
 //Initial condition
     Json::Value jsonIC = Json::Value(Json::objectValue);
