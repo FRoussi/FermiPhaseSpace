@@ -7,16 +7,13 @@
 #include <iostream>
 #include <fstream>
 
+#include "FHLattice.h"
 #include "FHExternalPotential.h"
 #include "FHExternalPotentialPulse.h"
 #include "json/json.h"
 
 
-arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec);
 
-template <typename T>       bool isIn(T w, std::vector<T>& v);
-
-template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex);
 
 
 
