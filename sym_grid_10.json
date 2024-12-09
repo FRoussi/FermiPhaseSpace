@@ -21,15 +21,18 @@
 		},
 		"parametersT" : -1.0,
 		"parametersU" : 1.0,
-		"positions" : "grid_10.xyz",
-		"periodic" : true,
-		"latticeMatrix" : 
-		[
-			[10,0,0],
-			[0,20,0],
-			[0,0,20]
-		],
-		"latticeZero" : [0,0,0]
+		"lattice" : 
+		{
+			"positionsFile" : "grid_10.xyz",
+			"periodic" : true,
+			"latticeMatrix" : 
+			[
+				[10,0,0],
+				[0,20,0],
+				[0,0,20]
+			],
+			"latticeZero" : [0,0,0]
+		}
 	},
 	"results" : 
 	{

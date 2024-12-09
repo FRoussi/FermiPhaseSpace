@@ -8,7 +8,7 @@
 #include <vector>
 #include <math.h>
 
-
+#include "include/FHLattice.h"
 #include "include/FHSystem.h"
 
 #include "include/json/json.h"
@@ -393,6 +393,8 @@ int main(int argc, char* argv[])
 // MAKING OF THE FHSystem
     arma::dmat sitePosition = armaMatfromVectorsVector(pos);
     //cout << "Position : " << endl << sitePosition << endl; 
+
+
 
     FHSystem newSystem = FHSystem();
     newSystem.setName(fileName);                                                                        //<- Name

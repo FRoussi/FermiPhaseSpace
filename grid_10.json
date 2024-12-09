@@ -21,8 +21,11 @@
 		},
 		"parametersT" : -1.0,
 		"parametersU" : 1.0,
-		"positions" : "grid_10.xyz",
-		"periodic" : false
+		"lattice" :
+		{
+			"positionsFile" : "grid_10.xyz",
+			"periodic" : false
+		}
 	},
 	"results" : 
 	{

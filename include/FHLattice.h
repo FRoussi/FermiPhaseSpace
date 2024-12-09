@@ -69,6 +69,8 @@ public:
     bool                                areNeighbour(uint iSite, uint jSite);
     bool                                areSameSite(uint iSite, uint jSite);
 
+    std::string                         getLatticeName();
+
     // SETTERS      
 
     void                                setPositions(const arma::dmat& positions, std::string sitesName = "C");
@@ -82,11 +84,16 @@ public:
     void                                setNeighbourDistance(double neigbD); 
     void                                setSamePointDistance(double samePointD); 
 
+    void                                setLatticeName(std::string newName);
+
     void                computeMatrices();
 
     // XYZ file
     void                readPositions(std::string xyzFile);
     void                writePositions(std::string xyzFile, std::string folderName = "");
+
+    // Json
+    Json::Value             writeFHLatticeJson();
 
     ~FHLattice();
 
@@ -117,6 +124,8 @@ private:
     std::vector<std::vector<bool>>  neighbourMatrix;
     std::vector<std::vector<bool>>  sameSiteMatrix;
 
+
+    std::string latticeName;
     bool talkative;
 
 

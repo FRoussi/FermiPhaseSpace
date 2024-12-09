@@ -130,8 +130,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
     talkative = talk;
 
+    Json::Value rootLattice = rootSystem.get("lattice","" );
 
-    lattice = FHLattice(rootSystem, folderName, talk);
+    lattice = FHLattice(rootLattice, folderName, talk);
     
 
 
@@ -297,6 +298,12 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 }
 
 
+/// @brief getter - lattice
+/// @return lattice
+FHLattice                                FHSystem::getLattice()
+{
+    return lattice;
+}
 
 /// @brief getter - number of sites
 /// @return number of sites
@@ -550,6 +557,11 @@ std::string                                 FHSystem::getFolder()
 
 
 // SETTERS
+
+    void                                 FHSystem::setLattice(FHLattice newLat)
+    {
+        lattice = newLat;
+    }
 
 void                    FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)
 {
@@ -1050,17 +1062,14 @@ Json::Value                    FHSystem::writeFHSystemJson()
 
 
     Json::Value systemRoot;
+
+    // Lattice 
+    systemRoot["lattice"] =  lattice.writeFHLatticeJson();
+
 //Positions
     systemRoot["positions"] = systemName + ".xyz";
 
-// Periodicity
-    systemRoot["periodic"] = false;
-    Json::Value zeroVecJson(Json::arrayValue);
-    Json::Value zeroMatJson(Json::arrayValue);
-    for (uint i = 0; i<3; i++)  zeroVecJson[i] = 0;
-    for (uint i = 0; i<3; i++)  zeroMatJson[i] = zeroVecJson;
-    systemRoot["latticeMatrix"] = zeroMatJson;
-    systemRoot["latticeZero"] = zeroVecJson;
+
 
 //Initial condition
     Json::Value jsonIC = Json::Value(Json::objectValue);

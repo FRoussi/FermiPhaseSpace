@@ -108,7 +108,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
 
 // Positions
-    std::string positionFile = rootSystem.get("positions", "").asString();
+    std::string positionFile = rootSystem.get("positionsFile", "").asString();
 
     if (folderName !="")
     {
@@ -118,6 +118,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     // std::cout << positionFile << std::endl;
     readPositions(positionFile);
 
+    latticeType = FHLatticeType::none;
 
 // Periodicity
     isPeriodicBool = rootSystem.get("periodic", false).asBool();
@@ -313,6 +314,10 @@ bool                                        FHLattice::areNeighbour(uint i, uint
         return sameSiteMatrix[i][j];
     }
 
+    std::string                              FHLattice::getLatticeName()
+    {
+        return latticeName;
+    }
 
 
 
@@ -387,6 +392,10 @@ void                                FHLattice::setSamePointDistance(double sameP
     samePointDistance = samePointD;
 }
 
+    void                                FHLattice::setLatticeName(std::string newName)
+    {
+        latticeName = newName;
+    }
 
 void                    FHLattice::readPositions(std::string xyzFile)
 {
@@ -455,6 +464,7 @@ void                    FHLattice::readPositions(std::string xyzFile)
 void                 FHLattice::writePositions(std::string xyzFile, std::string folderName)
 {
         // Writing of everything on the file :
+    latticeName = xyzFile;
     std::string fileAdress =  xyzFile + ".xyz";
     //std::cout << "Writing positions in: "<< fileAdress << std::endl;
     if (folderName != "")
@@ -473,6 +483,46 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
         streamPosition.close();
     }
 }
+
+    Json::Value         FHLattice::writeFHLatticeJson()
+    {
+        Json::Value rootLattice;
+
+        switch (latticeType)
+        {
+        case FHLatticeType::none:
+        {
+            rootLattice["latticeType"] = "none";
+            rootLattice["positionsFile"] = latticeName + ".xyz";
+        }
+        case FHLatticeType::cubic:
+        {
+            rootLattice["latticeType"] = "BC";
+        }
+
+
+        }
+
+
+
+        // Periodicity
+        if (isPeriodicBool)
+        {
+            rootLattice["periodic"] = true;
+            Json::Value zeroVecJson(Json::arrayValue);
+            Json::Value zeroMatJson(Json::arrayValue);
+            for (uint i = 0; i<3; i++)  zeroVecJson[i] = 0;
+            for (uint i = 0; i<3; i++)  zeroMatJson[i] = zeroVecJson;
+            rootLattice["latticeMatrix"] = zeroMatJson;
+            rootLattice["latticeZero"] = zeroVecJson;
+        }
+        else
+        {
+            rootLattice["periodic"] = false;
+        }
+
+    }
+
 
 
 

@@ -83,6 +83,7 @@ public:
 
 
 // GETTERS
+FHLattice                               getLattice();
     // site positions
     unsigned int                        getnSites();
     unsigned int                        getnDimension();
@@ -139,6 +140,7 @@ public:
 
 
 // SETTERS      
+    void                                setLattice(FHLattice newLat);
 
     void                                setPositions(const arma::dmat& positions, std::string sitesName = "C");
     void                                setPositions(const arma::dmat& positions, std::vector<std::string> siteNames);
