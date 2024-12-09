@@ -5,25 +5,18 @@ FHSystem::FHSystem(bool talk)
 {
 
     talkative = talk;
+    lattice = FHLattice(talk);
 
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    uint nSites = lattice.getnSites();
 
-    arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
-
-    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>();
-    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>();
+    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(nSites);
+    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(nSites);
 
     std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
     initCond[0] = initCond_up;
     initCond[1] = initCond_down;
 
-    setPositions(pos);
     setInitialConditionsDiagonal(initCond);
-    computeMatrices();
-
     initiateEmptyEnergyMatrices();
 
     UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
@@ -42,10 +35,7 @@ FHSystem::FHSystem(int x, bool talk)
 {
     talkative = talk;
 
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+lattice = FHLattice(x, talk);
 
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
@@ -69,7 +59,7 @@ FHSystem::FHSystem(int x, bool talk)
 
     setPositions(pos);
     setInitialConditionsDiagonal(initCond);
-    computeMatrices();
+
 
     initiateEmptyEnergyMatrices();
 
@@ -87,10 +77,7 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
 
     talkative = talk;
 
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    lattice = FHLattice(x,y,z,talk);
 
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
@@ -122,15 +109,15 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
     initCond[1] = initCond_down;
 
     setPositions(pos);
-       externalPotential = FHExternalPotential(&pos);
+    externalPotential = FHExternalPotential(&lattice);
     setInitialConditionsDiagonal(initCond);
-    computeMatrices();
+
 
 
     initiateEmptyEnergyMatrices();
-    UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType = FHTunnelingType::nearestNeighboursConstant;
-        VInteractionType        = FHSameSpinInteractionType::Vnone;
+    UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
+    tunnelingType           = FHTunnelingType::nearestNeighboursConstant;
+    VInteractionType        = FHSameSpinInteractionType::Vnone;
     tJExCType               = tJExchangeCouplingType::tJJnone;
     externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
@@ -143,61 +130,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
     talkative = talk;
 
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
 
-    originalJsonSystem = rootSystem;
-// Positions
-    std::string positionFile = rootSystem.get("positions", "").asString();
-
-    if (folderName !="")
-    {
-        positionFile = folderName + "/" + positionFile;
-    }
-
-    // std::cout << positionFile << std::endl;
-    readPositions(positionFile);
-
-
-// Periodicity
-    isPeriodicBool = rootSystem.get("periodic", false).asBool();
-
-    Json::Value latMat = rootSystem["latticeMatrix"];
-    if (latMat != Json::Value::null)
-    {
-        for (uint i = 0; i<3; i++)
-        {
-            Json::Value latRow = latMat[i]; 
-            for (uint j = 0; j<3; j++)
-            {
-                latticeMatrix(i,j) = latRow[j].asDouble();
-            }
-        }
-        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
-        if (!isInv)
-        {
-            std::cout << "Caution : the lattice matrix is singular." << std::endl;
-        }
-    }
+    lattice = FHLattice(rootSystem, folderName, talk);
     
-    Json::Value latRow = rootSystem["latticeZero"];
-    if (latRow != Json::Value::null)
-    {
-        for (uint j = 0; j<3; j++)
-        {
-            latticeZeroVector(j) = latRow[j].asDouble();
-        }
-    }
-
-    
-
-    if (isPeriodicBool)
-    {
-        computeMatrices();   
-    }
-
 
 
     initiateEmptyEnergyMatrices();
@@ -212,12 +147,12 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         {
             initialCondition = FHInitialConditionType::givenDiagonal;
             std::string subtypeIC = jsonIC.get("subtype", "spinWave").asString();
-            initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
-            initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
+            initConditions_upSpin = std::vector<bool>(getnSites(), false);
+            initConditions_downSpin = std::vector<bool>(getnSites(), false);
 
             if (subtypeIC == "spinWave")
             {
-                for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+                for (uint iPart = 0; iPart < getnSites() ; iPart++ )
                 {
                     if (iPart%2 == 0)
                     {
@@ -233,7 +168,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
             else if (subtypeIC == "chargeWave")
             {
-                for (uint iPart = 0; iPart < sitePositions.n_rows ; iPart++ )
+                for (uint iPart = 0; iPart < getnSites() ; iPart++ )
                 {
                     if (iPart%2 == 0)
                     {
@@ -246,12 +181,12 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
             else if (subtypeIC == "spinWave3")
             {
 
-                uint midParticleNumber = std::ceil(sitePositions.n_rows/2);
+                uint midParticleNumber = std::ceil(getnSites()/2);
                 for (uint iPart = 0; iPart < midParticleNumber ; iPart++ )
                 {
                     initConditions_upSpin[iPart] = true;
                 }
-                for (uint iPart = midParticleNumber; iPart < sitePositions.n_rows ; iPart++ )
+                for (uint iPart = midParticleNumber; iPart < getnSites() ; iPart++ )
                 {
                     initConditions_downSpin[iPart] = true;
                 }
@@ -260,7 +195,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
             else if (subtypeIC == "chargeWave3")
             {
-                uint midParticleNumber = std::ceil(sitePositions.n_rows/2);
+                uint midParticleNumber = std::ceil(getnSites()/2);
                 for (uint iPart = 0; iPart < midParticleNumber ; iPart++ )
                 {
                     initConditions_upSpin[iPart] = true;
@@ -274,7 +209,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
                 Json::Value ICNu = jsonIC["IC_NuDiag"];
                 if (ICNu.isArray())
                 {
-                    for (uint iSite = 0; iSite < std::min((uint)ICNu.size(), (uint)sitePositions.n_rows); iSite++)
+                    for (uint iSite = 0; iSite < std::min((uint)ICNu.size(), (uint)getnSites()); iSite++)
                     {
                         initConditions_upSpin[iSite] = ICNu[iSite].asBool();
                     }
@@ -282,7 +217,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
                 Json::Value ICNd = jsonIC["IC_NdDiag"];
                 if (ICNd.isArray())
                 {
-                    for (uint iSite = 0; iSite < std::min((uint)ICNd.size(), (uint)sitePositions.n_rows); iSite++)
+                    for (uint iSite = 0; iSite < std::min((uint)ICNd.size(), (uint)getnSites()); iSite++)
                     {
                         initConditions_downSpin[iSite] = ICNd[iSite].asBool();
                     }
@@ -325,6 +260,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         std::cout << "No Initial condition in the json file.  " << std::endl;  
     }
 
+
 // Tunneling Energy
     std::string tunnEn = rootSystem["EnergyT"].asString();
     if (tunnEn == "nearestNeighbours")
@@ -366,14 +302,14 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 /// @return number of sites
 unsigned int                                FHSystem::getnSites()
 {
-    return sitePositions.n_rows;
+    return lattice.getnSites();
 }
 
 /// @brief getter - number of dimension (we always work in dim 3 though)
 /// @return number of dimensions (if not 3, weird)
 unsigned int                                FHSystem::getnDimension()
 {
-    return sitePositions.n_cols;
+    return lattice.getnDimension();
 }
 
 /// @brief getter - position row vector of site 'iSite'
@@ -381,7 +317,7 @@ unsigned int                                FHSystem::getnDimension()
 /// @return row vector of coordinates
 arma::drowvec                               FHSystem::getSitePosition(uint iSite)
 {
-    return sitePositions.row(iSite);
+    return lattice.getSitePosition(iSite);
 }
 
 /// @brief getter - coordinate of a site
@@ -390,14 +326,7 @@ arma::drowvec                               FHSystem::getSitePosition(uint iSite
 /// @return coordinate of site 'iSite'in dimension 'dim'
 double                                      FHSystem::getCoordinate(uint dim, uint iSite)
 { 
-    if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
-    {
-        return sitePositions(iSite, dim);
-    } 
-    else
-    {
-        return 0;
-    }
+    return lattice.getCoordinate(dim, iSite);
 }
 
 /// @brief getter - relative position row vector of site 'iSite'
@@ -405,53 +334,39 @@ double                                      FHSystem::getCoordinate(uint dim, ui
 /// @return row vector of relative coordinates
 arma::drowvec                       FHSystem::getLatticeSitePosition(uint iSite)
 {
-    //std::cout << sitePositions.row(iSite) << std::endl;
-    //std::cout << inverseLatticeMatrix << std::endl;
-   // std::cout << latticeZeroVector << std::endl;
-    arma::drowvec pos = sitePositions.row(iSite) - latticeZeroVector;
-   // std::cout << inverseLatticeMatrix * pos.t() << std::endl;
-    return (inverseLatticeMatrix * pos.t()).t();
+    return lattice.getLatticeSitePosition(iSite);
 }
 
 double                              FHSystem::getLatticeCoordinate(uint dim, uint iSite)
 {
-    if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
-    {
-        arma::drowvec v = getLatticeSitePosition(iSite);
-        return v[dim];
-    } 
-    else
-    {
-        return 0;
-    }
+    return lattice.getLatticeCoordinate(dim, iSite);
 }
 
 
 bool                                        FHSystem::sitesHaveNames()
 {
-        return (siteTypes.n_rows == sitePositions.n_rows);
+    return lattice.sitesHaveNames();
 }
 
 std::string                                 FHSystem::getSiteName(uint iSite)
 {
-    //return siteTypeNames[siteTypes[site]];
-    return siteNames[iSite];
+    return lattice.getSiteName(iSite);
 }
 
 
 bool                                        FHSystem::isPeriodic()
 {
-    return isPeriodicBool;
+    return lattice.isPeriodic();
 }
 
 arma::dmat                                  FHSystem::getLatticeMatrix()
 {
-    return latticeMatrix;
+    return lattice.getLatticeMatrix();
 }
 
 arma::drowvec                        FHSystem::getLatticeZeroVector()
 {
-    return latticeZeroVector;
+    return lattice.getLatticeZeroVector();
 }
 
 bool                                        FHSystem::isSystemTimeDependant()
@@ -465,18 +380,19 @@ bool                                    FHSystem::isExternalPotentialNull()
 
 double                                      FHSystem::computeDistance(uint iSite, uint jSite)
 {
-    arma::drowvec dVec = sitePositions.row(iSite) - sitePositions.row(jSite); 
+    arma::drowvec dVec = getLatticeSitePosition(iSite) - getLatticeSitePosition(jSite); 
     double d = arma::norm(dVec);
     //std::cout << isPeriodic() << std::endl;
     if (isPeriodic())
     {
+        arma::dmat latMat = getLatticeMatrix();
         for (int zSym = -1; zSym < 2; zSym++)                             //<- symmetries in z
         {
             for (int ySym = -1; ySym < 2; ySym++)                         //<- symmetries in y
             {
                 for (int xSym = -1; xSym < 2; xSym++)                     //<- symmetries in x
                 {
-                    arma::drowvec dVecSym = dVec + xSym * latticeMatrix.col(0).t() + ySym * latticeMatrix.col(1).t() + zSym * latticeMatrix.col(2).t(); //<- new vector with one of the symmetric lattice
+                    arma::drowvec dVecSym = dVec + xSym * latMat.col(0).t() + ySym * latMat.col(1).t() + zSym * latMat.col(2).t(); //<- new vector with one of the symmetric lattice
                     d = std::min(d, arma::norm(dVecSym));                   //<- we take the minimum of them all
                     //std::cout << xSym << "  " << ySym << "  " << zSym << "  " << arma::norm(dVecSym) << "   " << d << std::endl;
                 }
@@ -490,12 +406,12 @@ double                                      FHSystem::computeDistance(uint iSite
 
 double                                      FHSystem::getDistance(uint i, uint j)
 {
-    return distanceMatrix(i,j);
+    return lattice.getDistance(i,j);
 }
 
 bool                                        FHSystem::areNeighbour(uint i, uint j)
 {
-    return neighbourMatrix[i][j];
+    return lattice.areNeighbour(i,j);
 }
 
 
@@ -637,71 +553,46 @@ std::string                                 FHSystem::getFolder()
 
 void                    FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)
 {
-    sitePositions = positions;
-    siteNames = std::vector<std::string>(sitePositions.n_rows, sitesName);
-    computeMatrices();
+    lattice.setPositions(positions, sitesName);
 }
 
 void                    FHSystem::setPositions(const arma::dmat& positions, std::vector<std::string> sN)
 {
-    sitePositions = positions;
-    siteNames = sN;
-    computeMatrices();
+    lattice.setPositions(positions, sN);
 }
 
 
 bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
 {
-    siteTypes = sTypes;
-    return sitesHaveNames();
+    return lattice.setSiteTypes(sTypes);
 }
 
 void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
 {
-    siteTypeNames = typeNames;
+    lattice.setSiteTypeNames(typeNames);
 }
 
 
 void                    FHSystem::setSymmetry(arma::dmat symVectors)
 {
-    if ((symVectors.n_cols != 3)&& (symVectors.n_rows != 3))
-    {
-        std::cout << "We want a 3x3 lattice matrix" << std::endl;
-    }
-    else
-    {
-        isPeriodicBool = true;
-        latticeMatrix = symVectors;
-        inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
-        if (!isInv)
-        {
-            std::cout << "Caution : the lattice matrix is singular." << std::endl;
-        }
-    }
-
-    if (latticeZeroVector.n_rows !=3)
-    {
-        latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    }
-
+     lattice.setSymmetry(symVectors);
 }
 
 void                                FHSystem::setLatticeZero(arma::drowvec latticeZ)
 {
-    latticeZeroVector = latticeZ;
+    lattice.setLatticeZero(latticeZ);
 }
 
 
 void                                FHSystem::setNeighbourDistance(double neigbD)
 {
-    neighbourDistance = neigbD;
+    lattice.setNeighbourDistance(neigbD);
 }
 
 
 void                                FHSystem::setSamePointDistance(double samePointD)
 {
-    samePointDistance = samePointD;
+    lattice.setSamePointDistance(samePointD);
 }
 
 
@@ -718,8 +609,8 @@ void FHSystem::setInitialConditionsDiagonal(const std::vector<std::vector<unsign
     upSpinParticleNumber = diagonalInitConditions[0].size();
     downSpinParticleNumber = diagonalInitConditions[1].size();
 
-    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
-    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
+    initConditions_upSpin = std::vector<bool>(getnSites(), false);
+    initConditions_downSpin = std::vector<bool>(getnSites(), false);
 
 
 
@@ -743,14 +634,14 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
 
     initialCondition = initCondType;
 
-    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
-    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
+    initConditions_upSpin = std::vector<bool>(getnSites(), false);
+    initConditions_downSpin = std::vector<bool>(getnSites(), false);
     upSpinParticleNumber = 0;
     downSpinParticleNumber = 0 ; 
 
     if (initialCondition == FHInitialConditionType::spinWave)
     {
-        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite ++)
+        for (uint iSite = 0; iSite < getnSites(); iSite ++)
         {
             if (iSite%2 == 0)
             {
@@ -767,7 +658,7 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
     }
     else if (initialCondition == FHInitialConditionType::chargeWave)
     {
-        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite ++)
+        for (uint iSite = 0; iSite < getnSites(); iSite ++)
         {
             if (iSite%2 == 0)
             {
@@ -780,8 +671,8 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
     }
     else
     {
-        upSpinParticleNumber = sitePositions.n_rows/2;
-        downSpinParticleNumber = sitePositions.n_rows/2;
+        upSpinParticleNumber = getnSites()/2;
+        downSpinParticleNumber = getnSites()/2;
     }
 
 }
@@ -794,18 +685,18 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
 {
 
     initialCondition = initCondType;
-    initConditions_upSpin = std::vector<bool>(sitePositions.n_rows, false);
-    initConditions_downSpin = std::vector<bool>(sitePositions.n_rows, false);
+    initConditions_upSpin = std::vector<bool>(getnSites(), false);
+    initConditions_downSpin = std::vector<bool>(getnSites(), false);
 
     upSpinParticleNumber = partNumber[0];
     downSpinParticleNumber = partNumber[1];
     if (initialCondition == FHInitialConditionType::givenDiagonal)
     {
-        for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, upSpinParticleNumber); iSite +=2)
+        for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
         {
                 initConditions_upSpin[iSite] = true;
         }
-        for (uint iSite = 1; iSite < std::min((uint)sitePositions.n_rows, downSpinParticleNumber); iSite +=2)
+        for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
         {
                 initConditions_downSpin[iSite] = true;
         }
@@ -813,11 +704,11 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
     }
     else if (initialCondition == FHInitialConditionType::spinWave)
     {
-        for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, upSpinParticleNumber); iSite +=2)
+        for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
         {
                 initConditions_upSpin[iSite] = true;
         }
-        for (uint iSite = 0; iSite < std::min((uint)sitePositions.n_rows, downSpinParticleNumber); iSite +=2)
+        for (uint iSite = 0; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
         {
                 initConditions_downSpin[iSite] = true;
         }
@@ -854,11 +745,11 @@ void                    FHSystem::setUInteraction_OnSite(double U0, bool add)
 {
     if (add)
     {
-        UMatrix += U0 * arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::eye);
+        UMatrix += U0 * arma::cx_dmat(getnSites(), getnSites(), arma::fill::eye);
     }
     else
     {
-        UMatrix = U0 * arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::eye);
+        UMatrix = U0 * arma::cx_dmat(getnSites(), getnSites(), arma::fill::eye);
     }
 
 }
@@ -867,15 +758,15 @@ void                    FHSystem::setUInteraction_OnSite(double U0, bool add)
 /// @param U Vector of on-site interaction energy
 void                    FHSystem::setUInteraction_GivenDiagonal(arma::dvec& Ua, bool add)
 {
-    if (Ua.n_rows == sitePositions.n_rows) 
+    if (Ua.n_rows == getnSites()) 
     {
         if (add)
         {
-            UMatrix += arma::cx_dmat(arma::diagmat(Ua), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            UMatrix += arma::cx_dmat(arma::diagmat(Ua), arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
         else
         {
-            UMatrix = arma::cx_dmat(arma::diagmat(Ua), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            UMatrix = arma::cx_dmat(arma::diagmat(Ua), arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }      
     }
     else
@@ -888,7 +779,7 @@ void                    FHSystem::setUInteraction_GivenDiagonal(arma::dvec& Ua, 
 /// @param Uab Matrix interaction energy
 void                    FHSystem::setUInteraction_GivenMatrix(arma::dmat& Uab, bool add)
 {
-    if ((Uab.n_rows == sitePositions.n_rows) && (Uab.n_cols == sitePositions.n_rows))
+    if ((Uab.n_rows == getnSites()) && (Uab.n_cols == getnSites()))
     {
         if (add)
         {
@@ -911,20 +802,20 @@ void                    FHSystem::setUInteraction_GivenMatrix(arma::dmat& Uab, b
 /// @param Us Matrix interaction energy by site type
 void                    FHSystem::setUInteraction_BySiteType(arma::dvec& Us, bool add)
 {
-    if (Us.n_rows == siteTypeNames.size()) 
+    if (Us.n_rows == lattice.getSiteNameNumber()) 
     {
-        arma::dvec Uvec = arma::dvec(sitePositions.n_rows, arma::fill::zeros);
-        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite++)
+        arma::dvec Uvec = arma::dvec(getnSites(), arma::fill::zeros);
+        for (uint iSite = 0; iSite < getnSites(); iSite++)
         {
-            Uvec[iSite] = Us[siteTypes[iSite]];
+            Uvec[iSite] = Us[lattice.getSiteType(iSite)];
         }
         if (add)
         {
-            UMatrix += arma::cx_dvec(arma::diagmat(Uvec), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            UMatrix += arma::cx_dvec(arma::diagmat(Uvec), arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
         else
         {
-            UMatrix = arma::cx_dvec(arma::diagmat(Uvec), arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            UMatrix = arma::cx_dvec(arma::diagmat(Uvec), arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
     }
     else
@@ -940,13 +831,13 @@ void                    FHSystem::setTunneling_BetweenNeighbours(double tH1, boo
 
     if (!add)
     {
-        tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+        tMatrix = arma::cx_dmat(getnSites(), getnSites(), arma::fill::zeros);
     }
-    for (unsigned int i = 0; i< sitePositions.n_rows; i++)
+    for (unsigned int i = 0; i< getnSites(); i++)
     {
-        for (unsigned int j = 0; j< sitePositions.n_rows; j++)
+        for (unsigned int j = 0; j< getnSites(); j++)
         {
-            if (neighbourMatrix[i][j])
+            if (areNeighbour(i,j))
             {
                 tMatrix(i,j) += tH1;
             }
@@ -962,13 +853,13 @@ void                    FHSystem::setTunneling_SamePosition(double tH0, bool add
 {
     if (!add)
     {
-        tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+        tMatrix = arma::cx_dmat(getnSites(), getnSites(), arma::fill::zeros);
     }
-    for (unsigned int i = 0; i< sitePositions.n_rows; i++)
+    for (unsigned int i = 0; i< getnSites(); i++)
     {
-        for (unsigned int j = 0; j< sitePositions.n_rows; j++)
+        for (unsigned int j = 0; j< getnSites(); j++)
         {
-            if (sameSiteMatrix[i][j] && (i!=j))
+            if (lattice.areSameSite(i,j) && (i!=j))
             {
                 tMatrix(i,j) += tH0;
             }
@@ -983,13 +874,13 @@ void                    FHSystem::setTunneling_atDistance(double tHd, double dis
 {
     if (!add)
     {
-        tMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+        tMatrix = arma::cx_dmat(getnSites(), getnSites(), arma::fill::zeros);
     }
-    for (unsigned int i = 0; i< sitePositions.n_rows; i++)
+    for (unsigned int i = 0; i< getnSites(); i++)
     {
-        for (unsigned int j = 0; j< sitePositions.n_rows; j++)
+        for (unsigned int j = 0; j< getnSites(); j++)
         {
-            if (abs(distanceMatrix(i,j) - dist) < 0.0001)
+            if (abs(getDistance(i,j) - dist) < 0.0001)
             {
                 tMatrix(i,j) += tHd;
             }
@@ -1001,15 +892,15 @@ void                    FHSystem::setTunneling_atDistance(double tHd, double dis
 /// @param tH tunneling interaction energy by pair of sites
 void                    FHSystem::setTunneling_GivenMatrix(arma::dmat tH, bool add)
 {
-    if ((tH.n_rows == sitePositions.n_rows) && (tH.n_cols == sitePositions.n_rows))
+    if ((tH.n_rows == getnSites()) && (tH.n_cols == getnSites()))
     {
         if (add)
         {
-            tMatrix += arma::cx_dmat(tH, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            tMatrix += arma::cx_dmat(tH, arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
         else
         {
-            tMatrix = arma::cx_dmat(tH, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            tMatrix = arma::cx_dmat(tH, arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
     }
     else
@@ -1022,33 +913,33 @@ void                    FHSystem::setTunneling_GivenMatrix(arma::dmat tH, bool a
 /// @param tHs1s2 tunneling interaction energy by pair of site types
 void                    FHSystem::setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add)
 {
-    if ((tHs1s2.n_rows == siteTypeNames.size()) && (tHs1s2.n_cols == siteTypeNames.size()))
+    if ((tHs1s2.n_rows == lattice.getSiteNameNumber()) && (tHs1s2.n_cols == lattice.getSiteNameNumber()))
     {
-          arma::dvec tHMat = arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
-        for (uint iSite = 0; iSite < sitePositions.n_rows; iSite++)
+          arma::dvec tHMat = arma::dmat(getnSites(), getnSites(), arma::fill::zeros);
+        for (uint iSite = 0; iSite < getnSites(); iSite++)
         {
-            for (uint jSite = 0; jSite < sitePositions.n_rows; jSite++)
+            for (uint jSite = 0; jSite < getnSites(); jSite++)
             {
-                if (std::abs(distanceMatrix(iSite, jSite) - d) < 0.0001)
+                if (std::abs(getDistance(iSite, jSite) - d) < 0.0001)
                 {
-                    tHMat(iSite, jSite) = tHs1s2(siteTypes[iSite], siteTypes[jSite]);
+                    tHMat(iSite, jSite) = tHs1s2(lattice.getSiteType(iSite), lattice.getSiteType(jSite));
                 }
             }
         }
         if (add)
         {
-            tMatrix += arma::cx_dvec(tHMat, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            tMatrix += arma::cx_dvec(tHMat, arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
         else
         {
-            tMatrix = arma::cx_dvec(tHMat, arma::dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros));
+            tMatrix = arma::cx_dvec(tHMat, arma::dmat(getnSites(), getnSites(), arma::fill::zeros));
         }
     }
 }
 
 void                    FHSystem::setExchangeCoupling(double J, bool add)
 {
-    JMatrix = arma::cx_dmat(sitePositions.n_rows, sitePositions.n_rows, arma::fill::zeros);
+    JMatrix = arma::cx_dmat(getnSites(), getnSites(), arma::fill::zeros);
 }
 
 
@@ -1064,97 +955,13 @@ void                    FHSystem::makePotential_pulse()
     double centert0 = 1.;
     double widthtd = 0.1;
     double frequencyw0 = 100;
-    arma::dvec polar = arma::dvec(sitePositions.n_cols, arma::fill::zeros);
+    arma::dvec polar = arma::dvec(getnDimension(), arma::fill::zeros);
     polar(0) = 1/std::sqrt(2);
     polar(1) = 1/std::sqrt(2);
-    externalPotential = FHExternalPotentialPulse(&sitePositions, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
-}
-
-void                    FHSystem::readPositions(std::string xyzFile)
-{
-
-    uint nPart = 0;
-    std::vector<std::vector<double>> positions3;
-
-    siteNames = std::vector<std::string>();
-    std::string line;
-    std::string coord;
-     
-
-    std::ifstream posFile(xyzFile);
-    if (posFile.is_open())
-    {
-        // Particle number :
-        std::getline(posFile, line);
-
-        nPart = std::stoi(line);
-        // Comment :
-        std::getline(posFile, line);
-        // Particles :
-        while(std::getline(posFile, line))
-        {
-            std::stringstream ss(line);
-            // Get the site name
-            ss >> coord;
-            siteNames.push_back(coord);
-            // Get its coordinates :
-            std::vector<double> coordinates;
-            while (ss >> coord)//(std::getline (ss, coord, '\t')) 
-            {
-                double d = std::stod(coord);
-                coordinates.push_back(d);
-            }                      
-            coordinates.resize(3);
-            positions3.push_back(coordinates);
-        }
-
-        posFile.close();
-    }
-    else
-    {
-        std::cout << "Problem with the particle file " << xyzFile << std::endl;
-    }
-
-
-    if (nPart == positions3.size())
-    {
-        if (talkative)
-        {
-            std::cout << "   -- Position file read, " << nPart << " particles." << std::endl;
-        }
-        setPositions(armaMatfromVectorsVector(positions3));
-    }
-    else
-    {
-        std::cout << "Problem in the xyz file : " << nPart << " particles announced, " << positions3.size() << " found." << std::endl;
-    }
-
+    externalPotential = FHExternalPotentialPulse(&lattice, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
 }
 
 
-/// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
-/// @return void
-void                 FHSystem::writePositions(std::string xyzFile, std::string folderName)
-{
-        // Writing of everything on the file :
-    std::string fileAdress =  xyzFile + ".xyz";
-    //std::cout << "Writing positions in: "<< fileAdress << std::endl;
-    if (folderName != "")
-    {
-        fileAdress = folderName + "/" + fileAdress;
-    }
-
-   std::ofstream streamPosition(fileAdress);
-    if (streamPosition.is_open())
-    {   
-        streamPosition << sitePositions.n_rows << std::endl;
-        for (uint iSite = 0; iSite < sitePositions.n_rows ; iSite ++)
-        {
-            streamPosition << std::endl << siteNames[iSite] << "\t" << sitePositions(iSite, 0) << "\t" << sitePositions(iSite, 1) << "\t" << sitePositions(iSite, 2) ;
-        }
-        streamPosition.close();
-    }
-}
 
 
 /// @brief Read a potential stored in fileName.
@@ -1196,18 +1003,18 @@ void                    FHSystem::readPotential(std::string fileName, std::strin
             std::getline(systFile, line);
             double frequencyw0 = std::stod(line);
             std::getline(systFile, line);
-            arma::dvec polar = arma::dvec(sitePositions.n_cols, arma::fill::zeros);
+            arma::dvec polar = arma::dvec(getnDimension(), arma::fill::zeros);
             std::stringstream ss(line);
             uint coordCountor = 0;
             while (std::getline(ss, coord, ' ')) 
             {
-                if (coordCountor < sitePositions.n_cols)
+                if (coordCountor < getnDimension())
                 {
                     polar(coordCountor) = std::stod(coord);
                 }
                 coordCountor++;
             }
-            externalPotential = FHExternalPotentialPulse(&sitePositions, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
+            externalPotential = FHExternalPotentialPulse(&lattice, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
         } 
     }
     else
@@ -1217,37 +1024,6 @@ void                    FHSystem::readPotential(std::string fileName, std::strin
 }
 
 
-/// @brief Computes usefull matrices: distanceMatrix and neighbourMatrix.
-/// @return void
-void                    FHSystem::computeMatrices()
-{
-
-    unsigned int nSites = sitePositions.n_rows;
-
-    distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
-    neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
-    sameSiteMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
-    
-    for (uint i=0; i<nSites; i++)
-    {
-        for (uint j=0; j<nSites; j++)
-        {
-            distanceMatrix(i, j) = computeDistance(i,j);
-            if (abs(distanceMatrix(i, j))< samePointDistance)
-            {
-                sameSiteMatrix[i][j] = true;
-            }
-            if (abs(distanceMatrix(i, j) - neighbourDistance) < samePointDistance)
-            {
-                neighbourMatrix[i][j] = true;
-            }
-        }
-    }
-
-
-    //std::cout << distanceMatrix << std::endl;
-}
-
 
 void                    FHSystem::initiateEmptyEnergyMatrices()
 {
@@ -1256,13 +1032,13 @@ void                    FHSystem::initiateEmptyEnergyMatrices()
     VInteractionType = FHSameSpinInteractionType::Vnone;
     tJExCType = tJExchangeCouplingType::tJJnone;
 
-    uint nSites = sitePositions.n_rows;
+    uint nSites = getnSites();
 
     UMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     VMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     JMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     tMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    externalPotential = FHExternalPotential(&sitePositions);
+    externalPotential = FHExternalPotential(&lattice);
 }
 
 
@@ -1544,7 +1320,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         {
             for (uint j = 0; j < 3; j++)
             {
-                 wannierFileStream << "       " << std::to_string(latticeMatrix(i,j));
+                 wannierFileStream << "       " << std::to_string(getLatticeMatrix()(i,j));
             }
             wannierFileStream << std::endl;
         }
@@ -1577,7 +1353,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         {
             for (uint j = 0; j < 3; j++)
             {
-                 wannierFileStream << "       " << std::to_string(latticeMatrix(i,j));
+                 wannierFileStream << "       " << std::to_string(getLatticeMatrix()(i,j));
             }
             wannierFileStream << std::endl;
         }
@@ -2109,7 +1885,7 @@ void                    FHSystem::writeFHSystemBis(std::string folderName)
         bool sitesHaveTags = sitesHaveNames();
 
         streamSystem << "#POSITIONS" << std::endl;
-        for (uint itpos = 0; itpos < sitePositions.n_rows; itpos++)
+        for (uint itpos = 0; itpos < getnSites(); itpos++)
         {
             if (sitesHaveTags)
             {
@@ -2155,7 +1931,7 @@ void                    FHSystem::writeFHSystemBis(std::string folderName)
             case FHOppositeSpinInteractionType::UonSiteGivenDiagonal:
             {
                 streamSystem << "#ENERGYPARAMETER_U_BYSITE" << std::endl;
-                for(uint iSite = 0; iSite<sitePositions.n_rows; iSite++)
+                for(uint iSite = 0; iSite<getnSites(); iSite++)
                 {
                     streamSystem << UMatrix(iSite, iSite).real() << "\t";
                 }

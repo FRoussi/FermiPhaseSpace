@@ -174,8 +174,6 @@ public:
 
     void                                setName(std::string name);
 
-    void                                computeMatrices();
-
     Json::Value                         writeFHSystemJson();
     Json::Value                         getOriginalJsonSystem();
     //void                                writeFHSystemBis(std::string folderName = "");
@@ -186,9 +184,6 @@ public:
     void                                makePotential_pulse();
     void                                readPotential(std::string fileName, std::string folderName = "");
 
-// XYZ file
-    void                readPositions(std::string xyzFile);
-    void                writePositions(std::string xyzFile, std::string folderName = "");
 
 // WannierTools
 
@@ -207,28 +202,14 @@ public:
 
 private:
     
-// SITES
-    arma::dmat                      sitePositions;
-    arma::uvec                      siteTypes;
-    std::vector<std::string>        siteTypeNames;
-    std::vector<std::string>        siteNames;
 
-// LATTICE
-    bool                            isPeriodicBool;
-    arma::dmat                      latticeMatrix;
-    arma::dmat                      inverseLatticeMatrix;
-    arma::drowvec                   latticeZeroVector;
+    FHLattice                       lattice;
+
 
 // PARTICLES
     unsigned int                    upSpinParticleNumber;
     unsigned int                    downSpinParticleNumber;
 
-
-    double                          neighbourDistance = 1;
-    double                          samePointDistance = 0.001;
-    arma::dmat                      distanceMatrix;
-    std::vector<std::vector<bool>>  neighbourMatrix;
-    std::vector<std::vector<bool>>  sameSiteMatrix;
 
 // ENERGY
     FHOppositeSpinInteractionType   UInteractionType;

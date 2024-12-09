@@ -1,7 +1,7 @@
 #include "../include/FHExternalPotentialPulse.h"
 
 
-FHExternalPotentialPulse::FHExternalPotentialPulse(const arma::dmat* sitePos, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar): FHExternalPotential(sitePos)
+FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar): FHExternalPotential(lat)
 {
     A0 = intensityA0;
     t0 = centert0;
@@ -20,7 +20,7 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(const arma::dmat* sitePos, do
 }
 
 
-FHExternalPotentialPulse::FHExternalPotentialPulse(const arma::dmat* sitePos, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat): FHExternalPotential(sitePos)
+FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat): FHExternalPotential(lat)
 {
     A0 = intensityA0;
     t0 = centert0;

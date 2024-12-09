@@ -8,13 +8,15 @@ FHExternalPotential::FHExternalPotential()
     currentPotentialTime = 0;
 }
 
-FHExternalPotential::FHExternalPotential(const arma::dmat* sitePos)
+FHExternalPotential::FHExternalPotential(FHLattice* lat)
 {
-    uint nSites = sitePos->n_rows;
+
+
+    uint nSites = lat->getnSites();
 
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
-    sitePositions = sitePos;
+    sitePositions = lat->getSitePositions();
 
     nullPotential = true;
     timeDependantPotential = false;

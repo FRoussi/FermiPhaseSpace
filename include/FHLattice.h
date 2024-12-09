@@ -22,6 +22,17 @@ template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex);
 class FHLattice  	
 {
 
+    enum FHLatticeType {
+        none,
+        cubic,
+        bulkCenteredCubic,
+        faceCenteredCubic,
+        triangular,
+        graphene,
+        moire,
+        kagome
+    };
+
 public:
     FHLattice(bool talk = true);
     FHLattice(int x, bool talk = true);
@@ -33,15 +44,20 @@ public:
 
     // GETTERS
     // site positions
-    unsigned int                        getnSites();
-    unsigned int                        getnDimension();
-    arma::drowvec                       getSitePosition(uint iSite);
-    double                              getCoordinate(uint dim, uint pos);
-    arma::drowvec                       getLatticeSitePosition(uint iSite);
-    double                              getLatticeCoordinate(uint dim, uint pos);
+    const unsigned int                        getnSites();
+    const unsigned int                        getnDimension();
+    const arma::drowvec                       getSitePosition(uint iSite);
+    const arma::dmat*                         getSitePositions();
+    const double                              getCoordinate(uint dim, uint pos);
+    const arma::drowvec                       getLatticeSitePosition(uint iSite);
+    const double                              getLatticeCoordinate(uint dim, uint pos);
+    const FHLatticeType                       getLatticeType();
     // site names
     bool                                sitesHaveNames();
-    std::string                         getSiteName(uint site);
+    uint                                getSiteNameNumber();
+    std::string                         getSiteName(uint iSite);
+    arma::uvec                          getSiteTypes();
+    uint                                getSiteType(uint iSite);
     // system symmetry
     bool                                isPeriodic();
     arma::dmat                          getLatticeMatrix();
@@ -51,6 +67,7 @@ public:
     double                              computeDistance(uint iSite, uint jSite);
     double                              getDistance(uint iSite, uint jSite);
     bool                                areNeighbour(uint iSite, uint jSite);
+    bool                                areSameSite(uint iSite, uint jSite);
 
     // SETTERS      
 
@@ -87,6 +104,11 @@ private:
     arma::dmat                      latticeMatrix;
     arma::dmat                      inverseLatticeMatrix;
     arma::drowvec                   latticeZeroVector;
+
+    // TYPE
+    FHLatticeType                   latticeType;
+    std::vector<int>                intParameters;
+    std::vector<double>             floatParameters; 
 
 // Connections
     double                          neighbourDistance = 1;

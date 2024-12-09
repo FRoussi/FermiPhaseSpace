@@ -6,6 +6,8 @@
 #include <math.h>
 #include <armadillo>
 
+
+#include "FHLattice.h"
 //#include "FHSystem.h"
 
 
@@ -16,7 +18,7 @@ class FHExternalPotential
 public:
 
     FHExternalPotential();
-    FHExternalPotential(const arma::dmat* sitePos);
+    FHExternalPotential(FHLattice* lat);
 
     bool                    getExternalPotential(double time, arma::cx_dmat& potential);
     arma::cx_dmat*          getExternalPotentialPointer();

@@ -8,8 +8,8 @@ class FHExternalPotentialPulse : public FHExternalPotential
 {
 public:
 
-    FHExternalPotentialPulse(const arma::dmat* sitePos, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar);
-    FHExternalPotentialPulse(const arma::dmat* sitePos, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat);
+    FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar);
+    FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat);
 
 
     arma::cx_dmat getExternalPotential(double t);

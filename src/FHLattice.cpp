@@ -6,19 +6,16 @@ FHLattice::FHLattice(bool talk)
 
     talkative = talk;
 
+    latticeType = FHLatticeType::cubic;
+
     isPeriodicBool = false;
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
 
-    arma::dmat pos = arma::dmat(1,  1, arma::fill::zeros);
+    arma::dmat pos = arma::dmat(2,  3, arma::fill::zeros);
+    pos(1,0) = 1;
 
-    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>();
-    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>();
-
-    std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
-    initCond[0] = initCond_up;
-    initCond[1] = initCond_down;
 
     setPositions(pos);
    
@@ -29,6 +26,8 @@ FHLattice::FHLattice(bool talk)
 FHLattice::FHLattice(int x, bool talk)
 {
     talkative = talk;
+
+   latticeType = FHLatticeType::cubic;
 
     isPeriodicBool = false;
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
@@ -65,6 +64,8 @@ FHLattice::FHLattice(int x, int y, int z, bool talk)
 {
 
     talkative = talk;
+
+   latticeType = FHLatticeType::cubic;
 
     isPeriodicBool = false;
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
@@ -121,6 +122,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 // Periodicity
     isPeriodicBool = rootSystem.get("periodic", false).asBool();
 
+
     Json::Value latMat = rootSystem["latticeMatrix"];
     if (latMat != Json::Value::null)
     {
@@ -139,6 +141,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
         }
     }
     
+
     Json::Value latRow = rootSystem["latticeZero"];
     if (latRow != Json::Value::null)
     {
@@ -158,14 +161,14 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 
 /// @brief getter - number of sites
 /// @return number of sites
-unsigned int                                FHLattice::getnSites()
+const unsigned int                                FHLattice::getnSites()
 {
     return sitePositions.n_rows;
 }
 
 /// @brief getter - number of dimension (we always work in dim 3 though)
 /// @return number of dimensions (if not 3, weird)
-unsigned int                                FHLattice::getnDimension()
+const unsigned int                                FHLattice::getnDimension()
 {
     return sitePositions.n_cols;
 }
@@ -173,16 +176,21 @@ unsigned int                                FHLattice::getnDimension()
 /// @brief getter - position row vector of site 'iSite'
 /// @param iSite a site number 
 /// @return row vector of coordinates
-arma::drowvec                               FHLattice::getSitePosition(uint iSite)
+const arma::drowvec                               FHLattice::getSitePosition(uint iSite)
 {
     return sitePositions.row(iSite);
+}
+
+const arma::dmat*                         FHLattice::getSitePositions()
+{
+    return &sitePositions;
 }
 
 /// @brief getter - coordinate of a site
 /// @param dim coordinate dimension
 /// @param iSite site number
 /// @return coordinate of site 'iSite'in dimension 'dim'
-double                                      FHLattice::getCoordinate(uint dim, uint iSite)
+const double                                      FHLattice::getCoordinate(uint dim, uint iSite)
 { 
     if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
     {
@@ -197,7 +205,7 @@ double                                      FHLattice::getCoordinate(uint dim, u
 /// @brief getter - relative position row vector of site 'iSite'
 /// @param iSite a site number 
 /// @return row vector of relative coordinates
-arma::drowvec                       FHLattice::getLatticeSitePosition(uint iSite)
+const arma::drowvec                       FHLattice::getLatticeSitePosition(uint iSite)
 {
     //std::cout << sitePositions.row(iSite) << std::endl;
     //std::cout << inverseLatticeMatrix << std::endl;
@@ -207,7 +215,7 @@ arma::drowvec                       FHLattice::getLatticeSitePosition(uint iSite
     return (inverseLatticeMatrix * pos.t()).t();
 }
 
-double                              FHLattice::getLatticeCoordinate(uint dim, uint iSite)
+const double                              FHLattice::getLatticeCoordinate(uint dim, uint iSite)
 {
     if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
     {
@@ -220,10 +228,19 @@ double                              FHLattice::getLatticeCoordinate(uint dim, ui
     }
 }
 
+const FHLattice::FHLatticeType                       FHLattice::getLatticeType()
+{
+    return latticeType;
+}
 
 bool                                        FHLattice::sitesHaveNames()
 {
         return (siteTypes.n_rows == sitePositions.n_rows);
+}
+
+uint                                FHLattice::getSiteNameNumber()
+{
+    return (uint)siteNames.size();
 }
 
 std::string                                 FHLattice::getSiteName(uint iSite)
@@ -232,6 +249,14 @@ std::string                                 FHLattice::getSiteName(uint iSite)
     return siteNames[iSite];
 }
 
+    arma::uvec                          FHLattice::getSiteTypes()
+    {
+        return siteTypes;
+    }
+    uint                                FHLattice::getSiteType(uint iSite)
+    {
+        return siteTypes[iSite];
+    }
 
 bool                                        FHLattice::isPeriodic()
 {
@@ -283,6 +308,10 @@ bool                                        FHLattice::areNeighbour(uint i, uint
     return neighbourMatrix[i][j];
 }
 
+    bool                                FHLattice::areSameSite(uint i, uint j)
+    {
+        return sameSiteMatrix[i][j];
+    }
 
 
 
