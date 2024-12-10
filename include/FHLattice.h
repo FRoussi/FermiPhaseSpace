@@ -11,16 +11,20 @@
 
 #include "json/json.h"
 
+using std::vector;
 
+vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
+vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
+vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
+vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a);
 
-arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec);
+void getNextIndex(unsigned int& i, unsigned int& j);
 
-template <typename T>       bool isIn(T w, std::vector<T>& v);
+arma::dmat armaMatfromVectorsVector(vector<vector<double>>& vecVec);
 
-template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex);
+template <typename T>       bool isIn(T w, vector<T>& v);
 
-class FHLattice  	
-{
+template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex);
 
     enum FHLatticeType {
         none,
@@ -33,12 +37,18 @@ class FHLattice
         kagome
     };
 
+class FHLattice  	
+{
+
+
+
 public:
     FHLattice(bool talk = true);
     FHLattice(int x, bool talk = true);
     FHLattice(int x, int y, int z, bool talk = true);
   //  FHSystem(std::string fileName, std::string folderName = "");
     FHLattice(Json::Value rootSystem, std::string folderName, bool talk = true);
+    FHLattice(FHLatticeType latType, vector<double> parameters);
 
     FHLattice(FHLattice* fhLattice);
 
@@ -52,24 +62,29 @@ public:
     const arma::drowvec                       getLatticeSitePosition(uint iSite);
     const double                              getLatticeCoordinate(uint dim, uint pos);
     const FHLatticeType                       getLatticeType();
+    std::string                               getLatticeName();
     // site names
     bool                                sitesHaveNames();
     uint                                getSiteNameNumber();
+    std::vector<std::string>            getSiteNames();
     std::string                         getSiteName(uint iSite);
     arma::uvec                          getSiteTypes();
     uint                                getSiteType(uint iSite);
+    std::vector<std::string>            getSiteTypeNames();
     // system symmetry
     bool                                isPeriodic();
     arma::dmat                          getLatticeMatrix();
     arma::drowvec                       getLatticeZeroVector();
 
 
+double                                  getNeighbourDistance();
+double                                  getSamePointDistance();
     double                              computeDistance(uint iSite, uint jSite);
     double                              getDistance(uint iSite, uint jSite);
     bool                                areNeighbour(uint iSite, uint jSite);
     bool                                areSameSite(uint iSite, uint jSite);
 
-    std::string                         getLatticeName();
+
 
     // SETTERS      
 
@@ -77,7 +92,7 @@ public:
     void                                setPositions(const arma::dmat& positions, std::vector<std::string> siteNames);
 
     bool                                setSiteTypes(arma::uvec sTypes);
-    void                                setSiteTypeNames(std::vector<std::string> typeNames);  
+    void                                setSiteTypeNames(vector<std::string> typeNames);  
 
     void                                setSymmetry(arma::dmat latticeMat); 
     void                                setLatticeZero(arma::drowvec latticeZ);
@@ -103,8 +118,8 @@ private:
     // SITES
     arma::dmat                      sitePositions;
     arma::uvec                      siteTypes;
-    std::vector<std::string>        siteTypeNames;
-    std::vector<std::string>        siteNames;
+    vector<std::string>        siteTypeNames;
+    vector<std::string>        siteNames;
 
 // LATTICE
     bool                            isPeriodicBool;
@@ -114,15 +129,15 @@ private:
 
     // TYPE
     FHLatticeType                   latticeType;
-    std::vector<int>                intParameters;
-    std::vector<double>             floatParameters; 
+    vector<int>                intParameters;
+    vector<double>             floatParameters; 
 
 // Connections
     double                          neighbourDistance = 1;
     double                          samePointDistance = 0.001;
     arma::dmat                      distanceMatrix;
-    std::vector<std::vector<bool>>  neighbourMatrix;
-    std::vector<std::vector<bool>>  sameSiteMatrix;
+    vector<vector<bool>>  neighbourMatrix;
+    vector<vector<bool>>  sameSiteMatrix;
 
 
     std::string latticeName;

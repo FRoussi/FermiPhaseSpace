@@ -80,6 +80,7 @@ public:
     FHSystem(int x, int y, int z, bool talk = true);
   //  FHSystem(std::string fileName, std::string folderName = "");
     FHSystem(Json::Value rootSystem, std::string folderName, bool talk = true);
+    FHSystem(FHLattice lattice);
 
 
 // GETTERS

@@ -298,6 +298,17 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 }
 
 
+FHSystem::FHSystem(FHLattice lat)
+{
+    talkative = true;
+
+    lattice = lat;
+
+    
+    initiateEmptyEnergyMatrices();
+}
+
+
 /// @brief getter - lattice
 /// @return lattice
 FHLattice                                FHSystem::getLattice()
@@ -1065,9 +1076,6 @@ Json::Value                    FHSystem::writeFHSystemJson()
 
     // Lattice 
     systemRoot["lattice"] =  lattice.writeFHLatticeJson();
-
-//Positions
-    systemRoot["positions"] = systemName + ".xyz";
 
 
 

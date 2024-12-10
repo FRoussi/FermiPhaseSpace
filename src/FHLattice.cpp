@@ -41,15 +41,15 @@ FHLattice::FHLattice(int x, bool talk)
     }
 
     int nPart = std::floor(x/2);
-    std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(nPart,0);
-    std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(nPart,0);
+    vector<unsigned int> initCond_up =  vector<unsigned int>(nPart,0);
+    vector<unsigned int> initCond_down =  vector<unsigned int>(nPart,0);
     for(int itPart = 0; itPart <nPart; itPart++)
     {
         initCond_up[itPart] = itPart * 2;
         initCond_down[itPart] = itPart * 2 + 1;
     }
 
-    std::vector<std::vector<unsigned int>> initCond = std::vector<std::vector<unsigned int>>(2);
+    vector<vector<unsigned int>> initCond = vector<vector<unsigned int>>(2);
     initCond[0] = initCond_up;
     initCond[1] = initCond_down;
 
@@ -159,6 +159,82 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 }
 
 
+FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters)
+{
+
+ vector<vector<double>> pos = makeBCGrid(2,1,1,1);
+
+     isPeriodicBool = false;
+    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+
+    latticeType = latType;
+
+switch (latType)
+{
+case none:
+    break;
+    case cubic:
+        pos = makeBCGrid(static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2]), parameters[3]);
+        latticeName = "CubicGrid";
+    break;
+    case bulkCenteredCubic:
+        pos = makeBCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
+        latticeName = "BCCGrid";
+    break;
+    case faceCenteredCubic:
+        pos = makeFCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
+        latticeName = "FCCGrid";
+    break;
+    case graphene:
+        pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
+        latticeName = "Graphene";
+    break;
+
+    default:
+    break;
+}
+
+
+    setPositions(armaMatfromVectorsVector(pos), "C");
+
+    computeMatrices();
+
+
+
+}
+
+
+FHLattice::FHLattice(FHLattice* lat)
+{
+    uint nSites = lat->getnSites();
+    uint nDim = lat->getnDimension();
+    sitePositions = arma::dmat( lat->getSitePositions()->memptr(), nSites, nDim);
+
+    siteTypes = lat->getSiteTypes();
+    siteTypeNames = lat->getSiteTypeNames();
+    siteNames = lat->getSiteNames();
+
+    isPeriodicBool = lat->isPeriodic();
+    latticeMatrix = lat->getLatticeMatrix();
+    latticeZeroVector = lat->getLatticeZeroVector();
+
+    if (arma::det(latticeMatrix) != 0)
+    {
+        inverseLatticeMatrix = arma::inv(latticeMatrix);
+    }
+
+    latticeType = lat->getLatticeType();
+
+    neighbourDistance = lat->getNeighbourDistance();
+    samePointDistance = lat->getSamePointDistance();
+
+
+    computeMatrices();
+
+}
+
 
 /// @brief getter - number of sites
 /// @return number of sites
@@ -229,14 +305,14 @@ const double                              FHLattice::getLatticeCoordinate(uint d
     }
 }
 
-const FHLattice::FHLatticeType                       FHLattice::getLatticeType()
+const FHLatticeType                       FHLattice::getLatticeType()
 {
     return latticeType;
 }
 
 bool                                        FHLattice::sitesHaveNames()
 {
-        return (siteTypes.n_rows == sitePositions.n_rows);
+    return (siteTypes.n_rows == sitePositions.n_rows);
 }
 
 uint                                FHLattice::getSiteNameNumber()
@@ -250,13 +326,24 @@ std::string                                 FHLattice::getSiteName(uint iSite)
     return siteNames[iSite];
 }
 
-    arma::uvec                          FHLattice::getSiteTypes()
+vector<std::string>            FHLattice::getSiteNames()
+{
+    return siteNames;
+}
+
+arma::uvec                          FHLattice::getSiteTypes()
+{
+    return siteTypes;
+}
+
+uint                                FHLattice::getSiteType(uint iSite)
+{
+    return siteTypes[iSite];
+}
+
+    vector<std::string>            FHLattice::getSiteTypeNames()
     {
-        return siteTypes;
-    }
-    uint                                FHLattice::getSiteType(uint iSite)
-    {
-        return siteTypes[iSite];
+        return siteTypeNames;
     }
 
 bool                                        FHLattice::isPeriodic()
@@ -272,6 +359,15 @@ arma::dmat                                  FHLattice::getLatticeMatrix()
 arma::drowvec                        FHLattice::getLatticeZeroVector()
 {
     return latticeZeroVector;
+}
+
+double                                   FHLattice::getNeighbourDistance()
+{
+    return neighbourDistance;
+}
+double                                   FHLattice::getSamePointDistance()
+{
+    return samePointDistance;
 }
 
 double                                      FHLattice::computeDistance(uint iSite, uint jSite)
@@ -314,10 +410,10 @@ bool                                        FHLattice::areNeighbour(uint i, uint
         return sameSiteMatrix[i][j];
     }
 
-    std::string                              FHLattice::getLatticeName()
-    {
+std::string                              FHLattice::getLatticeName()
+{
         return latticeName;
-    }
+}
 
 
 
@@ -326,11 +422,11 @@ bool                                        FHLattice::areNeighbour(uint i, uint
 void                    FHLattice::setPositions(const arma::dmat& positions, std::string sitesName)
 {
     sitePositions = positions;
-    siteNames = std::vector<std::string>(sitePositions.n_rows, sitesName);
+    siteNames = vector<std::string>(sitePositions.n_rows, sitesName);
     computeMatrices();
 }
 
-void                    FHLattice::setPositions(const arma::dmat& positions, std::vector<std::string> sN)
+void                    FHLattice::setPositions(const arma::dmat& positions, vector<std::string> sN)
 {
     sitePositions = positions;
     siteNames = sN;
@@ -344,7 +440,7 @@ bool                    FHLattice::setSiteTypes(arma::uvec sTypes)
     return sitesHaveNames();
 }
 
-void                    FHLattice::setSiteTypeNames(std::vector<std::string> typeNames)
+void                    FHLattice::setSiteTypeNames(vector<std::string> typeNames)
 {
     siteTypeNames = typeNames;
 }
@@ -401,9 +497,9 @@ void                    FHLattice::readPositions(std::string xyzFile)
 {
 
     uint nPart = 0;
-    std::vector<std::vector<double>> positions3;
+    vector<vector<double>> positions3;
 
-    siteNames = std::vector<std::string>();
+    siteNames = vector<std::string>();
     std::string line;
     std::string coord;
      
@@ -425,7 +521,7 @@ void                    FHLattice::readPositions(std::string xyzFile)
             ss >> coord;
             siteNames.push_back(coord);
             // Get its coordinates :
-            std::vector<double> coordinates;
+            vector<double> coordinates;
             while (ss >> coord)//(std::getline (ss, coord, '\t')) 
             {
                 double d = std::stod(coord);
@@ -466,7 +562,7 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
         // Writing of everything on the file :
     latticeName = xyzFile;
     std::string fileAdress =  xyzFile + ".xyz";
-    //std::cout << "Writing positions in: "<< fileAdress << std::endl;
+   // std::cout << "Writing positions in: "<< fileAdress << std::endl;
     if (folderName != "")
     {
         fileAdress = folderName + "/" + fileAdress;
@@ -475,6 +571,7 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
    std::ofstream streamPosition(fileAdress);
     if (streamPosition.is_open())
     {   
+        
         streamPosition << sitePositions.n_rows << std::endl;
         for (uint iSite = 0; iSite < sitePositions.n_rows ; iSite ++)
         {
@@ -493,17 +590,36 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
         case FHLatticeType::none:
         {
             rootLattice["latticeType"] = "none";
-            rootLattice["positionsFile"] = latticeName + ".xyz";
+            break;
         }
         case FHLatticeType::cubic:
         {
-            rootLattice["latticeType"] = "BC";
+            rootLattice["latticeType"] = "grid";
+            break;
+        }
+        case FHLatticeType::bulkCenteredCubic:
+        {
+            rootLattice["latticeType"] = "bcc";
+            break;
+        }
+        case FHLatticeType::faceCenteredCubic:
+        {
+            rootLattice["latticeType"] = "fcc";
+            break;
+        }
+        case FHLatticeType::graphene:
+        {
+            rootLattice["latticeType"] = "graphene";
+            break;
+        }
+        default :
+        {
+            rootLattice["latticeType"] = "none";
+            break;
+        }
         }
 
-
-        }
-
-
+        rootLattice["positionsFile"] = latticeName + ".xyz";
 
         // Periodicity
         if (isPeriodicBool)
@@ -521,6 +637,8 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
             rootLattice["periodic"] = false;
         }
 
+        return rootLattice;
+
     }
 
 
@@ -534,8 +652,8 @@ void                    FHLattice::computeMatrices()
     unsigned int nSites = sitePositions.n_rows;
 
     distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
-    neighbourMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
-    sameSiteMatrix = std::vector<std::vector<bool>>(nSites,  std::vector<bool>(nSites, false));
+    neighbourMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
+    sameSiteMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
     
     for (uint i=0; i<nSites; i++)
     {
@@ -576,10 +694,209 @@ FHLattice::~FHLattice()
 
 // OTHER FUNCTIONS
 
+// I - Grids
+
+/// @brief Makes a simple 3D-grid of sites 
+/// @param nx number of sites in the X dimension
+/// @param ny number of sites in the Y dimension
+/// @param nz number of sites in the Z dimension
+/// @param a distance between nearest neighbours
+/// @return a vector of site positions
+vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+{
+    
+    unsigned int nPoints = nx*ny*nz;
+    //std::cout <<"makegrid" << nx << " " << ny << " " << nz << " " << a << std::endl; 
+    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+
+    unsigned int counter = 0;
+    for (unsigned int z = 0; z < nz; z++)
+    {
+        for (unsigned int y = 0; y < ny; y++)
+        {
+            for (unsigned int x = 0; x < nx; x++)
+            {
+                //std::cout <<"makegrid in" << x << " " << y << " " << z << " " << std::endl; 
+                vector<double> newPos = {a*x, a*y, a*z};
+                pos[counter] = newPos;
+                counter +=1;
+            }
+        }
+    }
+
+    return pos;
+}
+
+/// @brief Makes a Body-centered Cubic grid of sites 
+/// @param nx number of cubes in the X dimension
+/// @param ny number of cubes in the Y dimension
+/// @param nz number of cubes in the Z dimension
+/// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(3)
+/// @return a vector of site positions
+vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+{
+    
+    unsigned int nPoints = 2*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
+    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+
+
+    unsigned int counter = 0;
+    for (unsigned int z = 0; z <= nz; z++)
+    {
+        for (unsigned int y = 0; y <= ny; y++)
+        {
+            for (unsigned int x = 0; x <= nx; x++)
+            {
+                vector<double> newPos = {a*x, a*y, a*z};
+                pos[counter] = newPos;
+                counter +=1;
+                if ((x != nx) && (y != ny) && (z != nz) )
+                {
+                    newPos = {a*(x + 0.5), a*(y + 0.5), a*(z+0.5)};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+            }
+        }
+    }
+
+    pos.resize(counter);
+
+    return pos;
+}
+
+
+/// @brief Makes a Face-centered Cubic grid of sites 
+/// @param nx number of cubes in the X dimension
+/// @param ny number of cubes in the Y dimension
+/// @param nz number of cubes in the Z dimension
+/// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(2)
+/// @return a vector of site positions
+vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+{
+    
+    unsigned int nPoints = 4*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
+    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+
+    unsigned int counter = 0;
+    for (unsigned int z = 0; z <= nz; z++)
+    {
+        for (unsigned int y = 0; y <= ny; y++)
+        {
+            for (unsigned int x = 0; x <= nx; x++)
+            {
+                vector<double> newPos = {a*x, a*y, a*z};
+                pos[counter] = newPos;
+                counter +=1;
+                if ((y != ny) && (z != nz) )
+                {
+                    newPos = {a*x , a*(y + 0.5), a*(z + 0.5)};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+                if ((x != nx) && (z != nz) )
+                {
+                    newPos = {a*(x + 0.5) , a*y, a*(z + 0.5)};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+                if ((x != nx) && (y != ny) )
+                {
+                    newPos = {a*(x + 0.5) , a*(y + 0.5), a*z};
+                    pos[counter] = newPos;
+                    counter +=1;
+                } 
+            }
+        }
+    }
+
+    pos.resize(counter);
+
+    return pos;
+}
+
+
+
+
+/// @brief Makes a graphene-shaped site vector
+/// @param nCombs number of combds in the graphene sheet
+/// @param a distance between nearest neighbours
+/// @return a vector of site positions
+vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
+{
+
+    double sqrt3 = std::sqrt(3);
+    unsigned int nOfPoints = 0;
+    vector<vector<double>> pos = vector<vector<double>>();
+
+    vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a, 0},
+                                {-sqrt3/2 *a, 0.5 *a, 0},
+                                {0   *a,      1   *a, 0},
+                                {0   *a,      -1  *a, 0},
+                                {sqrt3/2 *a, -0.5 *a, 0},
+                                {sqrt3/2 *a, 0.5  *a, 0}};
+    vector<vector<double>> posNew = pos0;
+
+
+    double iVec[2] = {sqrt3 *a, 0 *a};
+    double jVec[2] = {sqrt3/2 *a, 1.5 *a};
+
+    unsigned int basisIndex[2] = {0,0};
+
+
+    for (unsigned int bv = 0; bv < nCombs; bv++)
+    {
+        for (unsigned int p = 0; p<6; p++)
+        {
+            posNew[p][0] = pos0[p][0] + iVec[0] * basisIndex[0] + jVec[0] * basisIndex[1];
+            posNew[p][1] = pos0[p][1] + iVec[1] * basisIndex[0] + jVec[1] * basisIndex[1];
+        }
+        pos.insert(pos.end(), posNew.begin(), posNew.end());
+
+        getNextIndex(basisIndex[0], basisIndex[1]);
+
+        nOfPoints +=6;
+    }
+
+    // We remove the doublons :
+    double samePointThreshold = 0.001 * a;
+
+
+    for (unsigned int i1 = 0; i1< pos.size(); i1++)         //<- we look for all points equal to positions(i1)
+    {
+        unsigned int nDoublonsFound = 0;                    //<- There can't be more than three times the same point
+         
+        unsigned int i2 = i1+1;
+        while ((i2<pos.size()) && (nDoublonsFound < 2))    //<- as long as there are points and more doublons to find
+        {
+            double d = 0;
+            for (unsigned int iDim = 0; iDim<pos[i1].size(); iDim++)
+            {
+                d += std::abs(pos[i1][iDim] - pos[i2][iDim]);
+            }
+            if (abs(d) < samePointThreshold)                //<- if i1 and i2 are the same point :
+            {
+                pos.erase(pos.begin() + i2);                //<- We remove the point i2
+                nDoublonsFound ++;                          //<- We say we found one more doublon
+            }
+            else
+            {
+                i2 ++;                                      //<- else, we look at the next point
+            }
+                
+        }
+
+    }
+    
+    pos.shrink_to_fit();
+    return pos;
+}
+
+
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
 /// @param vecVec A vector of vector of double 
 /// @return The arma::dmat version of the vector
-arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec)
+arma::dmat armaMatfromVectorsVector(vector<vector<double>>& vecVec)
 {
     arma::dmat mattrix = arma::dmat();
     if (vecVec.size() > 0)
@@ -604,7 +921,7 @@ arma::dmat armaMatfromVectorsVector(std::vector<std::vector<double>>& vecVec)
 /// @param w the element to look for
 /// @param v the vector of possibilities
 /// @return true if w is in v
-template <typename T>       bool isIn(T w, std::vector<T>& v)
+template <typename T>       bool isIn(T w, vector<T>& v)
 {
 
         bool isInB = false;
@@ -623,7 +940,7 @@ template <typename T>       bool isIn(T w, std::vector<T>& v)
 /// @param v the vector of possibilities
 /// @param firstIndex index of the first found element
 /// @return true if w is in v
-template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex)
+template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex)
 {
     bool isInB = false;
     unsigned int index = 0;
@@ -636,5 +953,29 @@ template <typename T>       bool isIn(T w, std::vector<T>& v, uint& firstIndex)
     return isInB;
 }
 
+/// @brief The suite of integer doubles S defined by  S(t+1) = getNextIndex(S(t))
+/// and starting by (0,0) paves the positive plan in an ordely fashion. The
+/// aim is for [S(0) .. S(t)] to stay "as square as possible" for every index t.  
+void getNextIndex(unsigned int& i, unsigned int& j)
+{
+    if (i==j)
+    {
+        i=i+1;
+        j = 0;
+    }
+    else if (i==(j+1))
+    {
+        j = i;
+        i = 0;
+    }
+    else if (i>j)
+    {
+        j = j+1;
+    }
+    else
+    {
+        i=i+1;
+    }
 
+}
 
