@@ -151,8 +151,6 @@ void FHHFSolver::initiateSolver()
     }
 
 
-
-
 }
 
 void FHHFSolver::setComputeMomenta(bool yn)

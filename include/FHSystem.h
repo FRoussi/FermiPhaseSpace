@@ -199,6 +199,8 @@ FHLattice                               getLattice();
 
 // INITIATION
     void                                initiateEmptyEnergyMatrices();
+    void                                computeMomentaSpace();
+    void                                computeHFGroundState();
 
 
     ~FHSystem();
@@ -231,6 +233,21 @@ private:
     FHInitialConditionType          initialCondition;
     std::vector<bool>               initConditions_upSpin;
     std::vector<bool>               initConditions_downSpin;
+
+// Rotated representations
+    // Momentum space :
+    bool isMomentumSpaceComputed;
+    arma::dmat          ms_Nu;
+    arma::dmat          ms_Nd;
+    arma::dmat          ms_V;
+    arma::dvec          ms_E;
+
+    // HF ground state :
+    bool isHFGroundStateComputed;
+    arma::dmat          hfgs_Nu;
+    arma::dmat          hfgs_Nd;
+    arma::dmat          hfgs_V;
+    arma::dvec          hfgs_E;
 
 // SYSTEM
     std::string                     systemName;
