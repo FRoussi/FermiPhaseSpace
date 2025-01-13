@@ -1064,6 +1064,81 @@ void                    FHSystem::initiateEmptyEnergyMatrices()
     externalPotential = FHExternalPotential(&lattice);
 }
 
+void                                FHSystem::computeMomentaSpace()
+{
+    
+    arma::eig_sym(ms_E, ms_V, tMatrix);
+
+    arma::cx_dmat Mku = arma::cx_dmat(lattice.getnSites(), lattice.getnSites(), arma::fill::zeros);
+    Mku.submat(0,0,upSpinParticleNumber-1, upSpinParticleNumber-1) = arma::cx_dmat(upSpinParticleNumber, upSpinParticleNumber, arma::fill::eye);
+
+    arma::cx_dmat Mkd = arma::cx_dmat(lattice.getnSites(), lattice.getnSites(), arma::fill::zeros);
+    Mkd.submat(0,0,downSpinParticleNumber-1, downSpinParticleNumber-1) = arma::cx_dmat(downSpinParticleNumber, downSpinParticleNumber, arma::fill::eye);
+
+    ms_Nu = ms_V * Mku * ms_V.t();
+    ms_Nd = ms_V * Mkd * ms_V.t();
+
+    isMomentumSpaceComputed = true;
+
+
+}
+
+
+void                                FHSystem::computeHFGroundState()
+{
+
+    uint nSites = lattice.getnSites();
+
+    arma::cx_dmat Mku = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    Mku.submat(0,0,upSpinParticleNumber-1, upSpinParticleNumber-1) = arma::cx_dmat(upSpinParticleNumber, upSpinParticleNumber, arma::fill::eye);
+
+    arma::cx_dmat Mkd = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    Mkd.submat(0,0,downSpinParticleNumber-1, downSpinParticleNumber-1) = arma::cx_dmat(downSpinParticleNumber, downSpinParticleNumber, arma::fill::eye);
+
+    double thresholdConverged = 10^(-4) * nSites;
+    bool isConverged = false;
+    int maxIt = 100;
+    int it = 0;
+
+    arma::cx_dvec diagNu = arma::cx_dvec(nSites) * (double)upSpinParticleNumber / (double)nSites;
+    arma::cx_dvec diagNd = arma::cx_dvec(nSites) * (double)downSpinParticleNumber / (double)nSites;
+
+    arma::cx_dmat mfuHuU = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    arma::cx_dmat mfuHuD = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+    while ((it < maxIt) && !isConverged)
+    {
+
+        for (int i = 0; i < nSites; i++)
+        {
+            mfuHuU(i,i) = arma::dot(UMatrix.row(i), diagNd);
+            mfuHuD(i,i) = arma::dot(UMatrix.row(i), diagNu);
+        } 
+
+        arma::eig_sym(hfgs_Eu, hfgs_Vu, tMatrix + mfuHuU);
+        arma::eig_sym(hfgs_Ed, hfgs_Vd, tMatrix + mfuHuD);
+
+        hfgs_Nu = hfgs_Vu * Mku * hfgs_Vu.t();
+        hfgs_Nd = hfgs_Vd * Mkd * hfgs_Vd.t();
+
+        if ((arma::norm(hfgs_Nu.diag() - diagNu) < thresholdConverged) && (arma::norm(hfgs_Nd.diag() - diagNd) < thresholdConverged))
+        {
+            isConverged = true;
+        }
+        else
+        {
+            it +=1;
+            diagNu = hfgs_Nu.diag();
+            diagNd = hfgs_Nd.diag();
+        }
+
+    }
+
+
+    isHFGroundStateComputed = true;
+
+}
+
 
 
 /// @brief Write a JSON version of the Fermi-Hubbard System

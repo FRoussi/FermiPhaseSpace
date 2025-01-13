@@ -237,17 +237,19 @@ private:
 // Rotated representations
     // Momentum space :
     bool isMomentumSpaceComputed;
-    arma::dmat          ms_Nu;
-    arma::dmat          ms_Nd;
-    arma::dmat          ms_V;
+    arma::cx_dmat          ms_Nu;
+    arma::cx_dmat          ms_Nd;
+    arma::cx_dmat          ms_V;
     arma::dvec          ms_E;
 
     // HF ground state :
     bool isHFGroundStateComputed;
-    arma::dmat          hfgs_Nu;
-    arma::dmat          hfgs_Nd;
-    arma::dmat          hfgs_V;
-    arma::dvec          hfgs_E;
+    arma::cx_dmat           hfgs_Nu;
+    arma::cx_dmat           hfgs_Nd;
+    arma::cx_dmat           hfgs_Vu;
+    arma::cx_dmat           hfgs_Vd;
+    arma::dvec              hfgs_Eu;
+    arma::dvec              hfgs_Ed;
 
 // SYSTEM
     std::string                     systemName;
