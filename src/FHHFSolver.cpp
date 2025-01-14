@@ -78,6 +78,8 @@ void                        FHHFSolver::setMethodParameters(Json::Value param)
 void FHHFSolver::initiateSolver()
 {
 
+    std::cout << "   -- HF Solver initiation." << std::endl;
+
     FHSystem::FHInitialConditionType initCondition = fhSystem->getInitialCondition();
     integrator = HFIntegrator::RungeKutta4_38;
     //integrator = HFIntegrator::RungeKutta1_Mem;
@@ -118,29 +120,40 @@ void FHHFSolver::initiateSolver()
 
 
     }
-    else if (initCondition == FHSystem::FHInitialConditionType::quenched)
+    else if (initCondition == FHSystem::FHInitialConditionType::tbGroundState)
     {
+
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
 
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
 
         setComputeMomenta(true);
 
-        arma::cx_dmat Mku0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-        arma::cx_dmat Mkd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        Nu0 =  *fhSystem->get_tbgs_Nu_Pointer();
+        Nd0 =  *fhSystem->get_tbgs_Nd_Pointer();
 
-        for (unsigned int k=0; k<nPartU ; k++)
+        // printf("Test 4 - Initial Density matrix : \n");
+        // Nu0.print();
+    }
+    else if (initCondition == FHSystem::FHInitialConditionType::mfGroundState)
+    {
+
+        if (!fhSystem->isMFGroundStateComputed())
         {
-            Mku0(k,k) = 1; 
+            fhSystem->computeMFGroundState();
         }
 
-        for (unsigned int k=0; k<nPartD ; k++)
-        {
-            Mkd0(k,k) = 1; 
-        }
+        nPartU = fhSystem->getUpSpinParticleNumber();
+        nPartD = fhSystem->getDownSpinParticleNumber();
 
-        Nu0 =  V_1p * Mku0 * V_1p_1;
-        Nd0 =  V_1p * Mkd0 * V_1p_1;
+        setComputeMomenta(true);
+
+        Nu0 =  *fhSystem->get_mfgs_Nu_Pointer();
+        Nd0 =  *fhSystem->get_mfgs_Nd_Pointer();
 
         // printf("Test 4 - Initial Density matrix : \n");
         // Nu0.print();
@@ -158,11 +171,12 @@ void FHHFSolver::setComputeMomenta(bool yn)
     computeMomenta = yn;
     if (yn)
     {
-        arma::dvec eigVal;
-        arma::dmat Jreal = arma::real(*tM);
-        arma::eig_sym(eigVal, V_1p, Jreal);
-        V_1p_1 = V_1p.t();
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
     }
+
 }
 
 /// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
@@ -363,8 +377,9 @@ void FHHFSolver::runSimulation( )
         Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         if (computeMomenta)
         {
-            arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
-            arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
+            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+            arma::cx_dmat Mu = V_1p.t() * Nut * V_1p;
+            arma::cx_dmat Md = V_1p.t() * Ndt * V_1p;
             Mkku.col(0) = Mu.diag();
             Mkkd.col(0) = Md.diag();
         }
@@ -438,8 +453,9 @@ void FHHFSolver::runSimulation( )
         {
             if (computeMomenta)
             {
-                arma::cx_dmat Mu = V_1p_1 * Nut * V_1p;
-                arma::cx_dmat Md = V_1p_1 * Ndt * V_1p;
+                arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+                arma::cx_dmat Mu = V_1p.t() * Nut * V_1p;
+                arma::cx_dmat Md = V_1p.t() * Ndt * V_1p;
                 Mkku.col(t) = Mu.diag();
                 Mkkd.col(t) = Md.diag();
             }

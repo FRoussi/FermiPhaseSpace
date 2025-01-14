@@ -28,16 +28,45 @@ void FHEDSolver::setComputeMomenta(bool yn)
     }
 }
 
+arma::cx_dvec FHEDSolver::getTBGroundState()
+{
+    arma::sp_dmat H_t_real = arma::real(H_t);
+    arma::dvec psi_tbgs;
+    arma::eigs_sym(psi_tbgs, H_t_real, 1);  
+    return arma::cx_dvec(psi_tbgs, arma::dvec(psi_tbgs.size(), arma::fill::zeros));
+}
+
+arma::cx_dvec FHEDSolver::getMFGroundState()
+{
+
+    arma::sp_cx_dmat H_mfu = arma::sp_cx_dmat(basisSize, basisSize);
+
+    const arma::cx_dmat* mfNu =  fhSystem->get_mfgs_Nu_Pointer();
+    const arma::cx_dmat* mfNd =  fhSystem->get_mfgs_Nd_Pointer();
+
+    for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
+    {     
+        H_mfu = H_mfu + mfNu->at(iSite,iSite) * fhSystem->getInteractionEnergy(iSite, iSite) * NijdSet[iSite][iSite];
+        H_mfu = H_mfu + mfNd->at(iSite,iSite) * fhSystem->getInteractionEnergy(iSite, iSite) * NijuSet[iSite][iSite];
+    }
+      
+    arma::sp_dmat H_mf = arma::real(H_mfu) + arma::real(H_t);
+    arma::dvec psi_mfgs;
+    arma::eigs_sym(psi_mfgs, H_mf, 1);  
+    return arma::cx_dvec(psi_mfgs, arma::dvec(psi_mfgs.size(), arma::fill::zeros));
+}
+
 
 /// @brief Initiate the ED solver, compute the initial wave-function, then the usefull operators.
 ///@return void
 void FHEDSolver::initiateSolver()
 {
-    this->posPartU = bitsetFromVector(fhSystem->getInitialCondition_upSpin());
-    this->posPartD = bitsetFromVector(fhSystem->getInitialCondition_downSpin());
-    this->nPartU = posPartU.count();
-    this->nPartD = posPartD.count();
 
+    // N PARTICLES
+    nPartU = fhSystem->getUpSpinParticleNumber();
+    nPartD = fhSystem->getDownSpinParticleNumber();
+std::cout <<  "      ----- IS : step 1 nu="<< nPartU << " nd=" << nPartD << std::endl;
+    // BASIS DEFINITION
 
     this->basisSizeSpinUp = nChoosep(fhSystem->getnSites(), nPartU);
     this->basisSizeSpinDown = nChoosep(fhSystem->getnSites(), nPartD);
@@ -78,15 +107,40 @@ void FHEDSolver::initiateSolver()
         }
     }
 
-    uint l = getBasisIndex(this->posPartU, this->posPartD);
-    this->psi_0 = arma::cx_dvec(this->basisSize, arma::fill::zeros);
-    this->psi_0[l] = 1;                         //<- Compute the initial wave-function
-
-    this->psi = this->psi_0;                    //< The current wave-function becomes the initial one.
-
+std::cout <<  "      ----- IS : step 2 "<< std::endl;
+    // OPERATORS
 
     buildPairOperators();                       //<- Usefull pair operators
     buildHamiltonian();                         //<- Hamiltonian
+
+
+std::cout <<  "      ----- IS : step 3 "<< std::endl;
+    // INITIAL CONDITIONS
+    this->psi_0 = arma::cx_dvec(this->basisSize, arma::fill::zeros);
+
+    switch(fhSystem->getInitialCondition())
+    {
+        case FHSystem::FHInitialConditionType::tbGroundState:
+        {
+            psi_0 = getTBGroundState();
+        }
+        case FHSystem::FHInitialConditionType::mfGroundState:
+        {
+            psi_0 = getMFGroundState();
+        }
+        default:
+        {
+            this->posPartU = bitsetFromVector(fhSystem->getInitialCondition_upSpin());
+            this->posPartD = bitsetFromVector(fhSystem->getInitialCondition_downSpin());
+            uint l = getBasisIndex(this->posPartU, this->posPartD);
+            this->psi_0[l] = 1;                         //<- Compute the initial wave-function
+            std::cout <<  "      ----- IS : step 3.5 , l="<< l << std::endl;
+        }
+    }
+
+
+    this->psi = this->psi_0;                    //< The current wave-function becomes the initial one.
+std::cout <<  "      ----- IS : step 4 "<< std::endl;
 
 }
 

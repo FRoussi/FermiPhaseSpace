@@ -30,7 +30,8 @@ public:
         givenDensityMatrix,
         givenWaveFunctionBasisVector,
         givenWaveFunction,
-        quenched,
+        tbGroundState,
+        mfGroundState,
         groundState
     };
 
@@ -103,6 +104,8 @@ FHLattice                               getLattice();
     // 
     bool                                isSystemTimeDependant();
     bool                                isExternalPotentialNull();
+    bool                                isTBGroundStateComputed();
+    bool                                isMFGroundStateComputed();
 
     double                              computeDistance(uint iSite, uint jSite);
     double                              getDistance(uint iSite, uint jSite);
@@ -131,6 +134,16 @@ FHLattice                               getLattice();
     const arma::cx_dmat*                getJMatrixPointer();
     const arma::cx_dmat*                gettMatrixPointer();
     const arma::cx_dmat*                getExtPotPointer();
+    const arma::cx_dmat*                get_tbgs_Nu_Pointer();
+    const arma::cx_dmat*                get_tbgs_Nd_Pointer();
+    const arma::cx_dmat*                get_tbgs_V_Pointer();
+    const arma::dvec*                   get_tbgs_E_Pointer();
+    const arma::cx_dmat*                get_mfgs_Nu_Pointer();
+    const arma::cx_dmat*                get_mfgs_Nd_Pointer();
+    const arma::cx_dmat*                get_mfgs_Vu_Pointer();
+    const arma::cx_dmat*                get_mfgs_Vd_Pointer();
+    const arma::dvec*                   get_mfgs_Eu_Pointer();
+    const arma::dvec*                   get_mfgs_Ed_Pointer();
 
 
     std::string                         getName();
@@ -199,8 +212,8 @@ FHLattice                               getLattice();
 
 // INITIATION
     void                                initiateEmptyEnergyMatrices();
-    void                                computeMomentaSpace();
-    void                                computeHFGroundState();
+    void                                computeTBGroundState(bool withExternalPotential = false);
+    void                                computeMFGroundState(bool withExternalPotential = false);
 
 
     ~FHSystem();
@@ -236,20 +249,20 @@ private:
 
 // Rotated representations
     // Momentum space :
-    bool isMomentumSpaceComputed;
-    arma::cx_dmat          ms_Nu;
-    arma::cx_dmat          ms_Nd;
-    arma::cx_dmat          ms_V;
-    arma::dvec          ms_E;
+    bool TBGroundStateComputed;
+    arma::cx_dmat          tbgs_Nu;
+    arma::cx_dmat          tbgs_Nd;
+    arma::cx_dmat          tbgs_V;
+    arma::dvec             tbgs_E;
 
-    // HF ground state :
-    bool isHFGroundStateComputed;
-    arma::cx_dmat           hfgs_Nu;
-    arma::cx_dmat           hfgs_Nd;
-    arma::cx_dmat           hfgs_Vu;
-    arma::cx_dmat           hfgs_Vd;
-    arma::dvec              hfgs_Eu;
-    arma::dvec              hfgs_Ed;
+    // MF ground state :
+    bool MFGroundStateComputed;
+    arma::cx_dmat           mfgs_Nu;
+    arma::cx_dmat           mfgs_Nd;
+    arma::cx_dmat           mfgs_Vu;
+    arma::cx_dmat           mfgs_Vd;
+    arma::dvec              mfgs_Eu;
+    arma::dvec              mfgs_Ed;
 
 // SYSTEM
     std::string                     systemName;

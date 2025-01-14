@@ -229,13 +229,16 @@ int main(int argc, char* argv[])
 
             std::cout <<  "== Computation of ED dynamic "<< std::endl;
             FHEDSolver EDSolver = FHEDSolver(&fhSystem);
+            std::cout <<  "    ---- step 1 "<< std::endl;
             EDSolver.setResultFile(simName + "_ED_res", workFolder);
             EDSolver.setJsonFile(rootSim);
             EDSolver.setResultsWriter("json");
             EDSolver.setResultsSaved(rootSim["results"]);
             EDSolver.initiateSolver();
+            std::cout <<  "    ---- step 2 "<< std::endl;
             EDSolver.setTimeParameters(param_tm, param_dt, param_sptp);
             EDSolver.runSimulation();
+            std::cout <<  "    ---- step 3 "<< std::endl;
 
             break;
       }

@@ -117,7 +117,7 @@ void FHfTWASolver::initiateSolver()
             }
         }
     }
-    else if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
+    else if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::tbGroundState)
     {
 
         nPartU = fhSystem->getUpSpinParticleNumber();
@@ -300,7 +300,7 @@ void FHfTWASolver::runSimulation( )
 
 
 
-        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
+        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::tbGroundState)
         {
             // Initial matrices in momentum space :
             arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;

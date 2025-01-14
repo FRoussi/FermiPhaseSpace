@@ -136,7 +136,37 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     
 
 
+
     initiateEmptyEnergyMatrices();
+
+// Tunneling Energy
+    std::string tunnEn = rootSystem["EnergyT"].asString();
+    if (tunnEn == "nearestNeighbours")
+    {
+        tunnelingType = FHTunnelingType::nearestNeighboursConstant;
+        double tH = rootSystem.get("parametersT", -7.).asDouble();
+        setTunneling_BetweenNeighbours(tH);
+    }
+
+// Opposite-spin interaction
+    std::string UEn = rootSystem["EnergyU"].asString();
+    if (UEn == "None")
+    {
+        UInteractionType = FHOppositeSpinInteractionType::Unone;
+    }
+    if (UEn == "onSite")
+    {
+       setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
+        double U0 = rootSystem.get("parametersU", 1.).asDouble();                
+        setUInteraction_OnSite(U0);
+    }
+
+    // Same-spin Interaction
+    std::string VEn = rootSystem["EnergyV"].asString();
+    if (VEn == "None")
+    {
+        VInteractionType = FHSameSpinInteractionType::Vnone;
+    }
 
 
 // Initial condition
@@ -153,54 +183,44 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
             if (subtypeIC == "spinWave")
             {
-                for (uint iPart = 0; iPart < getnSites() ; iPart++ )
-                {
-                    if (iPart%2 == 0)
-                    {
-                        initConditions_upSpin[iPart] = true;
-                    }
-                    else
-                    {
-
-                        initConditions_downSpin[iPart] = true;
-                    }
-                }
+               setInitialConditions(FHInitialConditionType::spinWave);
             }  
 
             else if (subtypeIC == "chargeWave")
             {
-                for (uint iPart = 0; iPart < getnSites() ; iPart++ )
-                {
-                    if (iPart%2 == 0)
-                    {
-                        initConditions_upSpin[iPart] = true;
-                        initConditions_downSpin[iPart] = true;
-                    }
-                }
+                setInitialConditions(FHInitialConditionType::chargeWave);
             }     
 
             else if (subtypeIC == "spinWave3")
             {
 
                 uint midParticleNumber = std::ceil(getnSites()/2);
+                upSpinParticleNumber = 0;
+                downSpinParticleNumber = 0;
                 for (uint iPart = 0; iPart < midParticleNumber ; iPart++ )
                 {
                     initConditions_upSpin[iPart] = true;
+                    upSpinParticleNumber++;
                 }
                 for (uint iPart = midParticleNumber; iPart < getnSites() ; iPart++ )
                 {
                     initConditions_downSpin[iPart] = true;
+                    downSpinParticleNumber++;
                 }
-                
+
             }  
 
             else if (subtypeIC == "chargeWave3")
             {
                 uint midParticleNumber = std::ceil(getnSites()/2);
+                upSpinParticleNumber = 0;
+                downSpinParticleNumber = 0;
                 for (uint iPart = 0; iPart < midParticleNumber ; iPart++ )
                 {
                     initConditions_upSpin[iPart] = true;
                     initConditions_downSpin[iPart] = true;
+                    upSpinParticleNumber++;
+                    downSpinParticleNumber++;
                 }
 
             }         
@@ -242,10 +262,18 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
 
 
-
-        else if (typeIC == "quenched")
+        else if (typeIC == "tbGroundState")
         {
-
+            //std::cout << "  -- Initial Condition : TB ground State." << std::endl;
+            setInitialConditions(FHInitialConditionType::tbGroundState);
+        }
+        else if (typeIC == "mfGroundState")
+        {
+            setInitialConditions(FHInitialConditionType::mfGroundState);
+        }
+        else if (typeIC == "groundState")
+        {
+            setInitialConditions(FHInitialConditionType::mfGroundState);
         }
         else if (typeIC == "givenInFile")
         {
@@ -260,38 +288,6 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     {
         std::cout << "No Initial condition in the json file.  " << std::endl;  
     }
-
-
-// Tunneling Energy
-    std::string tunnEn = rootSystem["EnergyT"].asString();
-    if (tunnEn == "nearestNeighbours")
-    {
-        tunnelingType = FHTunnelingType::nearestNeighboursConstant;
-        double tH = rootSystem.get("parametersT", -7.).asDouble();
-        setTunneling_BetweenNeighbours(tH);
-    }
-
-// Opposite-spin interaction
-    std::string UEn = rootSystem["EnergyU"].asString();
-    if (UEn == "None")
-    {
-        UInteractionType = FHOppositeSpinInteractionType::Unone;
-    }
-    if (UEn == "onSite")
-    {
-       setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
-        double U0 = rootSystem.get("parametersU", 1.).asDouble();                
-        setUInteraction_OnSite(U0);
-    }
-
-    // Same-spin Interaction
-    std::string VEn = rootSystem["EnergyV"].asString();
-    if (VEn == "None")
-    {
-        VInteractionType = FHSameSpinInteractionType::Vnone;
-    }
-
-
 
 
 
@@ -377,26 +373,22 @@ bool                                        FHSystem::isPeriodic()
     return lattice.isPeriodic();
 }
 
-arma::dmat                                  FHSystem::getLatticeMatrix()
+arma::dmat                          FHSystem::getLatticeMatrix()
 {
     return lattice.getLatticeMatrix();
 }
 
-arma::drowvec                        FHSystem::getLatticeZeroVector()
+arma::drowvec                       FHSystem::getLatticeZeroVector()
 {
     return lattice.getLatticeZeroVector();
 }
 
-bool                                        FHSystem::isSystemTimeDependant()
-{
-    return externalPotential.isThePotentialTimeDependant();
-}
-bool                                    FHSystem::isExternalPotentialNull()
-{
-    return externalPotential.isThePotentialNull();
-}
+bool                                FHSystem::isSystemTimeDependant()       {   return externalPotential.isThePotentialTimeDependant();}
+bool                                FHSystem::isExternalPotentialNull()     {   return externalPotential.isThePotentialNull();}
+bool                                FHSystem::isTBGroundStateComputed()     {   return TBGroundStateComputed;}
+bool                                FHSystem::isMFGroundStateComputed()     {   return MFGroundStateComputed;}
 
-double                                      FHSystem::computeDistance(uint iSite, uint jSite)
+double                              FHSystem::computeDistance(uint iSite, uint jSite)
 {
     arma::drowvec dVec = getLatticeSitePosition(iSite) - getLatticeSitePosition(jSite); 
     double d = arma::norm(dVec);
@@ -528,42 +520,24 @@ void                                FHSystem::updateExternalPotential(double tim
 }
 
 
-const arma::cx_dmat*                        FHSystem::getUMatrixPointer()
-{
-    return &UMatrix;
-}
+const arma::cx_dmat*                        FHSystem::getUMatrixPointer()   {   return &UMatrix;}
+const arma::cx_dmat*                        FHSystem::getVMatrixPointer()   {   return &VMatrix;}
+const arma::cx_dmat*                        FHSystem::getJMatrixPointer()   {   return &JMatrix;}
+const arma::cx_dmat*                        FHSystem::gettMatrixPointer()   {   return &tMatrix;}
+const arma::cx_dmat*                        FHSystem::getExtPotPointer()    {   return externalPotential.getExternalPotentialPointer();}
+const arma::cx_dmat*                        FHSystem::get_tbgs_Nu_Pointer() {   return &tbgs_Nu;}
+const arma::cx_dmat*                        FHSystem::get_tbgs_Nd_Pointer() {   return &tbgs_Nd;}
+const arma::cx_dmat*                        FHSystem::get_tbgs_V_Pointer()  {   return &tbgs_V;}
+const arma::dvec*                           FHSystem::get_tbgs_E_Pointer()  {   return &tbgs_E;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Nu_Pointer() {   return &mfgs_Nu;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Nd_Pointer() {   return &mfgs_Nd;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Vu_Pointer() {   return &mfgs_Vu;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Vd_Pointer() {   return &mfgs_Vd;}
+const arma::dvec*                           FHSystem::get_mfgs_Eu_Pointer() {   return &mfgs_Eu;}
+const arma::dvec*                           FHSystem::get_mfgs_Ed_Pointer() {   return &mfgs_Ed;}
 
-const arma::cx_dmat*                        FHSystem::getVMatrixPointer()
-{
-    return &VMatrix; 
-}
-
-const arma::cx_dmat*                        FHSystem::getJMatrixPointer()
-{
-    return &JMatrix;
-}
-
-const arma::cx_dmat*                        FHSystem::gettMatrixPointer()
-{
-    return &tMatrix;
-}
-
-const arma::cx_dmat*                        FHSystem::getExtPotPointer()
-{
-    return externalPotential.getExternalPotentialPointer();
-}
-
-
-
-std::string                                 FHSystem::getName()
-{
-    return systemName;
-}
-
-std::string                                 FHSystem::getFolder()
-{
-    return systemFolder;
-}
+std::string                                 FHSystem::getName()             { return systemName;}
+std::string                                 FHSystem::getFolder()           { return systemFolder;}
 
 
 
@@ -650,7 +624,7 @@ void FHSystem::setInitialConditionsDiagonal(const std::vector<std::vector<unsign
 
 
 /// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
-/// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
+/// @param initCondType a kind of initial condition (tbGroundState, charge-wave, spin-wave ...)
 /// @return void
 void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
 {
@@ -662,46 +636,62 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
     upSpinParticleNumber = 0;
     downSpinParticleNumber = 0 ; 
 
-    if (initialCondition == FHInitialConditionType::spinWave)
+    switch (initialCondition)
     {
-        for (uint iSite = 0; iSite < getnSites(); iSite ++)
+        case FHInitialConditionType::spinWave:
         {
-            if (iSite%2 == 0)
+            for (uint iSite = 0; iSite < getnSites(); iSite ++)
             {
-                initConditions_upSpin[iSite] = true;
-                upSpinParticleNumber++;
-            }
-            else
-            {
-                initConditions_downSpin[iSite] = true;
-                downSpinParticleNumber++;
-            }
+                if (iSite%2 == 0)
+                {
+                    initConditions_upSpin[iSite] = true;
+                    upSpinParticleNumber++;
+                }
+                else
+                {
+                    initConditions_downSpin[iSite] = true;
+                    downSpinParticleNumber++;
+                }
 
-        }
-    }
-    else if (initialCondition == FHInitialConditionType::chargeWave)
-    {
-        for (uint iSite = 0; iSite < getnSites(); iSite ++)
+            }
+        }   
+        case FHInitialConditionType::chargeWave:
         {
-            if (iSite%2 == 0)
+            for (uint iSite = 0; iSite < getnSites(); iSite ++)
             {
-                initConditions_upSpin[iSite] = true;
-                upSpinParticleNumber++;
-                initConditions_downSpin[iSite] = true;
-                downSpinParticleNumber++;
+                if (iSite%2 == 0)
+                {
+                    initConditions_upSpin[iSite] = true;
+                    upSpinParticleNumber++;
+                    initConditions_downSpin[iSite] = true;
+                    downSpinParticleNumber++;
+                }
             }
         }
-    }
-    else
-    {
-        upSpinParticleNumber = getnSites()/2;
-        downSpinParticleNumber = getnSites()/2;
+        case FHInitialConditionType::tbGroundState:
+        {
+            //std::cout << "  -- Initial Condition : TB ground State." << std::endl;
+            upSpinParticleNumber = std::ceil((double)lattice.getnSites() / 2.); 
+            downSpinParticleNumber = std::floor((double)lattice.getnSites() / 2.); 
+            computeTBGroundState();
+        }
+        case FHInitialConditionType::mfGroundState:
+        {
+            upSpinParticleNumber = std::ceil((double)lattice.getnSites() / 2.); 
+            downSpinParticleNumber = std::floor((double)lattice.getnSites() / 2.); 
+            computeMFGroundState();
+        }
+        default:
+        {
+            upSpinParticleNumber = getnSites()/2;
+            downSpinParticleNumber = getnSites()/2;
+        }
     }
 
 }
 
 /// @brief Set up the Fermi-Hubbard system from site positions the number of particles as initial condition
-/// @param initCondType a kind of initial condition (quenched, charge-wave, spin-wave ...)
+/// @param initCondType a kind of initial condition (tbGroundState, charge-wave, spin-wave ...)
 /// @param partNumner vector of the numbers of up-spin, down-spin particle
 /// @return void
 void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::vector<unsigned int> partNumber )
@@ -713,30 +703,40 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
 
     upSpinParticleNumber = partNumber[0];
     downSpinParticleNumber = partNumber[1];
-    if (initialCondition == FHInitialConditionType::givenDiagonal)
+    switch(initialCondition)
     {
-        for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+        case FHInitialConditionType::givenDiagonal:
         {
-                initConditions_upSpin[iSite] = true;
-        }
-        for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
-        {
-                initConditions_downSpin[iSite] = true;
-        }
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_upSpin[iSite] = true;
+            }
+            for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_downSpin[iSite] = true;
+            }
 
-    }
-    else if (initialCondition == FHInitialConditionType::spinWave)
-    {
-        for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
-        {
-                initConditions_upSpin[iSite] = true;
         }
-        for (uint iSite = 0; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+        case FHInitialConditionType::spinWave:
         {
-                initConditions_downSpin[iSite] = true;
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_upSpin[iSite] = true;
+            }
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_downSpin[iSite] = true;
+            }
+        }
+        case FHInitialConditionType::tbGroundState:
+        {
+            computeTBGroundState();
+        }
+        case FHInitialConditionType::mfGroundState:
+        {
+            computeMFGroundState();
         }
     }
-
 }
 
 
@@ -1064,36 +1064,48 @@ void                    FHSystem::initiateEmptyEnergyMatrices()
     externalPotential = FHExternalPotential(&lattice);
 }
 
-void                                FHSystem::computeMomentaSpace()
+void                                FHSystem::computeTBGroundState(bool withExternalPotential)
 {
-    
-    arma::eig_sym(ms_E, ms_V, tMatrix);
+    if (withExternalPotential)
+    {
+        arma::eig_sym(tbgs_E, tbgs_V, tMatrix + *externalPotential.getExternalPotentialPointer());
+    }
+    else
+    {
+        arma::eig_sym(tbgs_E, tbgs_V, tMatrix);
+    }
 
-    arma::cx_dmat Mku = arma::cx_dmat(lattice.getnSites(), lattice.getnSites(), arma::fill::zeros);
-    Mku.submat(0,0,upSpinParticleNumber-1, upSpinParticleNumber-1) = arma::cx_dmat(upSpinParticleNumber, upSpinParticleNumber, arma::fill::eye);
+//std::cout << "     --- Comp TB 1, npu=" << upSpinParticleNumber << std::endl;
+    arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
+    diagMku.subvec(0,upSpinParticleNumber-1).ones();
+    arma::cx_dmat Mku = arma::diagmat(diagMku);
 
-    arma::cx_dmat Mkd = arma::cx_dmat(lattice.getnSites(), lattice.getnSites(), arma::fill::zeros);
-    Mkd.submat(0,0,downSpinParticleNumber-1, downSpinParticleNumber-1) = arma::cx_dmat(downSpinParticleNumber, downSpinParticleNumber, arma::fill::eye);
+    arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
+    diagMkd.subvec(0,downSpinParticleNumber-1).ones();
+    arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
-    ms_Nu = ms_V * Mku * ms_V.t();
-    ms_Nd = ms_V * Mkd * ms_V.t();
-
-    isMomentumSpaceComputed = true;
+//std::cout << "     --- Comp TB 2" << std::endl;
+    tbgs_Nu = tbgs_V * Mku * tbgs_V.t();
+    tbgs_Nd = tbgs_V * Mkd * tbgs_V.t();
+//std::cout << "     --- Comp TB 3" << std::endl;
+    TBGroundStateComputed  = true;
 
 
 }
 
 
-void                                FHSystem::computeHFGroundState()
+void                                FHSystem::computeMFGroundState(bool withExternalPotential)
 {
 
     uint nSites = lattice.getnSites();
 
-    arma::cx_dmat Mku = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    Mku.submat(0,0,upSpinParticleNumber-1, upSpinParticleNumber-1) = arma::cx_dmat(upSpinParticleNumber, upSpinParticleNumber, arma::fill::eye);
+    arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
+    diagMku.subvec(0,upSpinParticleNumber-1).ones();
+    arma::cx_dmat Mku = arma::diagmat(diagMku);
 
-    arma::cx_dmat Mkd = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    Mkd.submat(0,0,downSpinParticleNumber-1, downSpinParticleNumber-1) = arma::cx_dmat(downSpinParticleNumber, downSpinParticleNumber, arma::fill::eye);
+    arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
+    diagMkd.subvec(0,downSpinParticleNumber-1).ones();
+    arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
     double thresholdConverged = 10^(-4) * nSites;
     bool isConverged = false;
@@ -1115,27 +1127,36 @@ void                                FHSystem::computeHFGroundState()
             mfuHuD(i,i) = arma::dot(UMatrix.row(i), diagNu);
         } 
 
-        arma::eig_sym(hfgs_Eu, hfgs_Vu, tMatrix + mfuHuU);
-        arma::eig_sym(hfgs_Ed, hfgs_Vd, tMatrix + mfuHuD);
+        if (withExternalPotential)
+        {
+            arma::eig_sym(mfgs_Eu, mfgs_Vu, tMatrix + mfuHuU);
+            arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
+        }
+        else
+        {
+            arma::eig_sym(mfgs_Eu, mfgs_Vu, tMatrix + mfuHuU);
+            arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
+        }
+ 
 
-        hfgs_Nu = hfgs_Vu * Mku * hfgs_Vu.t();
-        hfgs_Nd = hfgs_Vd * Mkd * hfgs_Vd.t();
+        mfgs_Nu = mfgs_Vu * Mku * mfgs_Vu.t();
+        mfgs_Nd = mfgs_Vd * Mkd * mfgs_Vd.t();
 
-        if ((arma::norm(hfgs_Nu.diag() - diagNu) < thresholdConverged) && (arma::norm(hfgs_Nd.diag() - diagNd) < thresholdConverged))
+        if ((arma::norm(mfgs_Nu.diag() - diagNu) < thresholdConverged) && (arma::norm(mfgs_Nd.diag() - diagNd) < thresholdConverged))
         {
             isConverged = true;
         }
         else
         {
             it +=1;
-            diagNu = hfgs_Nu.diag();
-            diagNd = hfgs_Nd.diag();
+            diagNu = mfgs_Nu.diag();
+            diagNd = mfgs_Nd.diag();
         }
 
     }
 
 
-    isHFGroundStateComputed = true;
+    MFGroundStateComputed = true;
 
 }
 
@@ -1166,14 +1187,17 @@ Json::Value                    FHSystem::writeFHSystemJson()
         jsonIC["type"] = "givenDiagonal";
         jsonIC["subtype"] = "chargeWave";
         break;
-    case FHInitialConditionType::quenched:
-        jsonIC["type"] = "quenched";
+    case FHInitialConditionType::tbGroundState:
+        jsonIC["type"] = "tbGroundState";
         break;
     case FHInitialConditionType::groundState:
         jsonIC["type"] = "groundState";
         break;
     case FHInitialConditionType::givenDiagonal:
         jsonIC["type"] = "givenDiagonal"; 
+        break;
+    case FHInitialConditionType::mfGroundState:
+        jsonIC["type"] = "mfGroundState"; 
         break;
     default:
         break;
@@ -1674,9 +1698,9 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
                 initialCondition = FHInitialConditionType::givenDiagonal;
                 whatToR = WhatToRead::diagonalIC_UpSpin;
            }
-           else if (line == "#INITIALCONDITIONS_QUENCHED")
+           else if (line == "#INITIALCONDITIONS_tbGroundState")
            {
-                initialCondition = FHInitialConditionType::quenched;
+                initialCondition = FHInitialConditionType::tbGroundState;
                 whatToR = WhatToRead::numberOfParticles_UpSpin;
            }
            else if (line == "#ENERGYPARAMETER_U_CONSTANT")
@@ -1933,7 +1957,7 @@ FHSystem::FHSystem(std::string fileName, std::string folderName)
 
             setInitialConditionsDiagonal(initCond);
     }
-    else if (initialCondition == FHInitialConditionType::quenched)
+    else if (initialCondition == FHInitialConditionType::tbGroundState)
     {
         setInitialConditions(initialCondition, particlesNumber);
     }
@@ -2112,8 +2136,8 @@ void                    FHSystem::writeFHSystemBis(std::string folderName)
 // III - INITIAL CONDITIONS
         switch (initialCondition)
         {
-            case FHInitialConditionType::quenched:
-                streamSystem << "#INITIALCONDITIONS_QUENCHED" << std::endl;
+            case FHInitialConditionType::tbGroundState:
+                streamSystem << "#INITIALCONDITIONS_tbGroundState" << std::endl;
                 break;
             case FHInitialConditionType::givenDiagonal:
             {

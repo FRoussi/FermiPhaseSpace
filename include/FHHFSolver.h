@@ -76,8 +76,8 @@ private:
     arma::cx_dmat           Nut;                  //<- Current density matrices
     arma::cx_dmat           Ndt;
 
-    arma::dmat              V_1p;                   //<- rotation matrix for the momentum space
-    arma::dmat              V_1p_1;                 //<- Its transpose
+    //arma::dmat              V_1p;                   //<- rotation matrix for the momentum space
+    //arma::dmat              V_1p_1;                 //<- Its transpose
 
     void derivative(double currentTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
 

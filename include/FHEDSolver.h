@@ -67,6 +67,10 @@ public:
     void step(double d_t);
     void runSimulation();
 
+
+    arma::cx_dvec getTBGroundState();
+    arma::cx_dvec getMFGroundState();
+
     ~FHEDSolver();
 
 private:
@@ -106,10 +110,10 @@ private:
     arma::dmat momentaVec;
     arma::dvec momentaNRJ;
 
-    unsigned int getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BITS>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
+    uint getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BITS>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
 
 
-    std::complex<double> U_os_psil(unsigned int phi_l);                                     //<- Compute the interation energy of the basis vector 'phi_l'
+    std::complex<double> U_os_psil(uint phi_l);                                     //<- Compute the interation energy of the basis vector 'phi_l'
 
 
     void buildHamiltonian_U();                                                              //<- Build and store the operator "Interaction part of the Hamiltonian"
@@ -117,10 +121,10 @@ private:
     void buildHamiltonian_J();                                                              //<- Build and store the operator "Exchange coupling part of the Hamiltonian"
     void buildHamiltonian_ExternalPotential(double t);                                      //<- Build and store the operator "External Potential part of the Hamiltonian"
     void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
-    arma::sp_cx_dmat numberOperatorSpinUp(unsigned int iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
-    arma::sp_cx_dmat numberOperatorSpinDown(unsigned int iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
-    arma::sp_cx_dmat tunnelingOperatorSpinUp(unsigned int iSite, unsigned int jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
-    arma::sp_cx_dmat tunnelingOperatorSpinDown(unsigned int iSite, unsigned int jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
+    arma::sp_cx_dmat numberOperatorSpinUp(uint iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
+    arma::sp_cx_dmat numberOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
+    arma::sp_cx_dmat tunnelingOperatorSpinUp(uint iSite, uint jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
+    arma::sp_cx_dmat tunnelingOperatorSpinDown(uint iSite, uint jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
 
 };
 
