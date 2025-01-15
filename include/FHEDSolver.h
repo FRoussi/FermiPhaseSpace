@@ -61,6 +61,7 @@ public:
     double currentSimulationTime;
 
     void buildHamiltonian();
+
     void updateHamiltonian(double time);
     //void numberOperator();
 

@@ -91,8 +91,8 @@ protected:
     const arma::cx_dmat*        V;
     const arma::cx_dmat*        extPot;
 
-    arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
-    arma::dmat                  V_1p_1;             //<- Its transpose
+   // arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
+    //arma::dmat                  V_1p_1;             //<- Its transpose
 
     arma::cx_dmat               halfDiag;           //<- Diagonal matrix of 0.5
     arma::cx_dvec               halfVec;            //<- Vector of 0.5

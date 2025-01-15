@@ -31,8 +31,10 @@ void FHEDSolver::setComputeMomenta(bool yn)
 arma::cx_dvec FHEDSolver::getTBGroundState()
 {
     arma::sp_dmat H_t_real = arma::real(H_t);
-    arma::dvec psi_tbgs;
-    arma::eigs_sym(psi_tbgs, H_t_real, 1);  
+    arma::dmat eigVec;
+    arma::dvec eigVal;
+    arma::eigs_sym(eigVal, eigVec, H_t_real,1,"sa") ;  
+    arma::dvec psi_tbgs = eigVec.col(0);
     return arma::cx_dvec(psi_tbgs, arma::dvec(psi_tbgs.size(), arma::fill::zeros));
 }
 
@@ -51,8 +53,10 @@ arma::cx_dvec FHEDSolver::getMFGroundState()
     }
       
     arma::sp_dmat H_mf = arma::real(H_mfu) + arma::real(H_t);
-    arma::dvec psi_mfgs;
-    arma::eigs_sym(psi_mfgs, H_mf, 1);  
+    arma::dmat eigVec;
+    arma::dvec eigVal;
+    arma::eigs_sym(eigVal, eigVec, H_mf,1,"sa");  
+    arma::dvec psi_mfgs = eigVec.col(0);
     return arma::cx_dvec(psi_mfgs, arma::dvec(psi_mfgs.size(), arma::fill::zeros));
 }
 
@@ -65,7 +69,6 @@ void FHEDSolver::initiateSolver()
     // N PARTICLES
     nPartU = fhSystem->getUpSpinParticleNumber();
     nPartD = fhSystem->getDownSpinParticleNumber();
-std::cout <<  "      ----- IS : step 1 nu="<< nPartU << " nd=" << nPartD << std::endl;
     // BASIS DEFINITION
 
     this->basisSizeSpinUp = nChoosep(fhSystem->getnSites(), nPartU);
@@ -107,14 +110,15 @@ std::cout <<  "      ----- IS : step 1 nu="<< nPartU << " nd=" << nPartD << std:
         }
     }
 
-std::cout <<  "      ----- IS : step 2 "<< std::endl;
+    std::cout << "   -- Hilbert space dimension :     " << basisSize << std::endl;
+
     // OPERATORS
 
     buildPairOperators();                       //<- Usefull pair operators
     buildHamiltonian();                         //<- Hamiltonian
 
 
-std::cout <<  "      ----- IS : step 3 "<< std::endl;
+
     // INITIAL CONDITIONS
     this->psi_0 = arma::cx_dvec(this->basisSize, arma::fill::zeros);
 
@@ -123,10 +127,12 @@ std::cout <<  "      ----- IS : step 3 "<< std::endl;
         case FHSystem::FHInitialConditionType::tbGroundState:
         {
             psi_0 = getTBGroundState();
+            break;
         }
         case FHSystem::FHInitialConditionType::mfGroundState:
         {
             psi_0 = getMFGroundState();
+            break;
         }
         default:
         {
@@ -134,13 +140,12 @@ std::cout <<  "      ----- IS : step 3 "<< std::endl;
             this->posPartD = bitsetFromVector(fhSystem->getInitialCondition_downSpin());
             uint l = getBasisIndex(this->posPartU, this->posPartD);
             this->psi_0[l] = 1;                         //<- Compute the initial wave-function
-            std::cout <<  "      ----- IS : step 3.5 , l="<< l << std::endl;
+            break;
         }
     }
 
 
     this->psi = this->psi_0;                    //< The current wave-function becomes the initial one.
-std::cout <<  "      ----- IS : step 4 "<< std::endl;
 
 }
 
@@ -510,7 +515,8 @@ void FHEDSolver::step(double d_t)
 void FHEDSolver::runSimulation()
 {
 
-    std::cout << "- Start simulation" << std::endl << std::flush;
+    std::cout << "   -- Start simulation" << std::endl << std::flush;
+
 
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
@@ -527,6 +533,7 @@ void FHEDSolver::runSimulation()
     }
 
     this->psi = this->psi_0;
+
 
     // Bad filling thing :
     uint tt = nTimePoints/20;
@@ -587,7 +594,7 @@ void FHEDSolver::runSimulation()
         results.writeLine("EtH", EtH);
         results.writeLine("E", E);
 
-        std::cout << "- Results written in " << folderName << "/" << workName << ".txt" << std::endl;
+        std::cout << "   -- Results written in " << folderName << "/" << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -626,7 +633,7 @@ void FHEDSolver::runSimulation()
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results written in " << folderName << workName << ".json" << std::endl;
+        std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

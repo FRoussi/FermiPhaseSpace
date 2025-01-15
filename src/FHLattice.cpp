@@ -496,7 +496,7 @@ void                                FHLattice::setSamePointDistance(double sameP
 void                    FHLattice::readPositions(std::string xyzFile)
 {
 
-    uint nPart = 0;
+    uint nSites = 0;
     vector<vector<double>> positions3;
 
     siteNames = vector<std::string>();
@@ -507,13 +507,13 @@ void                    FHLattice::readPositions(std::string xyzFile)
     std::ifstream posFile(xyzFile);
     if (posFile.is_open())
     {
-        // Particle number :
+        // Site number :
         std::getline(posFile, line);
 
-        nPart = std::stoi(line);
+        nSites = std::stoi(line);
         // Comment :
         std::getline(posFile, line);
-        // Particles :
+        // Sites :
         while(std::getline(posFile, line))
         {
             std::stringstream ss(line);
@@ -535,21 +535,21 @@ void                    FHLattice::readPositions(std::string xyzFile)
     }
     else
     {
-        std::cout << "Problem with the particle file " << xyzFile << std::endl;
+        std::cout << "Problem with the site position file " << xyzFile << std::endl;
     }
 
 
-    if (nPart == positions3.size())
+    if (nSites == positions3.size())
     {
         if (talkative)
         {
-            std::cout << "   -- Position file read, " << nPart << " particles." << std::endl;
+            std::cout << "   -- Position file read, sites :   " << nSites << std::endl;
         }
         setPositions(armaMatfromVectorsVector(positions3));
     }
     else
     {
-        std::cout << "Problem in the xyz file : " << nPart << " particles announced, " << positions3.size() << " found." << std::endl;
+        std::cout << "Problem in the xyz file : " << nSites << " sites announced, " << positions3.size() << " found." << std::endl;
     }
 
 }

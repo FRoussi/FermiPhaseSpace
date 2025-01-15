@@ -133,8 +133,8 @@ void FHHFSolver::initiateSolver()
 
         setComputeMomenta(true);
 
-        Nu0 =  *fhSystem->get_tbgs_Nu_Pointer();
-        Nd0 =  *fhSystem->get_tbgs_Nd_Pointer();
+        Nu0 =  arma::cx_dmat(*fhSystem->get_tbgs_Nu_Pointer());
+        Nd0 =  arma::cx_dmat(*fhSystem->get_tbgs_Nd_Pointer());
 
         // printf("Test 4 - Initial Density matrix : \n");
         // Nu0.print();
@@ -152,8 +152,8 @@ void FHHFSolver::initiateSolver()
 
         setComputeMomenta(true);
 
-        Nu0 =  *fhSystem->get_mfgs_Nu_Pointer();
-        Nd0 =  *fhSystem->get_mfgs_Nd_Pointer();
+        Nu0 =  arma::cx_dmat(*fhSystem->get_mfgs_Nu_Pointer());
+        Nd0 =  arma::cx_dmat(*fhSystem->get_mfgs_Nd_Pointer());
 
         // printf("Test 4 - Initial Density matrix : \n");
         // Nu0.print();

@@ -185,12 +185,10 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
             {
                setInitialConditions(FHInitialConditionType::spinWave);
             }  
-
             else if (subtypeIC == "chargeWave")
             {
                 setInitialConditions(FHInitialConditionType::chargeWave);
             }     
-
             else if (subtypeIC == "spinWave3")
             {
 
@@ -209,7 +207,6 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
                 }
 
             }  
-
             else if (subtypeIC == "chargeWave3")
             {
                 uint midParticleNumber = std::ceil(getnSites()/2);
@@ -224,7 +221,6 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
                 }
 
             }         
-
             else if (subtypeIC == "givenInJson")
             {
                 Json::Value ICNu = jsonIC["IC_NuDiag"];
@@ -244,7 +240,6 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
                     }
                 }
             }   
-
             else if (subtypeIC == "givenInFile")
             {
                 std::string initConditions_fileName = jsonIC.get("IC_fileName", "").asString();
@@ -260,8 +255,6 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
             }        
 
         }
-
-
         else if (typeIC == "tbGroundState")
         {
             //std::cout << "  -- Initial Condition : TB ground State." << std::endl;
@@ -273,7 +266,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
         else if (typeIC == "groundState")
         {
-            setInitialConditions(FHInitialConditionType::mfGroundState);
+            setInitialConditions(FHInitialConditionType::groundState);
         }
         else if (typeIC == "givenInFile")
         {
@@ -283,6 +276,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         {
 
         }
+
+        std::cout << "   -- Initial condtion :            " << typeIC << std::endl;  
+        std::cout << "   -- Particle number :             " << upSpinParticleNumber + downSpinParticleNumber << std::endl;  
     }
     else
     {
@@ -642,18 +638,22 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
         {
             for (uint iSite = 0; iSite < getnSites(); iSite ++)
             {
+                //std::cout <<  "      ----- part filling : iSite=" << iSite << std::endl;
                 if (iSite%2 == 0)
                 {
                     initConditions_upSpin[iSite] = true;
                     upSpinParticleNumber++;
+                  //  std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
                 }
                 else
                 {
                     initConditions_downSpin[iSite] = true;
                     downSpinParticleNumber++;
+                    //std::cout <<  "      ----- part filling : down part" << iSite << std::endl;
                 }
 
             }
+            break;
         }   
         case FHInitialConditionType::chargeWave:
         {
@@ -667,6 +667,7 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
                     downSpinParticleNumber++;
                 }
             }
+            break;
         }
         case FHInitialConditionType::tbGroundState:
         {
@@ -674,17 +675,27 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
             upSpinParticleNumber = std::ceil((double)lattice.getnSites() / 2.); 
             downSpinParticleNumber = std::floor((double)lattice.getnSites() / 2.); 
             computeTBGroundState();
+            break;
         }
         case FHInitialConditionType::mfGroundState:
         {
             upSpinParticleNumber = std::ceil((double)lattice.getnSites() / 2.); 
             downSpinParticleNumber = std::floor((double)lattice.getnSites() / 2.); 
             computeMFGroundState();
+            break;
+        }
+        case FHInitialConditionType::groundState:
+        {
+            upSpinParticleNumber = std::ceil((double)lattice.getnSites() / 2.); 
+            downSpinParticleNumber = std::floor((double)lattice.getnSites() / 2.); 
+            computeMFGroundState();
+            break;
         }
         default:
         {
             upSpinParticleNumber = getnSites()/2;
             downSpinParticleNumber = getnSites()/2;
+            break;
         }
     }
 
@@ -715,7 +726,7 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
             {
                     initConditions_downSpin[iSite] = true;
             }
-
+            break;
         }
         case FHInitialConditionType::spinWave:
         {
@@ -727,14 +738,17 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
             {
                     initConditions_downSpin[iSite] = true;
             }
+            break;
         }
         case FHInitialConditionType::tbGroundState:
         {
             computeTBGroundState();
+            break;
         }
         case FHInitialConditionType::mfGroundState:
         {
             computeMFGroundState();
+            break;
         }
     }
 }
