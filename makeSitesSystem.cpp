@@ -55,11 +55,12 @@ int main(int argc, char* argv[])
     // Possible values
     vector<string> possibleGeometry = {"grid", "graphene", "bcc", "fcc"};
 
-    vector<string> possibleIC = {"ic_sw", "ic_cw", "ic_quenched"};
+    vector<string> possibleIC = {"ic_sw", "ic_cw", "ic_tbgs", "ic_mfgs"};
     enum IC{
         spinWave,
         chargeWave,
-        quenched
+        tbGroundState,
+        mfGroundState
     };
 
     vector<string> possibleNRJParameters = {"HF", "tJ"};
@@ -125,7 +126,8 @@ int main(int argc, char* argv[])
         {
             if (string(argv[iArg]) == possibleIC[0])  initC = IC::spinWave; 
             if (string(argv[iArg]) == possibleIC[1])  initC = IC::chargeWave;           
-            if (string(argv[iArg]) == possibleIC[2])  initC = IC::quenched;       //<- we note the initial condition
+            if (string(argv[iArg]) == possibleIC[2])  initC = IC::tbGroundState;       //<- we note the initial condition
+            if (string(argv[iArg]) == possibleIC[3])  initC = IC::mfGroundState;       //<- we note the initial condition
             wtr = whatToRead::nothing;                  //<- We stop reading geometry parameters
         }
         else 
@@ -171,8 +173,11 @@ int main(int argc, char* argv[])
     case IC::chargeWave:
         newSystem.setInitialConditions(FHSystem::FHInitialConditionType::chargeWave);
         break;
-    case IC::quenched:
-        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::quenched);
+    case IC::tbGroundState:
+        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::tbGroundState);
+        break; 
+    case IC::mfGroundState:
+        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::mfGroundState);
         break; 
     default:
         newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);

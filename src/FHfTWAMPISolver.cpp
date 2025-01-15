@@ -163,15 +163,15 @@ void FHfTWAMPISolver::runSimulation( )
 
 
 
-            if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::quenched)
+            if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::tbGroundState)
             {
                 // Initial matrices in momentum space :
                 arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
                 arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
 
                 // Initial matrices in position space :
-                rhou = V_1p * mU * V_1p_1 ;
-                rhod = V_1p * mD * V_1p_1;
+                rhou = (*fhSystem->get_tbgs_E_Pointer()) * mU * (*fhSystem->get_tbgs_E_Pointer()).t() ;
+                rhod = (*fhSystem->get_tbgs_E_Pointer()) * mD * (*fhSystem->get_tbgs_E_Pointer()).t();
 
             }
             else 
@@ -478,13 +478,12 @@ void FHfTWAMPISolver::runSimulation( )
         {
             Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
             Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-            arma::cx_dmat V_1p_comp = arma::cx_dmat(V_1p, arma::dmat(arma::size(V_1p), arma::fill::zeros)); 
             if (computeMomenta)
             {
                 for (unsigned int t = 0; t < nTimePoints; t++)
                 {
-                    Mkku.col(t) = arma::diagvec(V_1p_comp.t() * Nu.slice(t) * V_1p_comp);
-                    Mkkd.col(t) = arma::diagvec(V_1p_comp.t() * Nd.slice(t) * V_1p_comp);
+                    Mkku.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
+                    Mkkd.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
                 }
             }
         }
