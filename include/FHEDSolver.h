@@ -21,6 +21,8 @@
 std::vector<std::vector<bool>>      getCombinations(unsigned int n, unsigned int p, unsigned int max_n);
 unsigned int                        nChoosep(unsigned int n, unsigned int p);
 
+bool                        operator<(const std::bitset<MAX_BITS>& x, const std::bitset<MAX_BITS>& y);
+
 std::bitset<MAX_BITS>               bitsetFromVector(const std::vector<bool>& vec);
 
 void                                bitsetswap(std::bitset<MAX_BITS>& bs1, std::bitset<MAX_BITS>& bs2);
@@ -30,6 +32,8 @@ void                                fusionSortVector(std::vector<std::bitset<MAX
 std::bitset<MAX_BITS>               positionToBinary(std::vector<uint>&);
 
 std::vector<uint>                   binaryToPosition(std::bitset<MAX_BITS>&);
+
+
 
 uint                                getParticleNumberBetween(std::bitset<MAX_BITS>& posP, uint from, uint to);
 

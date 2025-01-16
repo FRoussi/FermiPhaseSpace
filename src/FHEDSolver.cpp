@@ -3,7 +3,11 @@
 FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
 {
 
+    arma::umat test = arma::umat(2,800000);
+
     currentSimulationTime = 0;
+
+
 }
 
 
@@ -66,6 +70,8 @@ arma::cx_dvec FHEDSolver::getMFGroundState()
 void FHEDSolver::initiateSolver()
 {
 
+
+    std::cout << "   -- Initialisation     "  << std::endl;
     // N PARTICLES
     nPartU = fhSystem->getUpSpinParticleNumber();
     nPartD = fhSystem->getDownSpinParticleNumber();
@@ -83,14 +89,13 @@ void FHEDSolver::initiateSolver()
     {
         c_pu[it] = bitsetFromVector(c_puVec[it]);
     }
+
     fusionSortVector(c_pu);
-    
+
 
     std::vector<std::vector<bool>> c_pdVec = getCombinations(this->fhSystem->getnSites(), this->nPartD, this->fhSystem->getnSites());
     c_pdVec.shrink_to_fit();
     this->c_pd = std::vector<std::bitset<MAX_BITS>>(basisSizeSpinDown);
-
-
     for (uint it = 0 ; it<basisSizeSpinDown; it++)
     {
         c_pd[it] = bitsetFromVector(c_pdVec[it]);
@@ -110,13 +115,14 @@ void FHEDSolver::initiateSolver()
         }
     }
 
-    std::cout << "   -- Hilbert space dimension :     " << basisSize << std::endl;
+    std::cout << "     - Hilbert space dimension :     " << basisSize << std::endl;
 
     // OPERATORS
 
     buildPairOperators();                       //<- Usefull pair operators
+    std::cout << "     - Pair operators built     " << std::endl;
     buildHamiltonian();                         //<- Hamiltonian
-
+    std::cout << "     - Hamiltonian built     "  << std::endl;
 
 
     // INITIAL CONDITIONS
@@ -144,7 +150,7 @@ void FHEDSolver::initiateSolver()
         }
     }
 
-
+    std::cout << "     - Initial condition computed     "  << std::endl;
     this->psi = this->psi_0;                    //< The current wave-function becomes the initial one.
 
 }
@@ -161,8 +167,12 @@ void FHEDSolver::buildPairOperators()
 // Filling the 2nd dimention of the vector-vector and computing the number operators
     for (uint i = 0; i < nSites; i++)
     {
+std::cout << "Niiu, i=" << i  <<  std::endl;
+
         NijuSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijuSet[i][i] = numberOperatorSpinUp(i);
+
+        std::cout << "Niid, i=" << i  <<  std::endl;
 
         NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijdSet[i][i] = numberOperatorSpinDown(i);
@@ -177,9 +187,12 @@ void FHEDSolver::buildPairOperators()
 
             if ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0)))
             {
+                    std::cout << "H_t(" << i << "," << j << ")=" << fhSystem->getTunnelingEnergy(i, j) <<  std::endl;
 
                 NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
+                std::cout << "N" << i << "," << j << "u"  <<  std::endl;
                 NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
+                std::cout << "N" << i << "," << j << "d"  <<  std::endl;
                 NijuSet[j][i] = NijuSet[i][j].t();
                 NijdSet[j][i] = NijdSet[i][j].t();
 
@@ -203,9 +216,13 @@ void FHEDSolver::buildHamiltonian_U()
     {
         for (uint jSite = 0 ; jSite < fhSystem->getnSites(); jSite ++)
         {
+
             if(fhSystem->getInteractionEnergy(iSite,jSite) != arma::cx_double(0,0))
             {
-                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite) * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
+                    std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) <<  std::endl;
+                arma::sp_cx_dmat NN = NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
+                 std::cout << "step1, NN.nz="  << NN.n_nonzero <<  std::endl;
+                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite) * NN;
             }
         }
     }
@@ -222,6 +239,7 @@ void FHEDSolver::buildHamiltonian_tM()
     {
         for (uint jSite = 0; jSite < fhSystem->getnSites(); jSite++)
         {
+
             if (fhSystem->getTunnelingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
                 H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]) ; //<- Up-spin AND down-spin !!!
@@ -274,9 +292,11 @@ void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 void FHEDSolver::buildHamiltonian()
 {
     buildHamiltonian_U();
+    std::cout << "HU build  " <<   std::endl;
     buildHamiltonian_tM();
+    std::cout << "Htm build  " <<   std::endl;
     buildHamiltonian_J();
-
+std::cout << "HJ build  " <<   std::endl;
     buildHamiltonian_ExternalPotential(0);
     
     H = H_U + H_t + H_J + H_externalPotential;
@@ -359,14 +379,26 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
 ///@return The operator "$\\hat{n}_{ij\\uparrow}$"
 arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 {
-    uint halfMatSizeUp = floor(basisSize * basisSizeSpinUp / 2);
-    arma::umat locations = arma::umat(2, halfMatSizeUp, arma::fill::zeros);
-    arma::cx_drowvec values = arma::cx_drowvec(halfMatSizeUp, arma::fill::zeros);
+    uint halfMatSizeUp = (uint)floor(basisSizeSpinUp * std::sqrt(basisSizeSpinUp));
+    std::cout << "halfMatSize =  " << halfMatSizeUp<<   std::endl;
+    std::vector<std::complex<double>> values = std::vector<std::complex<double>>();
+    std::vector<uint> locations1 = std::vector<uint>();
+    std::vector<uint> locations2 = std::vector<uint>();
+    values.reserve(halfMatSizeUp);
+    locations1.reserve(halfMatSizeUp);
+    locations2.reserve(halfMatSizeUp);
+
+      //  arma::cx_drowvec values = arma::cx_drowvec(halfMatSizeUp, arma::fill::zeros);
+
+    //arma::umat locations = arma::umat(2, halfMatSizeUp, arma::fill::zeros);
+    std::cout << "basisSizeSpinUp =  " << basisSizeSpinUp<<   std::endl;
+
 
     uint index = 0;
 
     for (uint lu = 0; lu < basisSizeSpinUp; lu++)
     {
+        //std::cout << "lu =  " << lu<<   std::endl;
         if (c_pu[lu][iSite] && (!c_pu[lu][jSite]))          // <- has the particle the possiblity to tunnel from iSite to jSite ?
         {
             std::bitset<MAX_BITS> c_pu_hoppdone = c_pu[lu];     // <- if yes, we write the new configuration in 'c_pu_hoppdone'
@@ -378,9 +410,12 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
                 {
                     for (uint ld = 0; ld < basisSizeSpinDown; ld++) // <- we note it in the whole base, with the down spin particle part equals
                     {
-                        locations(0,index) = basisSizeSpinDown * lu  + ld;      
-                        locations(1,index) = basisSizeSpinDown * mu  + ld;
-                        values(index) = pow(-1, getParticleNumberBetween(c_pu[lu], iSite, jSite));
+                        //locations(0,index) = basisSizeSpinDown * lu  + ld;      
+                        //locations(1,index) = basisSizeSpinDown * mu  + ld;
+                        //values(index) = pow(-1, getParticleNumberBetween(c_pu[lu], iSite, jSite));
+                        locations1.push_back(basisSizeSpinDown * lu  + ld);
+                        locations2.push_back(basisSizeSpinDown * mu  + ld);
+                        values.push_back(pow(-1, getParticleNumberBetween(c_pu[lu], iSite, jSite)));
                         index ++;
                     }
 
@@ -389,7 +424,17 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
         }
     }
 
-    return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
+
+    std::cout << "last index =  " << index<<   std::endl;
+    arma::umat loc = arma::umat(2,index);
+arma::cx_dvec val = arma::cx_dvec(values);
+for (int i = 0; i<index; i++)
+{
+    loc(0,i) = locations1[i];
+    loc(1,i) = locations2[i];
+}
+
+    return arma::sp_cx_dmat(loc, val, basisSize, basisSize);
 }
 
 
@@ -399,9 +444,13 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 ///@return The operator "$\\hat{n}_{ij\\downarrow}$"
 arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
 {
-     uint halfMatSizeDown = floor(basisSize * basisSizeSpinDown / 2);
-    arma::umat locations = arma::umat(2, halfMatSizeDown, arma::fill::zeros);
-    arma::cx_drowvec values = arma::cx_drowvec(halfMatSizeDown, arma::fill::zeros);
+     uint halfMatSizeDown = (uint)floor(basisSizeSpinUp * std::sqrt(basisSizeSpinUp));
+    std::vector<std::complex<double>> values = std::vector<std::complex<double>>();
+    std::vector<uint> locations1 = std::vector<uint>();
+    std::vector<uint> locations2 = std::vector<uint>();
+    values.reserve(halfMatSizeDown);
+    locations1.reserve(halfMatSizeDown);
+    locations2.reserve(halfMatSizeDown);
 
     uint index = 0;
 
@@ -418,9 +467,12 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
                 {
                     for (uint lu = 0; lu < basisSizeSpinUp; lu++) // <- we note it in the whole base, with the up spin particle part equals
                     {
-                        locations(0,index) = basisSizeSpinDown * lu  + ld;
-                        locations(1,index) = basisSizeSpinDown * lu  + md;
-                        values(index) = pow(-1, getParticleNumberBetween(c_pd[ld], iSite, jSite));
+                        //locations(0,index) = basisSizeSpinDown * lu  + ld;
+                        //locations(1,index) = basisSizeSpinDown * lu  + md;
+                        //values(index) = pow(-1, getParticleNumberBetween(c_pd[ld], iSite, jSite));
+                        locations1.push_back(basisSizeSpinDown * lu  + ld);
+                        locations2.push_back(basisSizeSpinDown * lu  + md);
+                        values.push_back(pow(-1, getParticleNumberBetween(c_pd[ld], iSite, jSite)));
                         index ++;
                     }
 
@@ -429,7 +481,16 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
         }
     }
 
-    return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
+       std::cout << "last index =  " << index<<   std::endl;
+    arma::umat loc = arma::umat(2,index);
+arma::cx_dvec val = arma::cx_dvec(values);
+for (int i = 0; i<index; i++)
+{
+    loc(0,i) = locations1[i];
+    loc(1,i) = locations2[i];
+}
+
+    return arma::sp_cx_dmat(loc, val, basisSize, basisSize);
 }
 
 
@@ -683,6 +744,13 @@ uint nChoosep(uint n, uint p)
 }
 
 
+bool operator<(const std::bitset<MAX_BITS>& x, const std::bitset<MAX_BITS>& y)
+{
+    for (int i = MAX_BITS-1; i >= 0; i--) {
+        if (x[i] ^ y[i]) return y[i];
+    }
+    return false;
+}
 
 
 
@@ -792,11 +860,13 @@ void fusionSortVector(std::vector<std::bitset<MAX_BITS>>& vec)
 {
     uint vecSize = vec.size();
 
+
     if (vecSize == 1);
 
     else if (vecSize == 2)
     {
-        if (vec[0].to_ulong() > vec[1].to_ulong())
+
+        if (vec[1] <  vec[0])
         {
             bitsetswap(vec[0], vec[1]);
         }
@@ -808,18 +878,21 @@ void fusionSortVector(std::vector<std::bitset<MAX_BITS>>& vec)
 
         uint mid = (uint)((vecSize / 2));
 
+
+
         std::vector<std::bitset<MAX_BITS>> vec1(vec.begin(), vec.begin() + mid);
         fusionSortVector(vec1);
 
-        std::vector<std::bitset<MAX_BITS>> vec2(vec.begin() + mid + 1, vec.end());
+        std::vector<std::bitset<MAX_BITS>> vec2(vec.begin() + mid , vec.end());
         fusionSortVector(vec2);
 
-        uint countor1 = 0;
-        uint countor2 = 0;
+
+        uint countor1 = 0;      //<- countor in vec1
+        uint countor2 = 0;      //<- countor in vec2
 
         while (countor1 + countor2 < vecSize)
         {
-            if (countor1 == vec1.size())
+            if (countor1 == vec1.size())            //<- if we reach the end of countor 1
             {
                 while (countor2 < vec2.size())
                 {
@@ -835,7 +908,7 @@ void fusionSortVector(std::vector<std::bitset<MAX_BITS>>& vec)
                     countor1 ++;
                 }
             }
-            else if (vec1[countor1].to_ulong() < vec2[countor2].to_ulong())
+            else if (vec1[countor1] < vec2[countor2])
             {
                 vec[countor1 + countor2] = vec1[countor1];
                 countor1++;
