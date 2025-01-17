@@ -6,6 +6,8 @@ FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
     arma::umat test = arma::umat(2,800000);
 
     currentSimulationTime = 0;
+    storeNiju = storeOperators::none;
+    storeNijd = storeOperators::none;
 
 
 }
@@ -172,33 +174,39 @@ std::cout << "Niiu, i=" << i  <<  std::endl;
         NijuSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijuSet[i][i] = numberOperatorSpinUp(i);
 
-        std::cout << "Niid, i=" << i  <<  std::endl;
-
         NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijdSet[i][i] = numberOperatorSpinDown(i);
 
     }
 
-
-    for (uint i = 0; i < nSites; i++)
+    if (storeNiju != storeOperators::none) 
     {
-        for (uint j = i + 1; j < nSites; j++)
+        for (uint i = 0; i < nSites; i++)
         {
-
-            if ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0)))
+            for (uint j = i + 1; j < nSites; j++)
             {
-                    std::cout << "H_t(" << i << "," << j << ")=" << fhSystem->getTunnelingEnergy(i, j) <<  std::endl;
-
-                NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
-                std::cout << "N" << i << "," << j << "u"  <<  std::endl;
-                NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
-                std::cout << "N" << i << "," << j << "d"  <<  std::endl;
-                NijuSet[j][i] = NijuSet[i][j].t();
-                NijdSet[j][i] = NijdSet[i][j].t();
-
+                if ((storeNiju == storeOperators::all) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
+                {
+                    NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
+                }
             }
         }
     }
+    if (storeNijd != storeOperators::none) 
+    {
+        for (uint i = 0; i < nSites; i++)
+        {
+            for (uint j = i + 1; j < nSites; j++)
+            {
+                if ((storeNijd == storeOperators::all) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
+                {
+                    NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
+                }
+            }
+        }
+    }
+
+ 
 
     /*printf("Some pair operators :");
     NijuSet[0][1].print_dense();
@@ -219,10 +227,8 @@ void FHEDSolver::buildHamiltonian_U()
 
             if(fhSystem->getInteractionEnergy(iSite,jSite) != arma::cx_double(0,0))
             {
-                    std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) <<  std::endl;
-                arma::sp_cx_dmat NN = NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
-                 std::cout << "step1, NN.nz="  << NN.n_nonzero <<  std::endl;
-                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite) * NN;
+                std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) <<  std::endl;
+                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite) * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
             }
         }
     }
@@ -235,14 +241,35 @@ void FHEDSolver::buildHamiltonian_U()
 void FHEDSolver::buildHamiltonian_tM()
 {
     H_t = arma::sp_cx_dmat(basisSize, basisSize);
+    arma::sp_cx_dmat nij = arma::sp_cx_dmat(basisSize, basisSize); 
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {
-        for (uint jSite = 0; jSite < fhSystem->getnSites(); jSite++)
+        for (uint jSite = iSite + 1; jSite < fhSystem->getnSites(); jSite++)
         {
-
             if (fhSystem->getTunnelingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
-                H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]) ; //<- Up-spin AND down-spin !!!
+                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) <<  std::endl;
+                // SPIN UP
+                if (storeNiju == storeOperators::none)
+                {
+                    nij = tunnelingOperatorSpinUp(iSite, jSite);
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * nij + fhSystem->getTunnelingEnergy(jSite, iSite) * nij.t(); 
+                }
+                else
+                {
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * NijuSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite) * NijuSet[iSite][jSite].t(); 
+                }
+                // SPIN DOWN
+                if (storeNijd == storeOperators::none)
+                {
+                    nij = tunnelingOperatorSpinDown(iSite, jSite);
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * nij + fhSystem->getTunnelingEnergy(jSite, iSite) * nij.t(); 
+                }
+                else
+                {
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * NijdSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite) * NijdSet[iSite][jSite].t(); 
+                }
+                
             }
         }
     }
@@ -257,7 +284,7 @@ void FHEDSolver::buildHamiltonian_J()
     H_J = arma::sp_cx_dmat(basisSize, basisSize);
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {
-        for (uint jSite = 0; jSite < fhSystem->getnSites(); jSite++)
+        for (uint jSite = iSite + 1 ; jSite < fhSystem->getnSites(); jSite++)
         {
             if (fhSystem->getExchangeCouplingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
@@ -291,10 +318,13 @@ void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 ///@return void
 void FHEDSolver::buildHamiltonian()
 {
+
+    fhSystem->gettMatrixPointer()->print();
+        buildHamiltonian_tM();
+    std::cout << "Htm build  " <<   std::endl;
     buildHamiltonian_U();
     std::cout << "HU build  " <<   std::endl;
-    buildHamiltonian_tM();
-    std::cout << "Htm build  " <<   std::endl;
+
     buildHamiltonian_J();
 std::cout << "HJ build  " <<   std::endl;
     buildHamiltonian_ExternalPotential(0);
@@ -380,7 +410,7 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
 arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 {
     uint halfMatSizeUp = (uint)floor(basisSizeSpinUp * std::sqrt(basisSizeSpinUp));
-    std::cout << "halfMatSize =  " << halfMatSizeUp<<   std::endl;
+    //std::cout << "halfMatSize =  " << halfMatSizeUp<<   std::endl;
     std::vector<std::complex<double>> values = std::vector<std::complex<double>>();
     std::vector<uint> locations1 = std::vector<uint>();
     std::vector<uint> locations2 = std::vector<uint>();
@@ -391,7 +421,7 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
       //  arma::cx_drowvec values = arma::cx_drowvec(halfMatSizeUp, arma::fill::zeros);
 
     //arma::umat locations = arma::umat(2, halfMatSizeUp, arma::fill::zeros);
-    std::cout << "basisSizeSpinUp =  " << basisSizeSpinUp<<   std::endl;
+   // std::cout << "basisSizeSpinUp =  " << basisSizeSpinUp<<   std::endl;
 
 
     uint index = 0;
@@ -425,7 +455,7 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
     }
 
 
-    std::cout << "last index =  " << index<<   std::endl;
+    //std::cout << "last index =  " << index<<   std::endl;
     arma::umat loc = arma::umat(2,index);
 arma::cx_dvec val = arma::cx_dvec(values);
 for (int i = 0; i<index; i++)
@@ -481,7 +511,7 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
         }
     }
 
-       std::cout << "last index =  " << index<<   std::endl;
+     //  std::cout << "last index =  " << index<<   std::endl;
     arma::umat loc = arma::umat(2,index);
 arma::cx_dvec val = arma::cx_dvec(values);
 for (int i = 0; i<index; i++)

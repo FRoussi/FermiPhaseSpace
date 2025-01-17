@@ -54,6 +54,14 @@ arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_cx_dm
 class FHEDSolver : public FHSolver
 {
 public:
+
+
+    enum storeOperators{
+        none,
+        needed,
+        all
+    };
+
     FHEDSolver(FHSystem* fhSystem);
 
 
@@ -114,6 +122,9 @@ private:
     uint nOfMomentumStates;
     arma::dmat momentaVec;
     arma::dvec momentaNRJ;
+
+    storeOperators storeNiju;
+    storeOperators storeNijd;
 
     uint getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BITS>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
 

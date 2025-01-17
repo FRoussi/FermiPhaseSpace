@@ -84,6 +84,9 @@ double                                  getSamePointDistance();
     bool                                areNeighbour(uint iSite, uint jSite);
     bool                                areSameSite(uint iSite, uint jSite);
 
+    const arma::dmat*                       getDistanceMatrix();
+    const std::vector<std::vector<bool>>*    getNeighbourMatrix();
+
 
 
     // SETTERS      

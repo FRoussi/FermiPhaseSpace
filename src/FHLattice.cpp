@@ -100,6 +100,7 @@ FHLattice::FHLattice(int x, int y, int z, bool talk)
 FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 {
 
+
     talkative = talk;
 
     isPeriodicBool = false;
@@ -117,6 +118,8 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 
     // std::cout << positionFile << std::endl;
     readPositions(positionFile);
+
+
 
     latticeType = FHLatticeType::none;
 
@@ -152,8 +155,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
         }
     }
 
-    
-
+    computeMatrices();
 
 
 }
@@ -395,26 +397,13 @@ double                                      FHLattice::computeDistance(uint iSit
     return d;
 }
 
-double                                      FHLattice::getDistance(uint i, uint j)
-{
-    return distanceMatrix(i,j);
-}
+double                                      FHLattice::getDistance(uint i, uint j)      {   return distanceMatrix(i,j);}
+bool                                        FHLattice::areNeighbour(uint i, uint j)     {   return neighbourMatrix[i][j];}
+bool                                        FHLattice::areSameSite(uint i, uint j)      {   return sameSiteMatrix[i][j];}
+std::string                                 FHLattice::getLatticeName()                 {   return latticeName;}
 
-bool                                        FHLattice::areNeighbour(uint i, uint j)
-{
-    return neighbourMatrix[i][j];
-}
-
-    bool                                FHLattice::areSameSite(uint i, uint j)
-    {
-        return sameSiteMatrix[i][j];
-    }
-
-std::string                              FHLattice::getLatticeName()
-{
-        return latticeName;
-}
-
+const arma::dmat*                           FHLattice::getDistanceMatrix()              {   return &distanceMatrix;}
+const vector<vector<bool>>*                 FHLattice::getNeighbourMatrix()             {   return &neighbourMatrix;}
 
 
 // SETTERS
@@ -551,6 +540,10 @@ void                    FHLattice::readPositions(std::string xyzFile)
     {
         std::cout << "Problem in the xyz file : " << nSites << " sites announced, " << positions3.size() << " found." << std::endl;
     }
+
+
+
+    computeMatrices();
 
 }
 
