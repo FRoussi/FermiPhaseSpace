@@ -107,7 +107,7 @@ FHLattice                               getLattice();
     bool                                isTBGroundStateComputed();
     bool                                isMFGroundStateComputed();
 
-    double                              computeDistance(uint iSite, uint jSite);
+   // double                              computeDistance(uint iSite, uint jSite);
     double                              getDistance(uint iSite, uint jSite);
     bool                                areNeighbour(uint iSite, uint jSite);
 

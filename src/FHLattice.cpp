@@ -155,7 +155,11 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
         }
     }
 
-    computeMatrices();
+    if (isPeriodic())
+    {
+        computeMatrices();
+    }
+
 
 
 }
@@ -343,27 +347,11 @@ uint                                FHLattice::getSiteType(uint iSite)
     return siteTypes[iSite];
 }
 
-    vector<std::string>            FHLattice::getSiteTypeNames()
-    {
-        return siteTypeNames;
-    }
-
-bool                                        FHLattice::isPeriodic()
-{
-    return isPeriodicBool;
-}
-
-arma::dmat                                  FHLattice::getLatticeMatrix()
-{
-    return latticeMatrix;
-}
-
-arma::drowvec                        FHLattice::getLatticeZeroVector()
-{
-    return latticeZeroVector;
-}
-
-double                                   FHLattice::getNeighbourDistance()
+vector<std::string>                         FHLattice::getSiteTypeNames()       {    return siteTypeNames;}
+bool                                        FHLattice::isPeriodic()             {    return isPeriodicBool;}
+arma::dmat                                  FHLattice::getLatticeMatrix()       {    return latticeMatrix;}
+arma::drowvec                               FHLattice::getLatticeZeroVector()   {    return latticeZeroVector;}
+double                                      FHLattice::getNeighbourDistance()
 {
     return neighbourDistance;
 }
@@ -642,27 +630,48 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
 void                    FHLattice::computeMatrices()
 {
 
+//std::cout << "compute matrices, smpD =" << samePointDistance << ", nD =" << neighbourDistance << std::endl;
+
     unsigned int nSites = sitePositions.n_rows;
 
     distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
     neighbourMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
     sameSiteMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
-    
+
+
+    // distance Matrix :
     for (uint i=0; i<nSites; i++)
     {
         for (uint j=0; j<nSites; j++)
         {
             distanceMatrix(i, j) = computeDistance(i,j);
-            if (abs(distanceMatrix(i, j))< samePointDistance)
+        }
+    }
+    // same site matrix :
+    for (uint i=0; i<nSites; i++)
+    {
+        for (uint j=0; j<nSites; j++)
+        {
+            if (std::norm(distanceMatrix(i, j))< samePointDistance)
             {
                 sameSiteMatrix[i][j] = true;
             }
-            if (abs(distanceMatrix(i, j) - neighbourDistance) < samePointDistance)
+        }
+    }
+    // neighbour matrix :
+    for (uint i=0; i<nSites; i++)
+    {
+        for (uint j=0; j<nSites; j++)
+        {
+            //std::cout << "i" << i << ", j=" << j << " , d=" << distanceMatrix(i, j) << "|d-n|=" << std::norm(distanceMatrix(i, j) - neighbourDistance) <<  std::endl;
+            if (std::norm(distanceMatrix(i, j) - neighbourDistance) < samePointDistance)
             {
                 neighbourMatrix[i][j] = true;
             }
         }
     }
+
+
 
 
     //std::cout << distanceMatrix << std::endl;

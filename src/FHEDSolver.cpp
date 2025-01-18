@@ -248,7 +248,7 @@ void FHEDSolver::buildHamiltonian_tM()
         {
             if (fhSystem->getTunnelingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
-                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) <<  std::endl;
+                
                 // SPIN UP
                 if (storeNiju == storeOperators::none)
                 {
@@ -269,7 +269,7 @@ void FHEDSolver::buildHamiltonian_tM()
                 {
                     H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * NijdSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite) * NijdSet[iSite][jSite].t(); 
                 }
-                
+                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) << " Ht.nnz="<< H_t.n_nonzero << std::endl;
             }
         }
     }
@@ -319,9 +319,9 @@ void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 void FHEDSolver::buildHamiltonian()
 {
 
-    fhSystem->gettMatrixPointer()->print();
-        buildHamiltonian_tM();
+    buildHamiltonian_tM();
     std::cout << "Htm build  " <<   std::endl;
+
     buildHamiltonian_U();
     std::cout << "HU build  " <<   std::endl;
 

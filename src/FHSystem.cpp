@@ -384,6 +384,7 @@ bool                                FHSystem::isExternalPotentialNull()     {   
 bool                                FHSystem::isTBGroundStateComputed()     {   return TBGroundStateComputed;}
 bool                                FHSystem::isMFGroundStateComputed()     {   return MFGroundStateComputed;}
 
+/*
 double                              FHSystem::computeDistance(uint iSite, uint jSite)
 {
     arma::drowvec dVec = getLatticeSitePosition(iSite) - getLatticeSitePosition(jSite); 
@@ -410,6 +411,7 @@ double                              FHSystem::computeDistance(uint iSite, uint j
     return d;
 }
 
+*/
 double                                      FHSystem::getDistance(uint i, uint j)
 {
     return lattice.getDistance(i,j);
