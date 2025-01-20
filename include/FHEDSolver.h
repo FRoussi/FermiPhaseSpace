@@ -47,7 +47,7 @@ std::bitset<MAX_BITS>               expandBitSetUnderConstraint(std::bitset<MAX_
 bool                                canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
 
 
-arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
+arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
 
 
 
@@ -106,19 +106,19 @@ private:
 // Current Wave function :
     arma::cx_dvec psi;                                              //<- Current wave function
 // operators :
-    arma::sp_cx_dmat H_U;
-    arma::sp_cx_dmat H_t;
-    arma::sp_cx_dmat H_J;
-    arma::sp_cx_dmat H_externalPotential;
-    arma::sp_cx_dmat H;
+    arma::sp_dmat H_U;
+    arma::sp_dmat H_t;
+    arma::sp_dmat H_J;
+    arma::sp_dmat H_externalPotential;
+    arma::sp_dmat H;
 
     //arma::cx_dmat Hdense;
     //std::vector<arma::sp_cx_dmat> NiiuSet;
     //std::vector<arma::sp_cx_dmat> NiidSet;
     //std::vector<arma::dvec> NiiuSet;
     //std::vector<arma::dvec> NiidSet;
-    std::vector<std::vector<arma::sp_cx_dmat>> NijuSet;
-    std::vector<std::vector<arma::sp_cx_dmat>> NijdSet;
+    std::vector<std::vector<arma::sp_dmat>> NijuSet;
+    std::vector<std::vector<arma::sp_dmat>> NijdSet;
 
     //Momentum space :
     uint nOfMomentumStates;
@@ -140,14 +140,14 @@ private:
     void buildHamiltonian_ExternalPotential(double t);                                      //<- Build and store the operator "External Potential part of the Hamiltonian"
     void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
 
-    arma::sp_cx_dmat buildOperatorFromDiagonal(uint bSize, arma::dvec diag);
+    arma::sp_dmat buildOperatorFromDiagonal(uint bSize, arma::dvec diag);
 
     arma::dvec numberVectorOperatorSpinUp(uint iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
     arma::dvec numberVectorOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
-    arma::sp_cx_dmat numberOperatorSpinUp(uint iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
-    arma::sp_cx_dmat numberOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
-    arma::sp_cx_dmat tunnelingOperatorSpinUp(uint iSite, uint jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
-    arma::sp_cx_dmat tunnelingOperatorSpinDown(uint iSite, uint jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
+    arma::sp_dmat numberOperatorSpinUp(uint iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
+    arma::sp_dmat numberOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
+    arma::sp_dmat tunnelingOperatorSpinUp(uint iSite, uint jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
+    arma::sp_dmat tunnelingOperatorSpinDown(uint iSite, uint jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
 
 };
 

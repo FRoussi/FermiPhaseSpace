@@ -29,8 +29,8 @@ void FHEDSolver::setComputeMomenta(bool yn)
 
         nOfMomentumStates = std::min(basisSize, (uint)10);
 
-        arma::sp_dmat H_t_real = arma::real(H_t);
-        arma::eigs_sym(momentaNRJ, momentaVec, H_t_real, nOfMomentumStates);  
+        //arma::sp_dmat H_t_real = arma::real(H_t);
+        arma::eigs_sym(momentaNRJ, momentaVec, H_t, nOfMomentumStates);  
     }
 }
 
@@ -47,15 +47,15 @@ arma::cx_dvec FHEDSolver::getTBGroundState()
 arma::cx_dvec FHEDSolver::getMFGroundState()
 {
 
-    arma::sp_cx_dmat H_mfu = arma::sp_cx_dmat(basisSize, basisSize);
+    arma::sp_dmat H_mfu = arma::sp_dmat(basisSize, basisSize);
 
     const arma::cx_dmat* mfNu =  fhSystem->get_mfgs_Nu_Pointer();
     const arma::cx_dmat* mfNd =  fhSystem->get_mfgs_Nd_Pointer();
 
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {     
-        H_mfu = H_mfu + mfNu->at(iSite,iSite) * fhSystem->getInteractionEnergy(iSite, iSite) * NijdSet[iSite][iSite];
-        H_mfu = H_mfu + mfNd->at(iSite,iSite) * fhSystem->getInteractionEnergy(iSite, iSite) * NijuSet[iSite][iSite];
+        H_mfu = H_mfu + mfNu->at(iSite,iSite).real() * fhSystem->getInteractionEnergy(iSite, iSite).real() * NijdSet[iSite][iSite];
+        H_mfu = H_mfu + mfNd->at(iSite,iSite).real() * fhSystem->getInteractionEnergy(iSite, iSite).real() * NijuSet[iSite][iSite];
     }
       
     arma::sp_dmat H_mf = arma::real(H_mfu) + arma::real(H_t);
@@ -165,10 +165,10 @@ void FHEDSolver::buildPairOperators()
     uint nSites = fhSystem->getnSites();
 
     // UPSPIN
-    NijuSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
+    NijuSet = std::vector<std::vector<arma::sp_dmat>>(nSites);
     for (uint i = 0; i < nSites; i++)
     {
-        NijuSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
+        NijuSet[i] = std::vector<arma::sp_dmat>(nSites);
         NijuSet[i][i] = numberOperatorSpinUp(i);
     }
     if (storeNiju != storeOperators::none)
@@ -189,10 +189,10 @@ void FHEDSolver::buildPairOperators()
 
 
 // SPIN DOWN
-    NijdSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
+    NijdSet = std::vector<std::vector<arma::sp_dmat>>(nSites);
     for (uint i = 0; i < nSites; i++)
     {
-        NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
+        NijdSet[i] = std::vector<arma::sp_dmat>(nSites);
         NijdSet[i][i] = numberOperatorSpinDown(i);
     }
     if (storeNijd != storeOperators::none) 
@@ -224,15 +224,15 @@ void FHEDSolver::buildPairOperators()
 void FHEDSolver::buildHamiltonian_U()
 {
 
-    H_U = arma::sp_cx_dmat(basisSize, basisSize);
+    H_U = arma::sp_dmat(basisSize, basisSize);
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite ++)
     {
         for (uint jSite = 0 ; jSite < fhSystem->getnSites(); jSite ++)
         {
             if(fhSystem->getInteractionEnergy(iSite,jSite) != arma::cx_double(0,0))
             {
-                std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
-                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite) * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
+                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite).real() * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
+                                std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
             }
         }
     }
@@ -244,8 +244,8 @@ void FHEDSolver::buildHamiltonian_U()
 ///@return void
 void FHEDSolver::buildHamiltonian_tM()
 {
-    H_t = arma::sp_cx_dmat(basisSize, basisSize);
-    arma::sp_cx_dmat nij = arma::sp_cx_dmat(basisSize, basisSize); 
+    H_t = arma::sp_dmat(basisSize, basisSize);
+    arma::sp_dmat nij = arma::sp_dmat(basisSize, basisSize); 
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {
         for (uint jSite = iSite + 1; jSite < fhSystem->getnSites(); jSite++)
@@ -257,21 +257,21 @@ void FHEDSolver::buildHamiltonian_tM()
                 if (storeNiju == storeOperators::none)
                 {
                     nij = tunnelingOperatorSpinUp(iSite, jSite);
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * nij + fhSystem->getTunnelingEnergy(jSite, iSite) * nij.t(); 
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * nij + fhSystem->getTunnelingEnergy(jSite, iSite).real() * nij.t(); 
                 }
                 else
                 {
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * NijuSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite) * NijuSet[iSite][jSite].t(); 
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * NijuSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite).real() * NijuSet[iSite][jSite].t(); 
                 }
                 // SPIN DOWN
                 if (storeNijd == storeOperators::none)
                 {
                     nij = tunnelingOperatorSpinDown(iSite, jSite);
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * nij + fhSystem->getTunnelingEnergy(jSite, iSite) * nij.t(); 
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * nij + fhSystem->getTunnelingEnergy(jSite, iSite).real() * nij.t(); 
                 }
                 else
                 {
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite) * NijdSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite) * NijdSet[iSite][jSite].t(); 
+                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * NijdSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite).real() * NijdSet[iSite][jSite].t(); 
                 }
                 std::cout << "Ht building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) << " Ht.nnz="<< H_t.n_nonzero << std::endl;
             }
@@ -285,14 +285,14 @@ void FHEDSolver::buildHamiltonian_tM()
 ///@return void
 void FHEDSolver::buildHamiltonian_J()
 {
-    H_J = arma::sp_cx_dmat(basisSize, basisSize);
+    H_J = arma::sp_dmat(basisSize, basisSize);
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {
         for (uint jSite = iSite + 1 ; jSite < fhSystem->getnSites(); jSite++)
         {
             if (fhSystem->getExchangeCouplingEnergy(iSite, jSite) != arma::cx_double(0,0))
             {
-                H_J = H_J + fhSystem->getExchangeCouplingEnergy(iSite, jSite) * arma::cx_double(0.5,0) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]).t() * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]) ;
+                H_J = H_J + fhSystem->getExchangeCouplingEnergy(iSite, jSite).real() * 0.5 * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]).t() * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]) ;
             }
         }
     }
@@ -301,7 +301,7 @@ void FHEDSolver::buildHamiltonian_J()
 
 void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 {
-   H_externalPotential = arma::sp_cx_dmat(basisSize, basisSize);
+   H_externalPotential = arma::sp_dmat(basisSize, basisSize);
    if (!fhSystem->isExternalPotentialNull())
    {
        for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
@@ -310,7 +310,7 @@ void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
            {
                if (fhSystem->getExternalPotential(iSite, jSite, time) != arma::cx_double(0,0))
                {
-                   H_externalPotential = H_externalPotential + fhSystem->getExternalPotential(iSite, jSite, time) * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]);
+                   H_externalPotential = H_externalPotential + fhSystem->getExternalPotential(iSite, jSite, time).real() * (NijuSet[iSite][jSite] + NijdSet[iSite][jSite]);
                }
            }
        }
@@ -328,7 +328,7 @@ void FHEDSolver::buildHamiltonian()
     buildHamiltonian_tM();
     std::cout << "Htm built  " <<   std::endl;
 
-
+//H_t.as_dense().print();
 
     buildHamiltonian_J();
 std::cout << "HJ build  " <<   std::endl;
@@ -350,7 +350,7 @@ void FHEDSolver::updateHamiltonian(double time)
 }
 
 
-arma::sp_cx_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec diag)
+arma::sp_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec diag)
 {
     uint bbSize = std::max(bSize, (uint)diag.size());
 
@@ -361,7 +361,7 @@ arma::sp_cx_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec di
         locations(1,i) = i;
     }
 
-    return arma::sp_cx_dmat(locations, arma::cx_dvec(diag, arma::dvec(diag.size(), arma::fill::zeros)), bbSize, bbSize, true, true);
+    return arma::sp_dmat(locations, diag, bbSize, bbSize, true, true);
 
 }
 
@@ -415,10 +415,10 @@ arma::dvec FHEDSolver::numberVectorOperatorSpinDown(uint iSite)
 ///@brief Compute the operator "$\\hat{n}_{ii\\uparrow}$"
 ///@param iSite Site number
 ///@return The operator "$\\hat{n}_{ii\\uparrow}$"
-arma::sp_cx_dmat FHEDSolver::numberOperatorSpinUp(uint iSite)
+arma::sp_dmat FHEDSolver::numberOperatorSpinUp(uint iSite)
 {
     arma::umat locations = arma::umat(2, basisSize, arma::fill::zeros);
-    arma::cx_drowvec values = arma::cx_drowvec(basisSize, arma::fill::zeros);
+    arma::drowvec values = arma::drowvec(basisSize, arma::fill::zeros);
     uint index = 0;
 
     if (nPartU != 0)
@@ -437,17 +437,17 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinUp(uint iSite)
             }
         }
     }
-    return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
+    return arma::sp_dmat(locations, values, basisSize, basisSize);
 }
 
 
 ///@brief Compute the operator "$\\hat{n}_{ii\\downarrow}$"
 ///@param iSite Site number
 ///@return The operator "$\\hat{n}_{ii\\downarrow}$"
-arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
+arma::sp_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
 {
     arma::umat locations = arma::umat(2, basisSize, arma::fill::zeros);
-    arma::cx_drowvec values = arma::cx_drowvec(basisSize, arma::fill::zeros);
+    arma::drowvec values = arma::drowvec(basisSize, arma::fill::zeros);
     uint index = 0;
 
     if (nPartD != 0)
@@ -466,7 +466,7 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
             }
         }
     }
-    return arma::sp_cx_dmat(locations, values, basisSize, basisSize);
+    return arma::sp_dmat(locations, values, basisSize, basisSize);
 }
 
 
@@ -474,11 +474,11 @@ arma::sp_cx_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
 ///@param iSite Site number
 ///@param jSite Site number
 ///@return The operator "$\\hat{n}_{ij\\uparrow}$"
-arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
+arma::sp_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 {
     uint halfMatSizeUp = (uint)floor(basisSizeSpinUp * std::sqrt(basisSizeSpinUp));
     //std::cout << "halfMatSize =  " << halfMatSizeUp<<   std::endl;
-    std::vector<std::complex<double>> values = std::vector<std::complex<double>>();
+    std::vector<double> values = std::vector<double>();
     std::vector<uint> locations1 = std::vector<uint>();
     std::vector<uint> locations2 = std::vector<uint>();
     values.reserve(halfMatSizeUp);
@@ -524,14 +524,14 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 
     //std::cout << "last index =  " << index<<   std::endl;
     arma::umat loc = arma::umat(2,index);
-arma::cx_dvec val = arma::cx_dvec(values);
+arma::dvec val = arma::dvec(values);
 for (int i = 0; i<index; i++)
 {
     loc(0,i) = locations1[i];
     loc(1,i) = locations2[i];
 }
 
-    return arma::sp_cx_dmat(loc, val, basisSize, basisSize);
+    return arma::sp_dmat(loc, val, basisSize, basisSize);
 }
 
 
@@ -539,10 +539,10 @@ for (int i = 0; i<index; i++)
 ///@param iSite Site number
 ///@param jSite Site number
 ///@return The operator "$\\hat{n}_{ij\\downarrow}$"
-arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
+arma::sp_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
 {
      uint halfMatSizeDown = (uint)floor(basisSizeSpinUp * std::sqrt(basisSizeSpinUp));
-    std::vector<std::complex<double>> values = std::vector<std::complex<double>>();
+    std::vector<double> values = std::vector<double>();
     std::vector<uint> locations1 = std::vector<uint>();
     std::vector<uint> locations2 = std::vector<uint>();
     values.reserve(halfMatSizeDown);
@@ -580,14 +580,14 @@ arma::sp_cx_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
 
      //  std::cout << "last index =  " << index<<   std::endl;
     arma::umat loc = arma::umat(2,index);
-arma::cx_dvec val = arma::cx_dvec(values);
+arma::dvec val = arma::dvec(values);
 for (int i = 0; i<index; i++)
 {
     loc(0,i) = locations1[i];
     loc(1,i) = locations2[i];
 }
 
-    return arma::sp_cx_dmat(loc, val, basisSize, basisSize);
+    return arma::sp_dmat(loc, val, basisSize, basisSize);
 }
 
 
@@ -1155,7 +1155,7 @@ std::bitset<MAX_BITS> expandBitSetUnderConstraint(std::bitset<MAX_BITS> reducedB
 /// @param tol
 /// @param m1
 /// @return exp(t.A)v
-arma::cx_dvec expmv(std::complex<double> t, arma::sp_cx_dmat& A, arma::cx_dvec& v, double tol, unsigned int m1 )
+arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, double tol, unsigned int m1 )
 {
     unsigned int n = A.n_rows;
     unsigned int m = std::min(n, m1);
