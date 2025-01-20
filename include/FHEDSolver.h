@@ -115,6 +115,8 @@ private:
     //arma::cx_dmat Hdense;
     //std::vector<arma::sp_cx_dmat> NiiuSet;
     //std::vector<arma::sp_cx_dmat> NiidSet;
+    //std::vector<arma::dvec> NiiuSet;
+    //std::vector<arma::dvec> NiidSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijuSet;
     std::vector<std::vector<arma::sp_cx_dmat>> NijdSet;
 
@@ -137,6 +139,11 @@ private:
     void buildHamiltonian_J();                                                              //<- Build and store the operator "Exchange coupling part of the Hamiltonian"
     void buildHamiltonian_ExternalPotential(double t);                                      //<- Build and store the operator "External Potential part of the Hamiltonian"
     void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
+
+    arma::sp_cx_dmat buildOperatorFromDiagonal(uint bSize, arma::dvec diag);
+
+    arma::dvec numberVectorOperatorSpinUp(uint iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
+    arma::dvec numberVectorOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
     arma::sp_cx_dmat numberOperatorSpinUp(uint iSite);                              //<- Build the operator "Number of up-spin particles on site 'iSite'".
     arma::sp_cx_dmat numberOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
     arma::sp_cx_dmat tunnelingOperatorSpinUp(uint iSite, uint jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".

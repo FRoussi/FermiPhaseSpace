@@ -163,23 +163,15 @@ void FHEDSolver::initiateSolver()
 void FHEDSolver::buildPairOperators()
 {
     uint nSites = fhSystem->getnSites();
-    NijuSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
-    NijdSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
 
-// Filling the 2nd dimention of the vector-vector and computing the number operators
+    // UPSPIN
+    NijuSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
     for (uint i = 0; i < nSites; i++)
     {
-std::cout << "Niiu, i=" << i  <<  std::endl;
-
         NijuSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
         NijuSet[i][i] = numberOperatorSpinUp(i);
-
-        NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
-        NijdSet[i][i] = numberOperatorSpinDown(i);
-
     }
-
-    if (storeNiju != storeOperators::none) 
+    if (storeNiju != storeOperators::none)
     {
         for (uint i = 0; i < nSites; i++)
         {
@@ -191,6 +183,17 @@ std::cout << "Niiu, i=" << i  <<  std::endl;
                 }
             }
         }
+    }
+
+
+
+
+// SPIN DOWN
+    NijdSet = std::vector<std::vector<arma::sp_cx_dmat>>(nSites);
+    for (uint i = 0; i < nSites; i++)
+    {
+        NijdSet[i] = std::vector<arma::sp_cx_dmat>(nSites);
+        NijdSet[i][i] = numberOperatorSpinDown(i);
     }
     if (storeNijd != storeOperators::none) 
     {
@@ -204,7 +207,9 @@ std::cout << "Niiu, i=" << i  <<  std::endl;
                 }
             }
         }
+
     }
+
 
  
 
@@ -224,10 +229,9 @@ void FHEDSolver::buildHamiltonian_U()
     {
         for (uint jSite = 0 ; jSite < fhSystem->getnSites(); jSite ++)
         {
-
             if(fhSystem->getInteractionEnergy(iSite,jSite) != arma::cx_double(0,0))
             {
-                std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) <<  std::endl;
+                std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
                 H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite) * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
             }
         }
@@ -319,11 +323,12 @@ void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 void FHEDSolver::buildHamiltonian()
 {
 
-    buildHamiltonian_tM();
-    std::cout << "Htm build  " <<   std::endl;
-
     buildHamiltonian_U();
-    std::cout << "HU build  " <<   std::endl;
+    std::cout << "HU built  " <<   std::endl;
+    buildHamiltonian_tM();
+    std::cout << "Htm built  " <<   std::endl;
+
+
 
     buildHamiltonian_J();
 std::cout << "HJ build  " <<   std::endl;
@@ -344,6 +349,68 @@ void FHEDSolver::updateHamiltonian(double time)
     H = H_U + H_t + H_J + H_externalPotential;
 }
 
+
+arma::sp_cx_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec diag)
+{
+    uint bbSize = std::max(bSize, (uint)diag.size());
+
+    arma::umat locations = arma::umat(2, (uint)diag.size(), arma::fill::zeros);
+    for (uint i = 0; i<(uint)diag.size(); i++)
+    {
+        locations(0,i) = i;
+        locations(1,i) = i;
+    }
+
+    return arma::sp_cx_dmat(locations, arma::cx_dvec(diag, arma::dvec(diag.size(), arma::fill::zeros)), bbSize, bbSize, true, true);
+
+}
+
+
+///@brief Compute the operator "$\\hat{n}_{ii\\uparrow}$"
+///@param iSite Site number
+///@return The operator "$\\hat{n}_{ii\\uparrow}$"
+arma::dvec FHEDSolver::numberVectorOperatorSpinUp(uint iSite)
+{
+    arma::dvec values = arma::dvec(basisSize, arma::fill::zeros);
+
+    if (nPartU != 0)
+    {
+        for (uint lu = 0; lu < basisSizeSpinUp; lu++)
+        {
+            if (c_pu[lu][iSite])
+            {
+                for (uint ld = 0; ld < basisSizeSpinDown; ld++)
+                {
+                    values(ld + basisSizeSpinDown * lu) = 1;
+                }
+            }
+        }
+    }
+    return values;
+}
+
+///@brief Compute the operator "$\\hat{n}_{ii\\downarrow}$"
+///@param iSite Site number
+///@return The operator "$\\hat{n}_{ii\\downarrow}$"
+arma::dvec FHEDSolver::numberVectorOperatorSpinDown(uint iSite)
+{
+    arma::dvec values = arma::dvec(basisSize, arma::fill::zeros);
+
+    if (nPartD != 0)
+    {
+        for (uint ld = 0; ld < basisSizeSpinDown; ld++)
+        {
+            if (c_pd[ld][iSite])
+            {
+                for (uint lu = 0; lu < basisSizeSpinUp; lu++)
+                {
+                    values(ld + basisSizeSpinDown * lu) = 1;
+                }
+            }
+        }
+    }
+    return values;
+}
 
 ///@brief Compute the operator "$\\hat{n}_{ii\\uparrow}$"
 ///@param iSite Site number

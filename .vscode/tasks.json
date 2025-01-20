@@ -150,5 +150,27 @@
             "group":"build",
             "detail": "Compile the system maker: /usr/bin/g++."
         }
+        ,
+        {
+            "type": "cppbuild",
+            "label": "g++ build test program",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g", 
+                "${workspaceFolder}/test.cpp",
+                "-o",
+                "${fileDirname}/test",
+                "-larmadillo"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group":"build",
+            "detail": "Compile the system maker: /usr/bin/g++."
+        }
     ]
 }
