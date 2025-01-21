@@ -301,241 +301,68 @@ FHSystem::FHSystem(FHLattice lat)
 }
 
 
-/// @brief getter - lattice
-/// @return lattice
-FHLattice                                FHSystem::getLattice()
-{
-    return lattice;
-}
 
-/// @brief getter - number of sites
-/// @return number of sites
-unsigned int                                FHSystem::getnSites()
-{
-    return lattice.getnSites();
-}
+FHLattice                                   FHSystem::getLattice()                                  {    return lattice;}
+unsigned int                                FHSystem::getnSites()                                   {    return lattice.getnSites();}
+unsigned int                                FHSystem::getnDimension()                               {    return lattice.getnDimension();}
+arma::drowvec                               FHSystem::getSitePosition(uint iSite)                   {    return lattice.getSitePosition(iSite);}
+double                                      FHSystem::getCoordinate(uint dim, uint iSite)           {    return lattice.getCoordinate(dim, iSite);}
+arma::drowvec                               FHSystem::getLatticeSitePosition(uint iSite)            {    return lattice.getLatticeSitePosition(iSite);}
+double                                      FHSystem::getLatticeCoordinate(uint dim, uint iSite)    {    return lattice.getLatticeCoordinate(dim, iSite);}
 
-/// @brief getter - number of dimension (we always work in dim 3 though)
-/// @return number of dimensions (if not 3, weird)
-unsigned int                                FHSystem::getnDimension()
-{
-    return lattice.getnDimension();
-}
+bool                                        FHSystem::sitesHaveNames()                              {    return lattice.sitesHaveNames();}
+std::string                                 FHSystem::getSiteName(uint iSite)                       {    return lattice.getSiteName(iSite);}
+bool                                        FHSystem::isPeriodic()                                  {    return lattice.isPeriodic();}
 
-/// @brief getter - position row vector of site 'iSite'
-/// @param iSite a site number 
-/// @return row vector of coordinates
-arma::drowvec                               FHSystem::getSitePosition(uint iSite)
-{
-    return lattice.getSitePosition(iSite);
-}
+arma::dmat                                  FHSystem::getLatticeMatrix()                            {    return lattice.getLatticeMatrix();}
+arma::drowvec                               FHSystem::getLatticeZeroVector()                        {    return lattice.getLatticeZeroVector();}
 
-/// @brief getter - coordinate of a site
-/// @param dim coordinate dimension
-/// @param iSite site number
-/// @return coordinate of site 'iSite'in dimension 'dim'
-double                                      FHSystem::getCoordinate(uint dim, uint iSite)
-{ 
-    return lattice.getCoordinate(dim, iSite);
-}
+bool                                        FHSystem::isSystemTimeDependant()                       {    return externalPotential.isThePotentialTimeDependant();}
+bool                                        FHSystem::isExternalPotentialNull()                     {    return externalPotential.isThePotentialNull();}
+bool                                        FHSystem::isTBGroundStateComputed()                     {    return TBGroundStateComputed;}
+bool                                        FHSystem::isMFGroundStateComputed()                     {    return MFGroundStateComputed;}
 
-/// @brief getter - relative position row vector of site 'iSite'
-/// @param iSite a site number 
-/// @return row vector of relative coordinates
-arma::drowvec                       FHSystem::getLatticeSitePosition(uint iSite)
-{
-    return lattice.getLatticeSitePosition(iSite);
-}
+double                                      FHSystem::getDistance(uint i, uint j)                   {    return lattice.getDistance(i,j);}
+bool                                        FHSystem::areNeighbour(uint i, uint j)                  {    return lattice.areNeighbour(i,j);}
 
-double                              FHSystem::getLatticeCoordinate(uint dim, uint iSite)
-{
-    return lattice.getLatticeCoordinate(dim, iSite);
-}
+FHSystem::FHInitialConditionType            FHSystem::getInitialCondition()                         {    return initialCondition;}
+std::vector<bool>                           FHSystem::getInitialCondition_upSpin()                  {    return initConditions_upSpin;}
+std::vector<bool>                           FHSystem::getInitialCondition_downSpin()                {    return initConditions_downSpin;}
+unsigned int                                FHSystem::getUpSpinParticleNumber()                     {    return upSpinParticleNumber;}
+unsigned int                                FHSystem::getDownSpinParticleNumber()                   {    return downSpinParticleNumber;}
 
+FHSystem::FHOppositeSpinInteractionType     FHSystem::getOppositeSpinInteractionType()              {    return UInteractionType;}
+FHSystem::FHTunnelingType                   FHSystem::getTunnelingType()                            {    return tunnelingType;}
+FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  {    return VInteractionType;}
+FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               {    return tJExCType;}
+std::complex<double>                        FHSystem::getInteractionEnergy(int i, int j)            {    return UMatrix(i,j);}
+std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)    {    return VMatrix(i,j);}
+std::complex<double>                        FHSystem::getTunnelingEnergy(int i, int j)              {    return tMatrix(i,j);}
+std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)       {    return JMatrix(i,j);}
 
-bool                                        FHSystem::sitesHaveNames()
-{
-    return lattice.sitesHaveNames();
-}
+std::complex<double>                        FHSystem::getExternalPotential(int i, double t)         {    return externalPotential.getExternalPotential(t,i,i);}
+std::complex<double>                        FHSystem::getExternalPotential(int i, int j, double t)  {    return externalPotential.getExternalPotential(t,i,j);}
+arma::cx_dmat                               FHSystem::getExternalPotential(double time)             {    return externalPotential.getExternalPotential(time);}
+void                                        FHSystem::updateExternalPotential(double time)          {    externalPotential.updatePotential(time);}
 
-std::string                                 FHSystem::getSiteName(uint iSite)
-{
-    return lattice.getSiteName(iSite);
-}
+const arma::cx_dmat*                        FHSystem::getUMatrixPointer()                           {   return &UMatrix;}
+const arma::cx_dmat*                        FHSystem::getVMatrixPointer()                           {   return &VMatrix;}
+const arma::cx_dmat*                        FHSystem::getJMatrixPointer()                           {   return &JMatrix;}
+const arma::cx_dmat*                        FHSystem::gettMatrixPointer()                           {   return &tMatrix;}
+const arma::cx_dmat*                        FHSystem::getExtPotPointer()                            {   return externalPotential.getExternalPotentialPointer();}
+const arma::cx_dmat*                        FHSystem::get_tbgs_Nu_Pointer()                         {   return &tbgs_Nu;}
+const arma::cx_dmat*                        FHSystem::get_tbgs_Nd_Pointer()                         {   return &tbgs_Nd;}
+const arma::cx_dmat*                        FHSystem::get_tbgs_V_Pointer()                          {   return &tbgs_V;}
+const arma::dvec*                           FHSystem::get_tbgs_E_Pointer()                          {   return &tbgs_E;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Nu_Pointer()                         {   return &mfgs_Nu;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Nd_Pointer()                         {   return &mfgs_Nd;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Vu_Pointer()                         {   return &mfgs_Vu;}
+const arma::cx_dmat*                        FHSystem::get_mfgs_Vd_Pointer()                         {   return &mfgs_Vd;}
+const arma::dvec*                           FHSystem::get_mfgs_Eu_Pointer()                         {   return &mfgs_Eu;}
+const arma::dvec*                           FHSystem::get_mfgs_Ed_Pointer()                         {   return &mfgs_Ed;}
 
-
-bool                                        FHSystem::isPeriodic()
-{
-    return lattice.isPeriodic();
-}
-
-arma::dmat                          FHSystem::getLatticeMatrix()
-{
-    return lattice.getLatticeMatrix();
-}
-
-arma::drowvec                       FHSystem::getLatticeZeroVector()
-{
-    return lattice.getLatticeZeroVector();
-}
-
-bool                                FHSystem::isSystemTimeDependant()       {   return externalPotential.isThePotentialTimeDependant();}
-bool                                FHSystem::isExternalPotentialNull()     {   return externalPotential.isThePotentialNull();}
-bool                                FHSystem::isTBGroundStateComputed()     {   return TBGroundStateComputed;}
-bool                                FHSystem::isMFGroundStateComputed()     {   return MFGroundStateComputed;}
-
-/*
-double                              FHSystem::computeDistance(uint iSite, uint jSite)
-{
-    arma::drowvec dVec = getLatticeSitePosition(iSite) - getLatticeSitePosition(jSite); 
-    double d = arma::norm(dVec);
-    //std::cout << isPeriodic() << std::endl;
-    if (isPeriodic())
-    {
-        arma::dmat latMat = getLatticeMatrix();
-        for (int zSym = -1; zSym < 2; zSym++)                             //<- symmetries in z
-        {
-            for (int ySym = -1; ySym < 2; ySym++)                         //<- symmetries in y
-            {
-                for (int xSym = -1; xSym < 2; xSym++)                     //<- symmetries in x
-                {
-                    arma::drowvec dVecSym = dVec + xSym * latMat.col(0).t() + ySym * latMat.col(1).t() + zSym * latMat.col(2).t(); //<- new vector with one of the symmetric lattice
-                    d = std::min(d, arma::norm(dVecSym));                   //<- we take the minimum of them all
-                    //std::cout << xSym << "  " << ySym << "  " << zSym << "  " << arma::norm(dVecSym) << "   " << d << std::endl;
-                }
-            }
-        }
-            
-    }
-
-    return d;
-}
-
-*/
-double                                      FHSystem::getDistance(uint i, uint j)
-{
-    return lattice.getDistance(i,j);
-}
-
-bool                                        FHSystem::areNeighbour(uint i, uint j)
-{
-    return lattice.areNeighbour(i,j);
-}
-
-
-/// @brief  getter - initial condition type
-/// @return initial condition type
-FHSystem::FHInitialConditionType            FHSystem::getInitialCondition()
-{
-    return initialCondition;
-}
-
-std::vector<bool>                           FHSystem::getInitialCondition_upSpin()
-{
-    return initConditions_upSpin;
-}
-
-std::vector<bool>                           FHSystem::getInitialCondition_downSpin()
-{
-    return initConditions_downSpin;
-}
-
-/// @brief getter - number of spin-up particles
-/// @return number of spin-up particles
-unsigned int                                FHSystem::getUpSpinParticleNumber()
-{
-    return upSpinParticleNumber;
-}
-
-/// @brief getter - number of spin-down particles
-/// @return number of spin-down particle
-unsigned int                                FHSystem::getDownSpinParticleNumber()
-{
-    return downSpinParticleNumber;
-}
-
-
-
-FHSystem::FHOppositeSpinInteractionType     FHSystem::getOppositeSpinInteractionType()
-{
-    return UInteractionType;
-}
-
-FHSystem::FHTunnelingType                   FHSystem::getTunnelingType() 
-{
-    return tunnelingType;
-}
-
-FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType() 
-{
-    return VInteractionType;
-}
-
-FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType() 
-{
-    return tJExCType;
-}
-
-
-std::complex<double>                        FHSystem::getInteractionEnergy(int i, int j)
-{
-    return UMatrix(i,j);
-}
-
-std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)
-{
-    return VMatrix(i,j);
-}
-
-std::complex<double>                        FHSystem::getTunnelingEnergy(int i, int j)
-{
-    return tMatrix(i,j);
-}
-
-std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)
-{
-    return JMatrix(i,j);
-}
-
-std::complex<double>                        FHSystem::getExternalPotential(int i, double t)
-{
-    return externalPotential.getExternalPotential(t,i,i);
-}
-
-std::complex<double>                        FHSystem::getExternalPotential(int i, int j, double t)
-{
-    return externalPotential.getExternalPotential(t,i,j);
-}
-
-arma::cx_dmat                        FHSystem::getExternalPotential(double time)
-{
-    return externalPotential.getExternalPotential(time);
-}
-
-void                                FHSystem::updateExternalPotential(double time)
-{
-    externalPotential.updatePotential(time);
-}
-
-
-const arma::cx_dmat*                        FHSystem::getUMatrixPointer()   {   return &UMatrix;}
-const arma::cx_dmat*                        FHSystem::getVMatrixPointer()   {   return &VMatrix;}
-const arma::cx_dmat*                        FHSystem::getJMatrixPointer()   {   return &JMatrix;}
-const arma::cx_dmat*                        FHSystem::gettMatrixPointer()   {   return &tMatrix;}
-const arma::cx_dmat*                        FHSystem::getExtPotPointer()    {   return externalPotential.getExternalPotentialPointer();}
-const arma::cx_dmat*                        FHSystem::get_tbgs_Nu_Pointer() {   return &tbgs_Nu;}
-const arma::cx_dmat*                        FHSystem::get_tbgs_Nd_Pointer() {   return &tbgs_Nd;}
-const arma::cx_dmat*                        FHSystem::get_tbgs_V_Pointer()  {   return &tbgs_V;}
-const arma::dvec*                           FHSystem::get_tbgs_E_Pointer()  {   return &tbgs_E;}
-const arma::cx_dmat*                        FHSystem::get_mfgs_Nu_Pointer() {   return &mfgs_Nu;}
-const arma::cx_dmat*                        FHSystem::get_mfgs_Nd_Pointer() {   return &mfgs_Nd;}
-const arma::cx_dmat*                        FHSystem::get_mfgs_Vu_Pointer() {   return &mfgs_Vu;}
-const arma::cx_dmat*                        FHSystem::get_mfgs_Vd_Pointer() {   return &mfgs_Vd;}
-const arma::dvec*                           FHSystem::get_mfgs_Eu_Pointer() {   return &mfgs_Eu;}
-const arma::dvec*                           FHSystem::get_mfgs_Ed_Pointer() {   return &mfgs_Ed;}
-
-std::string                                 FHSystem::getName()             { return systemName;}
-std::string                                 FHSystem::getFolder()           { return systemFolder;}
+std::string                                 FHSystem::getName()                                     { return systemName;}
+std::string                                 FHSystem::getFolder()                                   { return systemFolder;}
 
 
 
@@ -756,26 +583,10 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
 }
 
 
-void                    FHSystem::setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType UType)
-{
-    UInteractionType = UType;
-}
-
-void                    FHSystem::setTunnelingType(FHSystem::FHTunnelingType tType)
-{
-    tunnelingType = tType;
-}
-
-void                    FHSystem::setSameSpinInteractionType(FHSystem::FHSameSpinInteractionType VType)
-{
-    VInteractionType = VType;
-}
-
-void                    FHSystem::setExchangeCouplingEnergyType(FHSystem::tJExchangeCouplingType JType)
-{
-    tJExCType = JType;
-}
-
+void                    FHSystem::setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType UType)     {    UInteractionType = UType;}
+void                    FHSystem::setTunnelingType(FHSystem::FHTunnelingType tType)                                 {    tunnelingType = tType;}
+void                    FHSystem::setSameSpinInteractionType(FHSystem::FHSameSpinInteractionType VType)             {    VInteractionType = VType;}
+void                    FHSystem::setExchangeCouplingEnergyType(FHSystem::tJExchangeCouplingType JType)             {    tJExCType = JType;}
 
 
 /// @brief setter - on-site interaction energy
