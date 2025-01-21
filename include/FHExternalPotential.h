@@ -6,43 +6,56 @@
 #include <math.h>
 #include <armadillo>
 
-
+#include "json/json.h"
 #include "FHLattice.h"
 //#include "FHSystem.h"
 
 
-
+enum FHExternalPotentialType{
+    noneEP,
+    null,
+    constant,
+    coreHole,
+    pulse
+};
 
 class FHExternalPotential
 {
 public:
 
+
     FHExternalPotential();
     FHExternalPotential(FHLattice* lat);
 
-    bool                    getExternalPotential(double time, arma::cx_dmat& potential);
-    arma::cx_dmat*          getExternalPotentialPointer();
-    arma::cx_double         getExternalPotential(uint iSite, uint jSite);
-    arma::cx_double         getExternalPotential(double t, uint iSite, uint jSite);
-    arma::cx_dmat           getExternalPotential(double t);
+    bool                        getExternalPotential(double time, arma::cx_dmat& potential);
+    arma::cx_dmat*              getExternalPotentialPointer();
+    arma::cx_double             getExternalPotential(uint iSite, uint jSite);
+    arma::cx_double             getExternalPotential(double t, uint iSite, uint jSite);
+    arma::cx_dmat               getExternalPotential(double t);
+    FHExternalPotentialType     getExternalPotentialType();
 
-    void                    updatePotential(double t);
+    virtual                     std::vector<double>         getParameters();
+    virtual Json::Value         writePotentialJson();                 
 
-    bool                    isThePotentialNull();
-    bool                    isThePotentialTimeDependant();
+    void                        updatePotential(double t);
 
-protected:
+    bool                        isThePotentialNull();
+    bool                        isThePotentialTimeDependant();
 
-    bool                    nullPotential;
-    
-    bool                    timeDependantPotential;
+protected:  
 
-    double                  currentPotentialTime;
+    bool                        nullPotential;
 
-    const arma::dmat*       sitePositions;
+    bool                        timeDependantPotential;
+
+    double                      currentPotentialTime;
+
+    FHLattice*            fhLattice;
 
 
-    arma::cx_dmat           externalPotential;
+    arma::cx_dmat               externalPotential;
+
+    FHExternalPotentialType     potentialType;    
     
 
 };

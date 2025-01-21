@@ -6,6 +6,7 @@ FHExternalPotential::FHExternalPotential()
     nullPotential = true;
     timeDependantPotential = false;
     currentPotentialTime = 0;
+    potentialType = FHExternalPotentialType::null;
 }
 
 FHExternalPotential::FHExternalPotential(FHLattice* lat)
@@ -14,13 +15,16 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat)
 
     uint nSites = lat->getnSites();
 
-    externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    
+    //externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    externalPotential = arma::cx_dmat();
 
-    sitePositions = lat->getSitePositions();
+    fhLattice = lat;
 
     nullPotential = true;
     timeDependantPotential = false;
     currentPotentialTime = 0;
+    potentialType = FHExternalPotentialType::null;
 }
 
 bool                    FHExternalPotential::isThePotentialNull()
@@ -59,7 +63,15 @@ arma::cx_dmat*          FHExternalPotential::getExternalPotentialPointer()
 
 arma::cx_double         FHExternalPotential::getExternalPotential(uint iSite, uint jSite)
 {
-    return externalPotential(iSite, jSite);
+    if (potentialType == FHExternalPotentialType::null)
+    {
+        return 0;
+    }
+    else 
+    {
+        return externalPotential(iSite, jSite);
+    }
+
 }
 
 arma::cx_double         FHExternalPotential::getExternalPotential(double t, uint iSite, uint jSite)
@@ -68,7 +80,9 @@ arma::cx_double         FHExternalPotential::getExternalPotential(double t, uint
     {
         updatePotential(t);
     }
-    return externalPotential(iSite, jSite);
+
+    return getExternalPotential(iSite, jSite);
+
 }
 
 
@@ -82,4 +96,22 @@ arma::cx_dmat        FHExternalPotential::getExternalPotential(double t)
 void                    FHExternalPotential::updatePotential(double t)
 {
     currentPotentialTime = t;
+}
+
+
+std::vector<double>         FHExternalPotential::getParameters()
+{
+    return std::vector<double>();
+}
+
+FHExternalPotentialType FHExternalPotential::getExternalPotentialType()
+{
+    return potentialType;
+}
+
+Json::Value         FHExternalPotential::writePotentialJson()
+{
+    Json::Value jpot;
+    jpot["type"] = "None";
+    return jpot;
 }

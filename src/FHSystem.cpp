@@ -168,6 +168,30 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         VInteractionType = FHSameSpinInteractionType::Vnone;
     }
 
+// External Potential
+    Json::Value ExtPotJ = rootSystem["ExternalPotential"];
+    if (ExtPotJ == Json::nullValue)
+    {
+        externalPotential = FHExternalPotential(&lattice);
+    }
+    else
+    {
+        std::string extPotType = ExtPotJ.get("type", "None").asString();
+        if (extPotType == "None")
+        {
+            externalPotential = FHExternalPotential(&lattice);
+        }
+        else if (extPotType == "Constant")
+        {
+            externalPotential = FHExternalPotentialConstant(&lattice, arma::dvec(lattice.getnSites()));
+        }
+        else if (extPotType == "CoreHole")
+        {
+            externalPotential = FHExternalPotentialCoreHole(&lattice, 1, -1);
+        }
+        
+    }
+
 
 // Initial condition
     Json::Value jsonIC = rootSystem["IC"];
@@ -1069,7 +1093,7 @@ Json::Value                    FHSystem::writeFHSystemJson()
     default:
         break;
     }
-
+    // V interaction
     switch (VInteractionType)
     {
     case FHSameSpinInteractionType::Vnone:
@@ -1084,6 +1108,11 @@ Json::Value                    FHSystem::writeFHSystemJson()
     default:
         break;
     }
+
+        // External potential
+    Json::Value ExtPotJ = externalPotential.writePotentialJson();
+    systemRoot["ExternalPotential"] = ExtPotJ;
+
 
 
 

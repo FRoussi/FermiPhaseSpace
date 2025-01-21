@@ -624,24 +624,19 @@ void FHfTWASolver::derivative(double currentSimulationTime, const arma::cx_dmat&
 {
 
     arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * (rhod.diag() + halfVec)) ;
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * (rhou.diag() + halfVec)) ;
-    
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * (rhou.diag() + halfVec)) ;  
     
     if (!fhSystem->isExternalPotentialNull())
     {
         if (fhSystem->isSystemTimeDependant())
         {
-            arma::cx_dmat externalPot = fhSystem->getExternalPotential(currentSimulationTime);
-            DeltaUp +=externalPot;
-            DeltaDo +=externalPot;
+           fhSystem->updateExternalPotential(currentSimulationTime);
         }
-        else
-        {
-            DeltaUp += *extPot;
-            DeltaDo += *extPot;
-        }
-    }
 
+        DeltaUp += *extPot;
+        DeltaDo += *extPot;
+
+    }
 
     drhou_dt = - jj * ( rhou * DeltaUp - DeltaUp * rhou) ;
     drhod_dt = - jj * ( rhod * DeltaDo - DeltaDo * rhod) ;

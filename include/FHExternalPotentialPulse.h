@@ -18,6 +18,8 @@ public:
 
     void updatePotential(double t);
 
+    ~FHExternalPotentialPulse();
+
 protected :
 
     bool withTunnelingCoefficients;

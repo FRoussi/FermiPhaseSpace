@@ -317,13 +317,22 @@ void FHHFSolver::step_RK45(double d_t)
 void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt)
 {
 
-    if (fhSystem->isSystemTimeDependant())
+    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag())  + arma::diagmat(*V * nut.diag());
+    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag())  + arma::diagmat(*V * ndt.diag());
+
+
+    if (!fhSystem->isExternalPotentialNull())
     {
-        fhSystem->updateExternalPotential(currentTime);
+
+        if (fhSystem->isSystemTimeDependant())
+        {
+            fhSystem->updateExternalPotential(currentTime);
+        }
+        DeltaUp += *extPot;
+        DeltaDo += *extPot;
     }
 
-    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag()) + *extPot + arma::diagmat(*V * nut.diag());
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag()) + *extPot + arma::diagmat(*V * ndt.diag());
+
 
     dnut_dt = - jj * ( nut * DeltaUp - DeltaUp * nut) ;
     dndt_dt = - jj * ( ndt * DeltaDo - DeltaDo * ndt) ;

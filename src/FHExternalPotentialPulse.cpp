@@ -3,6 +3,8 @@
 
 FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar): FHExternalPotential(lat)
 {
+    uint nSites = lat->getnSites();
+    externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     A0 = intensityA0;
     t0 = centert0;
     td = widthtd;
@@ -11,8 +13,10 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
     polarization = polar;
     withTunnelingCoefficients = false;
 
+
     if (A0 !=0)
     {
+        potentialType = FHExternalPotentialType::pulse;
         nullPotential = false;
         timeDependantPotential = true;
     }
@@ -22,6 +26,8 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
 
 FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat): FHExternalPotential(lat)
 {
+    uint nSites = lat->getnSites();
+    externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     A0 = intensityA0;
     t0 = centert0;
     td = widthtd;
@@ -32,6 +38,7 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
 
     if (A0 !=0)
     {
+        potentialType = FHExternalPotentialType::pulse;
         nullPotential = false;
         timeDependantPotential = true;
     }
@@ -56,15 +63,16 @@ arma::cx_dmat FHExternalPotentialPulse::getExternalPotential(double t)
 
     std::complex<double> zeroComp = std::complex<double>(0,0);
 
-    for (uint iSite = 0; iSite < sitePositions->n_rows ; iSite++)
+
+    for (uint iSite = 0; iSite < fhLattice->getnSites() ; iSite++)
     {
-        for (uint jSite = 0; jSite < sitePositions->n_rows ; jSite++)
+        for (uint jSite = 0; jSite < fhLattice->getnSites() ; jSite++)
         {
             if (withTunnelingCoefficients)
             {
                 if (tunnelingMatrix->at(iSite, jSite) != zeroComp)
                 {
-                    extPotential(iSite,jSite) = tunnelingMatrix->at(iSite, jSite) * std::exp(jj*arma::dot(A_t,(sitePositions->row(iSite) - sitePositions->row(jSite))));  
+                    extPotential(iSite,jSite) = tunnelingMatrix->at(iSite, jSite) * std::exp(jj*arma::dot(A_t,(fhLattice->getSitePosition(iSite) - fhLattice->getSitePosition(jSite))));  
                 }
                 else
                 {
@@ -85,15 +93,15 @@ void FHExternalPotentialPulse::updatePotential(double t)
 
     std::complex<double> zeroComp = std::complex<double>(0,0);
 
-    for (uint iSite = 0; iSite < sitePositions->n_rows ; iSite++)
+    for (uint iSite = 0; iSite < fhLattice->getnSites() ; iSite++)
     {
-        for (uint jSite = 0; jSite < sitePositions->n_rows ; jSite++)
+        for (uint jSite = 0; jSite < fhLattice->getnSites() ; jSite++)
         {
             if (withTunnelingCoefficients)
             {
                 if (tunnelingMatrix->at(iSite, jSite) != zeroComp)
                 {
-                    externalPotential(iSite,jSite) = tunnelingMatrix->at(iSite, jSite) * std::exp(jj*arma::dot(A_t,(sitePositions->row(iSite) - sitePositions->row(jSite))));  
+                    externalPotential(iSite,jSite) = tunnelingMatrix->at(iSite, jSite) * std::exp(jj*arma::dot(A_t,(fhLattice->getSitePosition(iSite) - fhLattice->getSitePosition(jSite))));  
                 }
                 else
                 {
@@ -103,4 +111,9 @@ void FHExternalPotentialPulse::updatePotential(double t)
             }
         }
     }
+}
+
+FHExternalPotentialPulse::~FHExternalPotentialPulse()
+{
+    
 }

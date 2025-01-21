@@ -9,12 +9,16 @@ class FHExternalPotentialConstant : public FHExternalPotential
 public:
 
     FHExternalPotentialConstant(FHLattice* lat, arma::dvec Pot);
-    FHExternalPotentialConstant(FHLattice* lat, uint iSite, double intensityA0);
+
+    std::vector<double>         getParameters();
+    Json::Value         writePotentialJson();   
 
 
     ~FHExternalPotentialConstant();
 
 protected :
+
+    
 
 
 };
