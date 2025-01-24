@@ -183,18 +183,20 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     }
     else
     {
-        std::string extPotType = ExtPotJ.get("type", "None").asString();
-        if (extPotType == "None")
+        std::string extPotType = ExtPotJ.get("type", "none").asString();
+        if (extPotType == "none")
         {
             externalPotential = FHExternalPotential(&lattice);
         }
-        else if (extPotType == "Constant")
+        else if (extPotType == "constant")
         {
             externalPotential = FHExternalPotentialConstant(&lattice, arma::dvec(lattice.getnSites()));
         }
-        else if (extPotType == "CoreHole")
+        else if (extPotType == "coreHole")
         {
-            externalPotential = FHExternalPotentialCoreHole(&lattice, 1, -1);
+            uint site = ExtPotJ.get("site", 0).asUInt();
+            double hPot = ExtPotJ.get("holePotential", -1).asDouble();
+            externalPotential = FHExternalPotentialCoreHole(&lattice, site, hPot);
         }
         
     }

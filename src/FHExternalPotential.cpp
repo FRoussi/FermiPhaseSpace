@@ -110,6 +110,6 @@ FHExternalPotentialType FHExternalPotential::getExternalPotentialType()
 Json::Value         FHExternalPotential::writePotentialJson()
 {
     Json::Value jpot;
-    jpot["type"] = "None";
+    jpot["type"] = "none";
     return jpot;
 }

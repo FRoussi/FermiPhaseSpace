@@ -30,7 +30,7 @@ Json::Value        FHExternalPotentialConstant::writePotentialJson()
 {
    Json::Value jpot;
 
-   jpot["type"] = "Constant";
+   jpot["type"] = "constant";
     Json::Value jsonPotVec(Json::arrayValue);
     for (uint i = 0; i < externalPotential.n_cols; i++)
     {

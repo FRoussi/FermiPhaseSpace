@@ -27,7 +27,7 @@ Json::Value        FHExternalPotentialCoreHole::writePotentialJson()
 {
    Json::Value jpot;
 
-   jpot["type"] = "CoreHole";
+   jpot["type"] = "coreHole";
    jpot["site"] = iSite;
    jpot["holePotential"] = holePotential;
     

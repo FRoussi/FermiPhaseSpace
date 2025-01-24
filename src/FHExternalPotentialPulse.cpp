@@ -113,6 +113,18 @@ void FHExternalPotentialPulse::updatePotential(double t)
     }
 }
 
+Json::Value                 FHExternalPotentialPulse::writePotentialJson()
+{
+    Json::Value jpot;
+    jpot["type"] = "pulse";
+    jpot["A0"] = A0;
+    jpot["t0"] = t0;
+    jpot["td"] = td;
+    jpot["w0"] = w0;
+    jpot["phi"] = phi;
+    return jpot;
+}
+
 FHExternalPotentialPulse::~FHExternalPotentialPulse()
 {
     

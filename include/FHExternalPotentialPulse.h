@@ -18,6 +18,8 @@ public:
 
     void updatePotential(double t);
 
+    Json::Value                 writePotentialJson();   
+
     ~FHExternalPotentialPulse();
 
 protected :
