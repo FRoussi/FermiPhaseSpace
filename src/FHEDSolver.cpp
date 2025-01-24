@@ -232,7 +232,7 @@ void FHEDSolver::buildHamiltonian_U()
             if(fhSystem->getInteractionEnergy(iSite,jSite) != arma::cx_double(0,0))
             {
                 H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite).real() * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
-                                std::cout << "HU building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
+                                std::cout << "HU building, i=" << iSite << ", j=" << jSite << " Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
             }
         }
     }
@@ -273,7 +273,7 @@ void FHEDSolver::buildHamiltonian_tM()
                 {
                     H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * NijdSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite).real() * NijdSet[iSite][jSite].t(); 
                 }
-                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << "Uij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) << " Ht.nnz="<< H_t.n_nonzero << std::endl;
+                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << " Jij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) << " Ht.nnz="<< H_t.n_nonzero << std::endl;
             }
         }
     }
@@ -324,14 +324,8 @@ void FHEDSolver::buildHamiltonian()
 {
 
     buildHamiltonian_U();
-    std::cout << "HU built  " <<   std::endl;
     buildHamiltonian_tM();
-    std::cout << "Htm built  " <<   std::endl;
-
-//H_t.as_dense().print();
-
     buildHamiltonian_J();
-std::cout << "HJ build  " <<   std::endl;
     buildHamiltonian_ExternalPotential(0);
     
     H = H_U + H_t + H_J + H_externalPotential;
@@ -782,6 +776,14 @@ void FHEDSolver::runSimulation()
         EJson["tot"] = rJson.writeLine(E);
         resJson["E"] = EJson;
 
+        if (fhSystem->isTBGroundStateComputed())
+        {
+            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
+        }
+        if (fhSystem->isMFGroundStateComputed())
+        {
+            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
+        }
 
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";

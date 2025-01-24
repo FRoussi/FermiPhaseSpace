@@ -194,6 +194,8 @@ FHLattice                               getLattice();
 
     Json::Value                         writeFHSystemJson();
     Json::Value                         getOriginalJsonSystem();
+    Json::Value                         writeTBGroundStateJson();
+    Json::Value                         writeMFGroundStateJson();
     //void                                writeFHSystemBis(std::string folderName = "");
 
 

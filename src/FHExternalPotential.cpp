@@ -12,11 +12,9 @@ FHExternalPotential::FHExternalPotential()
 FHExternalPotential::FHExternalPotential(FHLattice* lat)
 {
 
-
-    uint nSites = lat->getnSites();
-
-    
+    //uint nSites = lat->getnSites();    
     //externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    
     externalPotential = arma::cx_dmat();
 
     fhLattice = lat;

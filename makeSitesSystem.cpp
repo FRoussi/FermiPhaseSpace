@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 
     IC initC = IC::spinWave;                            //<- default initial condition
 
-    NRJ en = NRJ::HF;
+    //NRJ en = NRJ::HF;
     vector<double> energyParam = {-1,1};                 //<- default energy parameters
 
 

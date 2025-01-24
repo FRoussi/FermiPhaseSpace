@@ -16,6 +16,9 @@ FHSystem::FHSystem(bool talk)
     initCond[0] = initCond_up;
     initCond[1] = initCond_down;
 
+    TBGroundStateComputed = false;
+    MFGroundStateComputed = false;
+
     setInitialConditionsDiagonal(initCond);
     initiateEmptyEnergyMatrices();
 
@@ -60,6 +63,8 @@ lattice = FHLattice(x, talk);
     setPositions(pos);
     setInitialConditionsDiagonal(initCond);
 
+    TBGroundStateComputed = false;
+    MFGroundStateComputed = false;
 
     initiateEmptyEnergyMatrices();
 
@@ -112,7 +117,8 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
     externalPotential = FHExternalPotential(&lattice);
     setInitialConditionsDiagonal(initCond);
 
-
+    TBGroundStateComputed = false;
+    MFGroundStateComputed = false;
 
     initiateEmptyEnergyMatrices();
     UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
@@ -135,7 +141,8 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     lattice = FHLattice(rootLattice, folderName, talk);
     
 
-
+    TBGroundStateComputed = false;
+    MFGroundStateComputed = false;
 
     initiateEmptyEnergyMatrices();
 
@@ -319,7 +326,8 @@ FHSystem::FHSystem(FHLattice lat)
     talkative = true;
 
     lattice = lat;
-
+    TBGroundStateComputed = false;
+    MFGroundStateComputed = false;
     
     initiateEmptyEnergyMatrices();
 }
@@ -948,6 +956,8 @@ void                                FHSystem::computeTBGroundState(bool withExte
 void                                FHSystem::computeMFGroundState(bool withExternalPotential)
 {
 
+
+
     uint nSites = lattice.getnSites();
 
     arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
@@ -958,7 +968,7 @@ void                                FHSystem::computeMFGroundState(bool withExte
     diagMkd.subvec(0,downSpinParticleNumber-1).ones();
     arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
-    double thresholdConverged = 10^(-4) * nSites;
+    double thresholdConverged = 0.0001 * nSites;
     bool isConverged = false;
     int maxIt = 100;
     int it = 0;
@@ -968,6 +978,7 @@ void                                FHSystem::computeMFGroundState(bool withExte
 
     arma::cx_dmat mfuHuU = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     arma::cx_dmat mfuHuD = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
 
     while ((it < maxIt) && !isConverged)
     {
@@ -989,7 +1000,6 @@ void                                FHSystem::computeMFGroundState(bool withExte
             arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
         }
  
-
         mfgs_Nu = mfgs_Vu * Mku * mfgs_Vu.t();
         mfgs_Nd = mfgs_Vd * Mkd * mfgs_Vd.t();
 
@@ -1005,7 +1015,6 @@ void                                FHSystem::computeMFGroundState(bool withExte
         }
 
     }
-
 
     MFGroundStateComputed = true;
 
@@ -1114,11 +1123,108 @@ Json::Value                    FHSystem::writeFHSystemJson()
     systemRoot["ExternalPotential"] = ExtPotJ;
 
 
+    // TB Ground State
+    if (isTBGroundStateComputed())
+    {
+        systemRoot["tbGroundState"] = writeTBGroundStateJson();
+    }
 
+    // MF Ground State
+    if (isMFGroundStateComputed())
+    {
+        systemRoot["mfGroundState"] = writeMFGroundStateJson();
+    }
 
     return systemRoot;
 }
 
+
+Json::Value                         FHSystem::writeTBGroundStateJson()
+{
+    if (!isTBGroundStateComputed())
+    {
+        computeTBGroundState();
+    }
+
+    Json::Value tbgsJson(Json::objectValue);
+    Json::Value jsonVecE(Json::arrayValue);
+    const arma::dvec* vecE = get_tbgs_E_Pointer();
+    for (uint i = 0; i < vecE->size(); i++)
+    {
+        jsonVecE.append(vecE->at(i));
+    }  
+    tbgsJson["energyVector"] = jsonVecE;
+    Json::Value jsonMatEig(Json::arrayValue);
+    const arma::cx_dmat* matV = get_tbgs_V_Pointer();
+    for (uint i = 0; i < matV->n_rows; i++)
+    {
+        Json::Value jsonMatEigJ(Json::arrayValue);
+        for (uint j = 0; j < matV->n_cols; j++)
+        {
+            jsonMatEigJ.append(matV->at(i,j).real());
+        }
+        jsonMatEig.append(jsonMatEigJ);
+    }  
+    tbgsJson["rotationMatrix"] = jsonMatEig;
+    return tbgsJson;
+}
+
+
+Json::Value                         FHSystem::writeMFGroundStateJson()
+{
+
+    if (!isMFGroundStateComputed())
+    {
+        computeMFGroundState();
+    }
+
+
+    Json::Value mfgsJson(Json::objectValue);
+
+    Json::Value jsonVecEu(Json::arrayValue);
+    const arma::dvec* vecEu = get_mfgs_Eu_Pointer();
+    for (uint i = 0; i < vecEu->size(); i++)
+    {
+        jsonVecEu.append(vecEu->at(i));
+    }  
+    mfgsJson["energyVectorUp"] = jsonVecEu;
+
+    Json::Value jsonVecEd(Json::arrayValue);
+    const arma::dvec* vecEd = get_mfgs_Ed_Pointer();
+    for (uint i = 0; i < vecEd->size(); i++)
+    {
+        jsonVecEd.append(vecEd->at(i));
+    }  
+    mfgsJson["energyVectorDown"] = jsonVecEd;
+
+    Json::Value jsonMatEigU(Json::arrayValue);
+    const arma::cx_dmat* matV = get_mfgs_Vu_Pointer();
+    for (uint i = 0; i < matV->n_rows; i++)
+    {
+        Json::Value jsonMatEigJ(Json::arrayValue);
+        for (uint j = 0; j < matV->n_cols; j++)
+        {
+            jsonMatEigJ.append(matV->at(i,j).real());
+        }
+        jsonMatEigU.append(jsonMatEigJ);
+    }  
+    mfgsJson["rotationMatrixUp"] = jsonMatEigU;
+
+    Json::Value jsonMatEigD(Json::arrayValue);
+    matV = get_mfgs_Vd_Pointer();
+    for (uint i = 0; i < matV->n_rows; i++)
+    {
+        Json::Value jsonMatEigJ(Json::arrayValue);
+        for (uint j = 0; j < matV->n_cols; j++)
+        {
+            jsonMatEigJ.append(matV->at(i,j).real());
+        }
+        jsonMatEigD.append(jsonMatEigJ);
+    }  
+    mfgsJson["rotationMatrixDown"] = jsonMatEigD;
+
+    return mfgsJson;
+}
 
 Json::Value                    FHSystem::getOriginalJsonSystem()
 {
@@ -1169,7 +1275,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         fileAdressName = folderName + "/" + wtIBFile;
     }
 
-    uint nSites = getnSites();
+    //uint nSites = getnSites();
 
     std::ofstream IBStream(fileAdressName);
     if (IBStream.is_open())
@@ -1204,7 +1310,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         fileAdressName = folderName + "/" + wtDosFile;
     }
 
-    uint nSites = getnSites();
+    //uint nSites = getnSites();
 
     std::ofstream DOSStream(fileAdressName);
     if (DOSStream.is_open())
@@ -1244,7 +1350,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         fileAdressName = folderName + "/" + wtIBUFile;
     }
 
-    uint nSites = getnSites();
+   // uint nSites = getnSites();
 
     std::ofstream IBUStream(fileAdressName);
     if (IBUStream.is_open())

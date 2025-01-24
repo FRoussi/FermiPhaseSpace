@@ -791,6 +791,15 @@ unsigned int tt = std::floor(nTraj/10);
         EJson["tot"] = rJson.writeLineInReal(E);
         resJson["E"] = EJson;
 
+        if (fhSystem->isTBGroundStateComputed())
+        {
+            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
+        }
+        if (fhSystem->isMFGroundStateComputed())
+        {
+            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
+        }
+
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);

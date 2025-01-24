@@ -594,6 +594,14 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
             resJson["E"] = EJson;
         }
 
+        if (fhSystem->isTBGroundStateComputed())
+        {
+            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
+        }
+        if (fhSystem->isMFGroundStateComputed())
+        {
+            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
+        }
 
 
         Json::StreamWriterBuilder wbuilder;

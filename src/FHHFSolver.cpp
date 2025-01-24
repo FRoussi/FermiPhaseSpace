@@ -573,6 +573,15 @@ void FHHFSolver::runSimulation( )
         }
 
 
+        if (fhSystem->isTBGroundStateComputed())
+        {
+            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
+        }
+        if (fhSystem->isMFGroundStateComputed())
+        {
+            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
+        }
+
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);
