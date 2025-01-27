@@ -175,23 +175,22 @@ void FHfTWASolver::initiateSolver()
         {
             for (unsigned int j = i+1; j < nSites; j++)
             {
-                sqrtNoiseVarianceMatrixU(i,j) = (diagMu0(i) + diagMu0(j) - 2 * diagMu0(i) * diagMu0(j))/2;
+                sqrtNoiseVarianceMatrixU(i,j) = std::sqrt((diagMu0(i) + diagMu0(j) - 2 * diagMu0(i) * diagMu0(j))/2);
                 sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
-                sqrtNoiseVarianceMatrixD(i,j) = (diagMd0(i) + diagMd0(j) - 2 * diagMd0(i) * diagMd0(j))/2;
+                sqrtNoiseVarianceMatrixD(i,j) =  std::sqrt((diagMd0(i) + diagMd0(j) - 2 * diagMd0(i) * diagMd0(j))/2);
                 sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
             }
         }
     }
     
-    sqrtNoiseVarianceMatrixU = arma::sqrt(sqrtNoiseVarianceMatrixU);
-    sqrtNoiseVarianceMatrixD = arma::sqrt(sqrtNoiseVarianceMatrixD);
+    //sqrtNoiseVarianceMatrixU = arma::sqrt(sqrtNoiseVarianceMatrixU);
+    //sqrtNoiseVarianceMatrixD = arma::sqrt(sqrtNoiseVarianceMatrixD);
 
     if (talkative)
     {
         std::cout << "--- fTWA Variance matrix : " << std::endl ;
         sqrtNoiseVarianceMatrixU.print();
     }
-
 
 }
 
@@ -348,8 +347,8 @@ void FHfTWASolver::runSimulation( )
 
             // Initial matrices in position space :
 
-            rhou = (*fhSystem->get_tbgs_V_Pointer()) * mU * (*fhSystem->get_tbgs_V_Pointer()).t() ;
-            rhod = (*fhSystem->get_tbgs_V_Pointer()) * mD * (*fhSystem->get_tbgs_V_Pointer()).t();
+            rhou = (*fhSystem->get_mfgs_Vu_Pointer()) * mU * (*fhSystem->get_mfgs_Vu_Pointer()).t() ;
+            rhod = (*fhSystem->get_mfgs_Vd_Pointer()) * mD * (*fhSystem->get_mfgs_Vd_Pointer()).t();
 
         }
         else 
