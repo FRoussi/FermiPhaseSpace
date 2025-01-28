@@ -13,7 +13,9 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS) : FHSolver(fhS)
     arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
 
     halfDiag = 0.5 * arma::cx_dmat(nSites, nSites, arma::fill::eye);
-    halfVec = 0.5 * arma::cx_dvec(nSites, arma::fill::eye);
+    halfVec = 0.5 * arma::cx_dvec(nSites, arma::fill::ones);
+
+
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
@@ -111,9 +113,9 @@ void FHfTWASolver::initiateSolver()
         {
             for (unsigned int j = i+1; j < nSites; j++)
             {
-                sqrtNoiseVarianceMatrixU(i,j) = (diagNu0(i) + diagNu0(j) - 2 * diagNu0(i) * diagNu0(j))/2;
+                sqrtNoiseVarianceMatrixU(i,j) = std::sqrt((diagNu0(i) + diagNu0(j) - 2 * diagNu0(i) * diagNu0(j))/2);
                 sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
-                sqrtNoiseVarianceMatrixD(i,j) = (diagNd0(i) + diagNd0(j) - 2 * diagNd0(i) * diagNd0(j))/2;
+                sqrtNoiseVarianceMatrixD(i,j) = std::sqrt((diagNd0(i) + diagNd0(j) - 2 * diagNd0(i) * diagNd0(j))/2);
                 sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
             }
         }
@@ -143,9 +145,9 @@ void FHfTWASolver::initiateSolver()
         {
             for (unsigned int j = i+1; j < nSites; j++)
             {
-                sqrtNoiseVarianceMatrixU(i,j) = (diagMu0(i) + diagMu0(j) - 2 * diagMu0(i) * diagMu0(j))/2;
+                sqrtNoiseVarianceMatrixU(i,j) = std::sqrt((diagMu0(i) + diagMu0(j) - 2 * diagMu0(i) * diagMu0(j))/2);
                 sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
-                sqrtNoiseVarianceMatrixD(i,j) = (diagMd0(i) + diagMd0(j) - 2 * diagMd0(i) * diagMd0(j))/2;
+                sqrtNoiseVarianceMatrixD(i,j) = std::sqrt((diagMd0(i) + diagMd0(j) - 2 * diagMd0(i) * diagMd0(j))/2);
                 sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
             }
         }
@@ -182,6 +184,8 @@ void FHfTWASolver::initiateSolver()
             }
         }
     }
+
+    //sqrtNoiseVarianceMatrixU.print();
     
     //sqrtNoiseVarianceMatrixU = arma::sqrt(sqrtNoiseVarianceMatrixU);
     //sqrtNoiseVarianceMatrixD = arma::sqrt(sqrtNoiseVarianceMatrixD);
@@ -257,7 +261,7 @@ void FHfTWASolver::runSimulation( )
    // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 
-    arma::cx_dmat halfDiagMatrix = arma::cx_dmat(0.5 * arma::dmat(nSites, nSites, arma::fill::eye), arma::dmat(nSites, nSites, arma::fill::zeros)); //<- Matrix of diagnoal 1/2
+    //arma::cx_dmat halfDiagMatrix = arma::cx_dmat(0.5 * arma::dmat(nSites, nSites, arma::fill::eye), arma::dmat(nSites, nSites, arma::fill::zeros)); //<- Matrix of diagnoal 1/2
 
 
 
@@ -320,6 +324,7 @@ void FHfTWASolver::runSimulation( )
         arma::cx_dmat wnu = wnM_up % sqrtNoiseVarianceMatrixU;                          //<- Noise to add to 
         arma::cx_dmat wnd = wnM_down % sqrtNoiseVarianceMatrixD;
 
+
         // We miss memeory space so we pay attention to useless matrices :
         wnM.reset();
         wnM_up.reset();
@@ -332,23 +337,20 @@ void FHfTWASolver::runSimulation( )
             arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
             arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
 
-            // Initial matrices in position space :
-            
-
-            rhou = (*fhSystem->get_tbgs_V_Pointer()) * mU * (*fhSystem->get_tbgs_V_Pointer()).t() ;
-            rhod = (*fhSystem->get_tbgs_V_Pointer()) * mD * (*fhSystem->get_tbgs_V_Pointer()).t();
-
+            // Initial matrices in position space 
+            rhou = (*fhSystem->get_tbgs_V_Pointer()) * mU * ((*fhSystem->get_tbgs_V_Pointer()).t()) ;
+            rhod = (*fhSystem->get_tbgs_V_Pointer()) * mD * ((*fhSystem->get_tbgs_V_Pointer()).t()) ;
+    
         }
-        if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::mfGroundState)
+        else if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::mfGroundState)
         {
             // Initial matrices in momentum space :
             arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
             arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
 
             // Initial matrices in position space :
-
-            rhou = (*fhSystem->get_mfgs_Vu_Pointer()) * mU * (*fhSystem->get_mfgs_Vu_Pointer()).t() ;
-            rhod = (*fhSystem->get_mfgs_Vd_Pointer()) * mD * (*fhSystem->get_mfgs_Vd_Pointer()).t();
+            rhou = (*fhSystem->get_mfgs_Vu_Pointer()) * mU * ((*fhSystem->get_mfgs_Vu_Pointer()).t()) ;
+            rhod = (*fhSystem->get_mfgs_Vd_Pointer()) * mD * ((*fhSystem->get_mfgs_Vd_Pointer()).t()) ;
 
         }
         else 
@@ -356,9 +358,7 @@ void FHfTWASolver::runSimulation( )
            // Initial rho matrices :
            rhou = rhou0_mean + wnu;  
            rhod = rhod0_mean + wnd;
-
         }
-
 
         // We compute the trajectory dynamic and add up the diagonal to the result
         for (unsigned int t = 0;  t<nTimePoints; t++)
@@ -382,10 +382,10 @@ void FHfTWASolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                Nu_loc =  rhou + halfDiagMatrix;
-                Nd_loc =  rhod + halfDiagMatrix;
+                Nu_loc =  rhou + halfDiag;
+                Nd_loc =  rhod + halfDiag;
                 EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+                EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
             }
 
             // We do 'nStepsPerTimePoint' simulation steps
@@ -458,8 +458,8 @@ void FHfTWASolver::runSimulation( )
         Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhou_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
-            Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + arma::cx_dmat(arma::size(rhod_t.slice(t)), arma::fill::eye) / arma::cx_double(2,0);
+            Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + halfDiag;
+            Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + halfDiag;
         }
     }
     if (saveDiagDMatrix)
@@ -567,6 +567,13 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         Json::Value resJson = jsonFile;
 
         resJson["t"] = rJson.writeLine(timeLine);
+
+        if (saveWholeDMatrix)
+        {
+            //Json::Value n12uJS(Json::arrayValue);
+            //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
+            resJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
+        }
 
         if (saveDiagDMatrix)
         {
