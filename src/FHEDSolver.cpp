@@ -6,8 +6,8 @@ FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
     arma::umat test = arma::umat(2,800000);
 
     currentSimulationTime = 0;
-    storeNiju = storeOperators::none;
-    storeNijd = storeOperators::none;
+    storeNiju = storeOperators::SOnone;
+    storeNijd = storeOperators::SOnone;
 
 
 }
@@ -171,13 +171,13 @@ void FHEDSolver::buildPairOperators()
         NijuSet[i] = std::vector<arma::sp_dmat>(nSites);
         NijuSet[i][i] = numberOperatorSpinUp(i);
     }
-    if (storeNiju != storeOperators::none)
+    if (storeNiju != storeOperators::SOnone)
     {
         for (uint i = 0; i < nSites; i++)
         {
             for (uint j = i + 1; j < nSites; j++)
             {
-                if ((storeNiju == storeOperators::all) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
+                if ((storeNiju == storeOperators::SOall) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
                 {
                     NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
                 }
@@ -195,13 +195,13 @@ void FHEDSolver::buildPairOperators()
         NijdSet[i] = std::vector<arma::sp_dmat>(nSites);
         NijdSet[i][i] = numberOperatorSpinDown(i);
     }
-    if (storeNijd != storeOperators::none) 
+    if (storeNijd != storeOperators::SOnone) 
     {
         for (uint i = 0; i < nSites; i++)
         {
             for (uint j = i + 1; j < nSites; j++)
             {
-                if ((storeNijd == storeOperators::all) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
+                if ((storeNijd == storeOperators::SOall) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
                 {
                     NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
                 }
@@ -254,7 +254,7 @@ void FHEDSolver::buildHamiltonian_tM()
             {
                 
                 // SPIN UP
-                if (storeNiju == storeOperators::none)
+                if (storeNiju == storeOperators::SOnone)
                 {
                     nij = tunnelingOperatorSpinUp(iSite, jSite);
                     H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * nij + fhSystem->getTunnelingEnergy(jSite, iSite).real() * nij.t(); 
@@ -264,7 +264,7 @@ void FHEDSolver::buildHamiltonian_tM()
                     H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * NijuSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite).real() * NijuSet[iSite][jSite].t(); 
                 }
                 // SPIN DOWN
-                if (storeNijd == storeOperators::none)
+                if (storeNijd == storeOperators::SOnone)
                 {
                     nij = tunnelingOperatorSpinDown(iSite, jSite);
                     H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * nij + fhSystem->getTunnelingEnergy(jSite, iSite).real() * nij.t(); 

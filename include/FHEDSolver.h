@@ -57,9 +57,9 @@ public:
 
 
     enum storeOperators{
-        none,
-        needed,
-        all
+        SOnone,
+        SOneeded,
+        SOall
     };
 
     FHEDSolver(FHSystem* fhSystem);
