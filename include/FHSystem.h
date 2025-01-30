@@ -8,6 +8,8 @@
 #include <fstream>
 
 #include "FHLattice.h"
+#include "FHTunnelingInteraction.h"
+#include "FHCoulombInteraction.h"
 #include "FHExternalPotential.h"
 #include "FHExternalPotentialPulse.h"
 #include "FHExternalPotentialConstant.h"
@@ -117,15 +119,15 @@ FHLattice                               getLattice();
     unsigned int                        getUpSpinParticleNumber();
     unsigned int                        getDownSpinParticleNumber();
 
-    FHOppositeSpinInteractionType       getOppositeSpinInteractionType();
-    FHTunnelingType                     getTunnelingType();
-    FHSameSpinInteractionType           getSameSpinInteractionType();
-    tJExchangeCouplingType              getExchangeCouplingEnergyType();
+    FHCoulombInteractionType            getCoulombInteractionType();
+    FHTunnelingInteractionType          getTunnelingInteractionType();
+   // FHSameSpinInteractionType           getSameSpinInteractionType();
+   // tJExchangeCouplingType              getExchangeCouplingEnergyType();
 
-    std::complex<double>                getInteractionEnergy(int iSite, int jSite);
+    std::complex<double>                getCoulombInteraction(int iSite, int jSite);
     std::complex<double>                getSameSpinInteractionEnergy(int iSite, int jSite);
-    std::complex<double>                getTunnelingEnergy(int iSite, int jSite);
-    std::complex<double>                getExchangeCouplingEnergy(int iSite, int jSite);
+    std::complex<double>                getTunnelingInteraction(int iSite, int jSite);
+    //std::complex<double>                getExchangeCouplingEnergy(int iSite, int jSite);
     std::complex<double>                getExternalPotential(int iSite, double time);
     std::complex<double>                getExternalPotential(int iSite, int jSite, double time);
     arma::cx_dmat                       getExternalPotential(double time);
@@ -133,7 +135,7 @@ FHLattice                               getLattice();
 
     const arma::cx_dmat*                getUMatrixPointer();
     const arma::cx_dmat*                getVMatrixPointer();
-    const arma::cx_dmat*                getJMatrixPointer();
+    //const arma::cx_dmat*                getJMatrixPointer();
     const arma::cx_dmat*                gettMatrixPointer();
     const arma::cx_dmat*                getExtPotPointer();
     const arma::cx_dmat*                get_tbgs_Nu_Pointer();
@@ -174,20 +176,20 @@ FHLattice                               getLattice();
     void                                setInitialConditions(FHInitialConditionType initialCondType);
     void                                setInitialConditions(FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
 
-    void                                setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
-    void                                setTunnelingType(FHTunnelingType tType);
-    void                                setSameSpinInteractionType(FHSameSpinInteractionType VType);
-    void                                setExchangeCouplingEnergyType(tJExchangeCouplingType JType);
+   // void                                setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
+   // void                                setTunnelingType(FHTunnelingType tType);
+   // void                                setSameSpinInteractionType(FHSameSpinInteractionType VType);
+    //void                                setExchangeCouplingEnergyType(tJExchangeCouplingType JType);
 
-    void                                setUInteraction_OnSite(double U0, bool add = false);
-    void                                setUInteraction_GivenDiagonal(arma::dvec& Ua, bool add = false);
-    void                                setUInteraction_GivenMatrix(arma::dmat& Uab, bool add = false);
-    void                                setUInteraction_BySiteType(arma::dvec& Us, bool add = false);
-    void                                setTunneling_BetweenNeighbours(double tH1, bool add = false);
-    void                                setTunneling_atDistance(double tH1, double dist, bool add = false);
-    void                                setTunneling_SamePosition(double tH1, bool add = false);
-    void                                setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false);
-    void                                setTunneling_GivenMatrix(arma::dmat tH, bool add = false);
+   // void                                setUInteraction_OnSite(double U0, bool add = false);
+   // void                                setUInteraction_GivenDiagonal(arma::dvec& Ua, bool add = false);
+    //void                                setUInteraction_GivenMatrix(arma::dmat& Uab, bool add = false);
+    //void                                setUInteraction_BySiteType(arma::dvec& Us, bool add = false);
+   // void                                setTunneling_BetweenNeighbours(double tH1, bool add = false);
+    //void                                setTunneling_atDistance(double tH1, double dist, bool add = false);
+    //void                                setTunneling_SamePosition(double tH1, bool add = false);
+    //void                                setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false);
+   // void                                setTunneling_GivenMatrix(arma::dmat tH, bool add = false);
     void                                setExchangeCoupling(double J, bool add = false);
 
     void                                setName(std::string name);
@@ -202,7 +204,7 @@ FHLattice                               getLattice();
 
 // External Potential
     void                                makePotential_pulse();
-    void                                readPotential(std::string fileName, std::string folderName = "");
+   // void                                readPotential(std::string fileName, std::string folderName = "");
 
 
 // WannierTools
@@ -215,7 +217,7 @@ FHLattice                               getLattice();
 
 
 // INITIATION
-    void                                initiateEmptyEnergyMatrices();
+    void                                initiateNullInteraction();
     void                                computeTBGroundState(bool withExternalPotential = false);
     void                                computeMFGroundState(bool withExternalPotential = false);
 
@@ -234,16 +236,20 @@ private:
 
 
 // ENERGY
-    FHOppositeSpinInteractionType   UInteractionType;
-    FHSameSpinInteractionType       VInteractionType;
-    tJExchangeCouplingType          tJExCType;
-    FHTunnelingType                 tunnelingType;
-    ExternalPotentialType           externalPotentialType;
+   // FHOppositeSpinInteractionType   UInteractionType;
+   // FHSameSpinInteractionType       VInteractionType;
+    //tJExchangeCouplingType          tJExCType;
+   // FHTunnelingType                 tunnelingType;
+   // ExternalPotentialType           externalPotentialType;
 
-    arma::cx_dmat                   UMatrix;
-    arma::cx_dmat                   VMatrix;
-    arma::cx_dmat                   JMatrix;
-    arma::cx_dmat                   tMatrix;
+
+    FHCoulombInteraction            coulombInteraction;
+    FHTunnelingInteraction            tunnelingInteraction;
+
+    //arma::cx_dmat                   UMatrix;
+   // arma::cx_dmat                   VMatrix;
+  //  arma::cx_dmat                   JMatrix;
+  //  arma::cx_dmat                   tMatrix;
     FHExternalPotential             externalPotential;
 
 // INITIAL CONDITIONS

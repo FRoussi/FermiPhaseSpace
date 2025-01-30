@@ -20,15 +20,10 @@ FHSystem::FHSystem(bool talk)
     MFGroundStateComputed = false;
 
     setInitialConditionsDiagonal(initCond);
-    initiateEmptyEnergyMatrices();
+    initiateNullInteraction();
 
-    UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType           = FHTunnelingType::nearestNeighboursConstant;
-    VInteractionType        = FHSameSpinInteractionType::Vnone;
-    tJExCType               = tJExchangeCouplingType::tJJnone;
-    externalPotentialType   = ExternalPotentialType::ExtPotNone;
-
-
+  //  tJExCType               = tJExchangeCouplingType::tJJnone;
+   // externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
     
 }
@@ -66,13 +61,13 @@ lattice = FHLattice(x, talk);
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
 
-    initiateEmptyEnergyMatrices();
+    initiateNullInteraction();
 
-    UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType = FHTunnelingType::nearestNeighboursConstant;
-    VInteractionType        = FHSameSpinInteractionType::Vnone;
-    tJExCType               = tJExchangeCouplingType::tJJnone;
-    externalPotentialType   = ExternalPotentialType::ExtPotNone;
+  //  UInteractionType = FHOppositeSpinInteractionType::UonSiteConstant;
+  //  tunnelingType = FHTunnelingType::nearestNeighboursConstant;
+  //  VInteractionType        = FHSameSpinInteractionType::Vnone;
+  //  tJExCType               = tJExchangeCouplingType::tJJnone;
+  //  externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
 }
 
@@ -120,12 +115,12 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
 
-    initiateEmptyEnergyMatrices();
-    UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
-    tunnelingType           = FHTunnelingType::nearestNeighboursConstant;
-    VInteractionType        = FHSameSpinInteractionType::Vnone;
-    tJExCType               = tJExchangeCouplingType::tJJnone;
-    externalPotentialType   = ExternalPotentialType::ExtPotNone;
+    initiateNullInteraction();
+  //  UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
+  //  tunnelingType           = FHTunnelingType::nearestNeighboursConstant;
+  //  VInteractionType        = FHSameSpinInteractionType::Vnone;
+  //  tJExCType               = tJExchangeCouplingType::tJJnone;
+  //  externalPotentialType   = ExternalPotentialType::ExtPotNone;
 
 }
 
@@ -144,35 +139,20 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
 
-    initiateEmptyEnergyMatrices();
+    initiateNullInteraction();
 
 // Tunneling Energy
-    std::string tunnEn = rootSystem["EnergyT"].asString();
-    if (tunnEn == "nearestNeighbours")
-    {
-        tunnelingType = FHTunnelingType::nearestNeighboursConstant;
-        double tH = rootSystem.get("parametersT", -7.).asDouble();
-        setTunneling_BetweenNeighbours(tH);
-    }
+    Json::Value tunnJson = rootSystem["tunnelingInteraction"];
+    tunnelingInteraction = FHTunnelingInteraction(&lattice, tunnJson);
 
-// Opposite-spin interaction
-    std::string UEn = rootSystem["EnergyU"].asString();
-    if (UEn == "None")
-    {
-        UInteractionType = FHOppositeSpinInteractionType::Unone;
-    }
-    if (UEn == "onSite")
-    {
-       setOppositeSpinInteractionType(FHOppositeSpinInteractionType::UonSiteConstant);
-        double U0 = rootSystem.get("parametersU", 1.).asDouble();                
-        setUInteraction_OnSite(U0);
-    }
 
-    // Same-spin Interaction
-    std::string VEn = rootSystem["EnergyV"].asString();
-    if (VEn == "None")
+// Coulomb interaction
+    Json::Value coulInt = rootSystem["coulombInteraction"];
+    std::string coulType = coulInt.get("type", "null").asString();
+    if (coulType == "onSite")
     {
-        VInteractionType = FHSameSpinInteractionType::Vnone;
+        double onSiteE = coulInt.get("onSiteInteraction", 1.).asDouble();
+        coulombInteraction = FHCoulombInteraction(&lattice, onSiteE) ;
     }
 
 // External Potential
@@ -331,7 +311,7 @@ FHSystem::FHSystem(FHLattice lat)
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
     
-    initiateEmptyEnergyMatrices();
+    initiateNullInteraction();
 }
 
 
@@ -365,24 +345,24 @@ std::vector<bool>                           FHSystem::getInitialCondition_downSp
 unsigned int                                FHSystem::getUpSpinParticleNumber()                     {    return upSpinParticleNumber;}
 unsigned int                                FHSystem::getDownSpinParticleNumber()                   {    return downSpinParticleNumber;}
 
-FHSystem::FHOppositeSpinInteractionType     FHSystem::getOppositeSpinInteractionType()              {    return UInteractionType;}
-FHSystem::FHTunnelingType                   FHSystem::getTunnelingType()                            {    return tunnelingType;}
-FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  {    return VInteractionType;}
-FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               {    return tJExCType;}
-std::complex<double>                        FHSystem::getInteractionEnergy(int i, int j)            {    return UMatrix(i,j);}
-std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)    {    return VMatrix(i,j);}
-std::complex<double>                        FHSystem::getTunnelingEnergy(int i, int j)              {    return tMatrix(i,j);}
-std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)       {    return JMatrix(i,j);}
+FHCoulombInteractionType                    FHSystem::getCoulombInteractionType()                   {    return coulombInteraction.getCoulombInteractionType();}
+FHTunnelingInteractionType                  FHSystem::getTunnelingInteractionType()                 {    return tunnelingInteraction.getTunnelingInteractionType();}
+//FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  {    return VInteractionType;}
+//FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               {    return tJExCType;}
+std::complex<double>                        FHSystem::getCoulombInteraction(int i, int j)            {    return coulombInteraction.getCoulombUInteraction(i,j);}
+std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)    {    return coulombInteraction.getCoulombVInteraction(i,j);}
+std::complex<double>                        FHSystem::getTunnelingInteraction(int i, int j)              {    return tunnelingInteraction.getTunnelingInteraction(i,j);}
+//std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)       {    return JMatrix(i,j);}
 
 std::complex<double>                        FHSystem::getExternalPotential(int i, double t)         {    return externalPotential.getExternalPotential(t,i,i);}
 std::complex<double>                        FHSystem::getExternalPotential(int i, int j, double t)  {    return externalPotential.getExternalPotential(t,i,j);}
 arma::cx_dmat                               FHSystem::getExternalPotential(double time)             {    return externalPotential.getExternalPotential(time);}
 void                                        FHSystem::updateExternalPotential(double time)          {    externalPotential.updatePotential(time);}
 
-const arma::cx_dmat*                        FHSystem::getUMatrixPointer()                           {   return &UMatrix;}
-const arma::cx_dmat*                        FHSystem::getVMatrixPointer()                           {   return &VMatrix;}
-const arma::cx_dmat*                        FHSystem::getJMatrixPointer()                           {   return &JMatrix;}
-const arma::cx_dmat*                        FHSystem::gettMatrixPointer()                           {   return &tMatrix;}
+const arma::cx_dmat*                        FHSystem::getUMatrixPointer()                           {   return coulombInteraction.getCoulombUInteractionPointer();}
+const arma::cx_dmat*                        FHSystem::getVMatrixPointer()                           {   return coulombInteraction.getCoulombVInteractionPointer();}
+//const arma::cx_dmat*                        FHSystem::getJMatrixPointer()                           {   return &JMatrix;}
+const arma::cx_dmat*                        FHSystem::gettMatrixPointer()                           {   return tunnelingInteraction.getTunnelingInteractionPointer();}
 const arma::cx_dmat*                        FHSystem::getExtPotPointer()                            {   return externalPotential.getExternalPotentialPointer();}
 const arma::cx_dmat*                        FHSystem::get_tbgs_Nu_Pointer()                         {   return &tbgs_Nu;}
 const arma::cx_dmat*                        FHSystem::get_tbgs_Nd_Pointer()                         {   return &tbgs_Nd;}
@@ -617,12 +597,8 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
 }
 
 
-void                    FHSystem::setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType UType)     {    UInteractionType = UType;}
-void                    FHSystem::setTunnelingType(FHSystem::FHTunnelingType tType)                                 {    tunnelingType = tType;}
-void                    FHSystem::setSameSpinInteractionType(FHSystem::FHSameSpinInteractionType VType)             {    VInteractionType = VType;}
-void                    FHSystem::setExchangeCouplingEnergyType(FHSystem::tJExchangeCouplingType JType)             {    tJExCType = JType;}
 
-
+/*
 /// @brief setter - on-site interaction energy
 /// @param U0 on-site interaction energy
 void                    FHSystem::setUInteraction_OnSite(double U0, bool add)
@@ -826,6 +802,7 @@ void                    FHSystem::setExchangeCoupling(double J, bool add)
     JMatrix = arma::cx_dmat(getnSites(), getnSites(), arma::fill::zeros);
 }
 
+*/
 
 void                    FHSystem::setName(std::string name)    
 {
@@ -842,12 +819,12 @@ void                    FHSystem::makePotential_pulse()
     arma::dvec polar = arma::dvec(getnDimension(), arma::fill::zeros);
     polar(0) = 1/std::sqrt(2);
     polar(1) = 1/std::sqrt(2);
-    externalPotential = FHExternalPotentialPulse(&lattice, intensityA0, centert0, widthtd, frequencyw0, polar, &tMatrix);
+    externalPotential = FHExternalPotentialPulse(&lattice, intensityA0, centert0, widthtd, frequencyw0, polar, tunnelingInteraction.getTunnelingInteractionPointer());
 }
 
 
 
-
+/*
 /// @brief Read a potential stored in fileName.
 /// @return void
 void                    FHSystem::readPotential(std::string fileName, std::string folderName)
@@ -907,33 +884,36 @@ void                    FHSystem::readPotential(std::string fileName, std::strin
     }
 }
 
+*/
 
-
-void                    FHSystem::initiateEmptyEnergyMatrices()
+void                    FHSystem::initiateNullInteraction()
 {
-    UInteractionType = FHOppositeSpinInteractionType::Unone;
-    tunnelingType = FHTunnelingType::tHnone;
-    VInteractionType = FHSameSpinInteractionType::Vnone;
-    tJExCType = tJExchangeCouplingType::tJJnone;
 
-    uint nSites = getnSites();
+   // tJExCType = tJExchangeCouplingType::tJJnone;
 
-    UMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    VMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    JMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    tMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    //uint nSites = getnSites();
+
+    //UMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    //VMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+   // JMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    //tMatrix = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+    coulombInteraction = FHCoulombInteraction(&lattice);
+    tunnelingInteraction = FHTunnelingInteraction(&lattice);
     externalPotential = FHExternalPotential(&lattice);
 }
 
 void                                FHSystem::computeTBGroundState(bool withExternalPotential)
 {
+arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
+
     if (withExternalPotential)
     {
-        arma::eig_sym(tbgs_E, tbgs_V, tMatrix + *externalPotential.getExternalPotentialPointer());
+        arma::eig_sym(tbgs_E, tbgs_V, *tMatrix + *externalPotential.getExternalPotentialPointer());
     }
     else
     {
-        arma::eig_sym(tbgs_E, tbgs_V, tMatrix);
+        arma::eig_sym(tbgs_E, tbgs_V, *tMatrix);
     }
 
 //std::cout << "     --- Comp TB 1, npu=" << upSpinParticleNumber << std::endl;
@@ -958,7 +938,8 @@ void                                FHSystem::computeTBGroundState(bool withExte
 void                                FHSystem::computeMFGroundState(bool withExternalPotential)
 {
 
-
+arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
+arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
 
     uint nSites = lattice.getnSites();
 
@@ -987,19 +968,19 @@ void                                FHSystem::computeMFGroundState(bool withExte
 
         for (int i = 0; i < nSites; i++)
         {
-            mfuHuU(i,i) = arma::dot(UMatrix.row(i), diagNd);
-            mfuHuD(i,i) = arma::dot(UMatrix.row(i), diagNu);
+            mfuHuU(i,i) = arma::dot(UMatrix->row(i), diagNd);
+            mfuHuD(i,i) = arma::dot(UMatrix->row(i), diagNu);
         } 
 
         if (withExternalPotential)
         {
-            arma::eig_sym(mfgs_Eu, mfgs_Vu, tMatrix + mfuHuU);
-            arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
+            arma::eig_sym(mfgs_Eu, mfgs_Vu, *tMatrix + mfuHuU);
+            arma::eig_sym(mfgs_Ed, mfgs_Vd, *tMatrix + mfuHuD);
         }
         else
         {
-            arma::eig_sym(mfgs_Eu, mfgs_Vu, tMatrix + mfuHuU);
-            arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
+            arma::eig_sym(mfgs_Eu, mfgs_Vu, *tMatrix + mfuHuU);
+            arma::eig_sym(mfgs_Ed, mfgs_Vd, *tMatrix + mfuHuD);
         }
  
         mfgs_Nu = mfgs_Vu * Mku * mfgs_Vu.t();
@@ -1066,6 +1047,9 @@ Json::Value                    FHSystem::writeFHSystemJson()
     } 
     systemRoot["IC"] = jsonIC;
 // Energy
+    systemRoot["tunnelingInteraction"] = tunnelingInteraction.writeTunnelingInteractionJson();
+    systemRoot["coulombInteraction"] = coulombInteraction.writeCoulombInteractionJson();
+    /*
     switch (tunnelingType)
     {
     case FHTunnelingType::tHnone:
@@ -1119,7 +1103,7 @@ Json::Value                    FHSystem::writeFHSystemJson()
     default:
         break;
     }
-
+*/
         // External potential
     Json::Value ExtPotJ = externalPotential.writePotentialJson();
     systemRoot["ExternalPotential"] = ExtPotJ;
@@ -1260,7 +1244,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         {
             for (uint jSite = 0; jSite < nSites; jSite ++ )
             {
-                datFile << "    0    0    0    " << iSite+1 << "    " << jSite+1 << "    " <<  std::to_string(getTunnelingEnergy(iSite, jSite).real()) << "    " << std::to_string((double)0) << std::endl; 
+                datFile << "    0    0    0    " << iSite+1 << "    " << jSite+1 << "    " <<  std::to_string(tunnelingInteraction.getTunnelingInteraction(iSite, jSite).real()) << "    " << std::to_string((double)0) << std::endl; 
             }
         }
 

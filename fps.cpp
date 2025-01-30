@@ -17,6 +17,9 @@
 #include "include/json/json.h"
 
 #define DEF_MAX_THREAD_NUM 4
+#define FPS_VERSION_MAJOR 0
+#define FPS_VERSION_MINOR 1
+#define FPS_VERSION_PATCH 0
 
 int main(int argc, char* argv[])
 {
@@ -24,6 +27,7 @@ int main(int argc, char* argv[])
 
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
 
+   std::cout << "== FPS version:  " << FPS_VERSION_MAJOR << "." << FPS_VERSION_MINOR << "." << FPS_VERSION_PATCH << std::endl;
 
    arma::arma_version ver;
    std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
