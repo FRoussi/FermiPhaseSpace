@@ -147,13 +147,9 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
 
 // Coulomb interaction
-    Json::Value coulInt = rootSystem["coulombInteraction"];
-    std::string coulType = coulInt.get("type", "null").asString();
-    if (coulType == "onSite")
-    {
-        double onSiteE = coulInt.get("onSiteInteraction", 1.).asDouble();
-        coulombInteraction = FHCoulombInteraction(&lattice, onSiteE) ;
-    }
+    Json::Value coulJson = rootSystem["coulombInteraction"];
+    std::string coulType = coulJson.get("type", "null").asString();
+    coulombInteraction = FHCoulombInteraction(&lattice, coulJson);
 
 // External Potential
     Json::Value ExtPotJ = rootSystem["ExternalPotential"];
