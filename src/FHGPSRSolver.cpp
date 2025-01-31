@@ -11,7 +11,7 @@ FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : FHSolver(fhS)
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
-    J = fhSystem->getJMatrixPointer();
+   // J = fhSystem->getJMatrixPointer();
     V = fhSystem->getVMatrixPointer();
     extPot = fhSystem->getExtPotPointer();
 
@@ -235,7 +235,7 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
 
     arma::cx_dmat B = arma::cx_dmat(2*sizeMat, 1, arma::fill::zeros);
 
-    if (fhSystem->getOppositeSpinInteractionType() == FHSystem::FHOppositeSpinInteractionType::UonSiteConstant)
+    if (fhSystem->getCoulombInteractionType() == FHCoulombInteractionType::CEonSite)
     {
         arma::cx_dmat A =quarterDiffusionMatrix(rhou, rhod, U0);
         double A_norm = arma::norm(A,1);
@@ -244,7 +244,7 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
             B = sqrtDecomposition_fromA(A);
         }
     }
-    else if (fhSystem->getOppositeSpinInteractionType() == FHSystem::FHOppositeSpinInteractionType::UonSiteGivenDiagonal)
+    else if (fhSystem->getCoulombInteractionType() == FHCoulombInteractionType::CEgiven)
     {
         arma::cx_dvec Udiag = arma::diagmat(*U);
         arma::cx_dmat D =diffusionMatrix(rhou, rhod, Udiag);
@@ -640,7 +640,7 @@ void FHGPSRSolver::step(double currentSimulationTime, arma::cx_dmat& rhou, arma:
         else if (driftIntegrator == GPSRDriftIntegrator::RungeKutta4_38)    step_Drift_RK4_38(currentSimulationTime, rhou, rhod, d_t, drhou_Drift, drhod_Drift);
 
         // Step from the diffusion part : 
-        double U0 = std::real( fhSystem->getInteractionEnergy(0,0));
+        double U0 = std::real( fhSystem->getCoulombInteraction(0,0));
         if (diffusionIntegrator==GPSRDiffusionIntegrator::analytical)   step_Diffusion(rhou, rhod, U0, d_t, drhou_Diff, drhod_Diff);
         else step_Diffusion_svd(rhou, rhod, U0, d_t, drhou_Diff, drhod_Diff);
 
@@ -768,6 +768,7 @@ unsigned int tt = std::floor(nTraj/10);
 
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
+
             
         resJson["t"] = rJson.writeLine(timeLine);
 

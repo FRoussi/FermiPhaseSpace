@@ -39,6 +39,8 @@ public:
     virtual Json::Value         writeCoulombInteractionJson();                 
 
 
+    ~FHCoulombInteraction();
+
 private:  
 
 
@@ -50,8 +52,8 @@ private:
     FHCoulombInteractionType       CoulombInteractionType;    
     
 
-    std::vector<double>         parameterSet1;
-    std::vector<double>         parameterSet2;
+    std::vector<double>         parameterSet1;   //<- Energies
+    std::vector<double>         parameterSet2;  //<- Distances
 
 
     void                        addCoulomb(double distance, double Interaction);

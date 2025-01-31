@@ -6,7 +6,7 @@ FHExternalPotential::FHExternalPotential()
     nullPotential = true;
     timeDependantPotential = false;
     currentPotentialTime = 0;
-    potentialType = FHExternalPotentialType::null;
+    potentialType = FHExternalPotentialType::EPnull;
 }
 
 FHExternalPotential::FHExternalPotential(FHLattice* lat)
@@ -22,7 +22,7 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat)
     nullPotential = true;
     timeDependantPotential = false;
     currentPotentialTime = 0;
-    potentialType = FHExternalPotentialType::null;
+    potentialType = FHExternalPotentialType::EPnull;
 }
 
 bool                    FHExternalPotential::isThePotentialNull()
@@ -61,7 +61,7 @@ arma::cx_dmat*          FHExternalPotential::getExternalPotentialPointer()
 
 arma::cx_double         FHExternalPotential::getExternalPotential(uint iSite, uint jSite)
 {
-    if (potentialType == FHExternalPotentialType::null)
+    if (potentialType == FHExternalPotentialType::EPnull)
     {
         return 0;
     }
@@ -110,6 +110,6 @@ FHExternalPotentialType FHExternalPotential::getExternalPotentialType()
 Json::Value         FHExternalPotential::writePotentialJson()
 {
     Json::Value jpot;
-    jpot["type"] = "none";
+    jpot["type"] = "null";
     return jpot;
 }

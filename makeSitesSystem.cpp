@@ -155,15 +155,11 @@ int main(int argc, char* argv[])
 
 // MAKING OF THE FHSystem
 
-
-
-
     FHSystem newSystem = FHSystem(lat0);
-    newSystem.setName(fileName);                                                                        //<- Name                                                          //<- Position
-    newSystem.setTunnelingType(FHSystem::FHTunnelingType::nearestNeighboursConstant);                    //<- Energy
-    newSystem.setTunneling_BetweenNeighbours(energyParam[0]);
-    newSystem.setOppositeSpinInteractionType(FHSystem::FHOppositeSpinInteractionType::UonSiteConstant);
-    newSystem.setUInteraction_OnSite(energyParam[1]);
+    newSystem.setName(fileName);    
+    
+    newSystem.setBasisInteractions();
+
     
     switch (initC)
     {
@@ -199,6 +195,8 @@ int main(int argc, char* argv[])
     param["int_order"] = 4;
     simRoot["parameters"] = param;
 
+
+
     simRoot["system"] = newSystem.writeFHSystemJson();
 
     Json::Value res;
@@ -208,6 +206,7 @@ int main(int argc, char* argv[])
     res["momenta"] = false;
     res["energies"] = true;
     simRoot["results"] = res;
+
 
     
     //std::cout << simRoot << std::endl;

@@ -19,7 +19,7 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS) : FHSolver(fhS)
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
-    J = fhSystem->getJMatrixPointer();
+    //J = fhSystem->getJMatrixPointer();
     V = fhSystem->getVMatrixPointer();
     extPot = fhSystem->getExtPotPointer();
 
@@ -235,6 +235,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rho2iid;
     arma::cx_drowvec EU;  
     arma::cx_drowvec EtH; 
+    arma::cx_drowvec EpotExt;
 
     if (saveWholeDMatrix)
     {
@@ -255,6 +256,7 @@ void FHfTWASolver::runSimulation( )
     {
         EU          = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EpotExt     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     }
 
 
@@ -280,6 +282,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rho2iid_loc; 
     arma::cx_drowvec EU_loc;   
     arma::cx_drowvec EtH_loc;  
+    arma::cx_drowvec EpotExt_loc;
 
 
     if (saveWholeDMatrix)
@@ -386,6 +389,7 @@ void FHfTWASolver::runSimulation( )
                 Nd_loc =  rhod + halfDiag;
                 EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
                 EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
+                EpotExt_loc(t) = EpotExt_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
             }
 
             // We do 'nStepsPerTimePoint' simulation steps
@@ -429,6 +433,7 @@ void FHfTWASolver::runSimulation( )
         {
             EU += EU_loc;
             EtH += EtH_loc;
+            EpotExt += EpotExt_loc;
         }
 
     }
@@ -501,12 +506,18 @@ void FHfTWASolver::runSimulation( )
     {
         EU = EU/nTraj_arma;
         EtH = EtH/nTraj_arma;
-        E = EtH+ EU;
+        EpotExt = EpotExt/nTraj_arma;
+        E = EtH + EU + EpotExt;
     }
 
     
-
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
+   arma::cx_dmat Energies = arma::cx_dmat(nTimePoints, 4);
+   Energies.row(0) = EU;
+   Energies.row(1) = EtH;
+   Energies.row(2) = EpotExt;
+   Energies.row(3) = E;
+   
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, Energies, timeLine);
 
 
 }
@@ -517,7 +528,7 @@ void FHfTWASolver::runSimulation( )
 
 
 
-void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_drowvec &EU, arma::cx_drowvec &EtH, arma::cx_drowvec &E,std::vector<double> &timeLine)
+void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
 {
 
     // Writing the results :
@@ -551,9 +562,10 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         }
         if (saveEnergies)
         {
-            results.writeLineInReal("EU", EU);
-            results.writeLineInReal("EtH", EtH);
-            results.writeLineInReal("E", E);
+            results.writeLineInReal("EU", Energies.row(0));
+            results.writeLineInReal("EtH", Energies.row(1));
+            results.writeLineInReal("Epe", Energies.row(2));
+            results.writeLineInReal("E", Energies.row(3));
         }
 
 
@@ -565,6 +577,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
 
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
+
 
         resJson["t"] = rJson.writeLine(timeLine);
 
@@ -594,9 +607,10 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         if (saveEnergies)
         {
             Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(EU);
-            EJson["tH"] = rJson.writeLineInReal(EtH);
-            EJson["tot"] = rJson.writeLineInReal(E);
+            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
+            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
+            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
+            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
             resJson["E"] = EJson;
         }
 

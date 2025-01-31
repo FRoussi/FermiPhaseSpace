@@ -28,8 +28,8 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJ
     parameterSet1 = std::vector<double>();
     parameterSet2 = std::vector<double>();
 
-    parameterSet1.push_back(tunnDist);
-    parameterSet2.push_back(tunnE);
+    parameterSet1.push_back(tunnE);
+    parameterSet2.push_back(tunnDist);
 
         uint nSites = fhLattice->getnSites();
         tunnelingInteraction = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -42,14 +42,15 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJ
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, double neighbourD, double tunnelingE)
 {
+
     tunnelingInteractionType = FHTunnelingInteractionType::TEnearestNeigbors;
     fhLattice = lat;
 
     parameterSet1 = std::vector<double>();
     parameterSet2 = std::vector<double>();
 
-    parameterSet1.push_back(neighbourD);
-    parameterSet2.push_back(tunnelingE);
+    parameterSet1.push_back(tunnelingE);
+    parameterSet2.push_back(neighbourD);
 
 
     uint nSites = fhLattice->getnSites();
@@ -67,8 +68,8 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, std::vector<doubl
     tunnelingInteractionType = FHTunnelingInteractionType::TEdistanceInteraction;
     fhLattice = lat;
 
-    parameterSet1 = std::vector<double>(tunnelingDs);
-    parameterSet2 = std::vector<double>(tunnelingEs);
+    parameterSet1 = std::vector<double>(tunnelingEs);
+    parameterSet2 = std::vector<double>(tunnelingDs);
 
     uint nSites = fhLattice->getnSites();
     tunnelingInteraction = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -77,7 +78,7 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, std::vector<doubl
 
     for (uint iDist = 0; iDist < nParam; iDist++)
     {
-        addTunneling(parameterSet1[iDist], parameterSet2[iDist]);
+        addTunneling(parameterSet2[iDist], parameterSet1[iDist]);
     }
 
 }
@@ -135,34 +136,38 @@ Json::Value         FHTunnelingInteraction::writeTunnelingInteractionJson()
         case(FHTunnelingInteractionType::TEnull):
         {
             jpot["type"] = "null";
+            break;
         }
         case(FHTunnelingInteractionType::TEnearestNeigbors):
         {
             jpot["type"] = "nearestNeighbors";
-            jpot["neighborDistance"] = parameterSet1[0];
-            jpot["neighborInteraction"] = parameterSet2[0];
+            jpot["neighborDistance"] = parameterSet2[0];
+            jpot["neighborInteraction"] = parameterSet1[0];
+            break;
         }
         case(FHTunnelingInteractionType::TEdistanceInteraction):
         {
             jpot["type"] = "distanceInteraction";
 
             Json::Value dVecJ = Json::Value(Json::arrayValue);
-            for (uint i = 0; i<parameterSet1.size(); i++)
+            for (uint i = 0; i<parameterSet2.size(); i++)
             {
-                dVecJ.append(parameterSet1[i]);
+                dVecJ.append(parameterSet2[i]);
             }
             jpot["distances"] = dVecJ;
 
             Json::Value eVecJ = Json::Value(Json::arrayValue);
-            for (uint i = 0; i<parameterSet2.size(); i++)
+            for (uint i = 0; i<parameterSet1.size(); i++)
             {
-                eVecJ.append(parameterSet2[i]);
+                eVecJ.append(parameterSet1[i]);
             }
             jpot["energies"] = eVecJ;
+            break;
         }
         default:
         {
             jpot["type"] = "null";
+            break;
         }
     }
 
@@ -191,4 +196,10 @@ void                        FHTunnelingInteraction::addTunneling(double distance
     }
 
 
+}
+
+
+FHTunnelingInteraction::~FHTunnelingInteraction()
+{
+    
 }

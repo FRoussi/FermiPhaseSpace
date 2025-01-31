@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
 
       std::cout << "--- Fermi-Hubbard Dynamic with fTWA and MPI --- " << std::endl;
 
+      std::cout << "== FPS version:  " << FPS_VERSION_MAJOR << "." << FPS_VERSION_MINOR << "." << FPS_VERSION_PATCH << std::endl;
 
       arma::arma_version ver;
       std::cout << "== ARMA version: "<< ver.as_string() << std::endl;

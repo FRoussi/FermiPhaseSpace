@@ -12,11 +12,10 @@
 
 
 enum FHExternalPotentialType{
-    noneEP,
-    null,
-    constant,
-    coreHole,
-    pulse
+    EPnull,
+    EPconstant,
+    EPcoreHole,
+    EPpulse
 };
 
 class FHExternalPotential

@@ -26,8 +26,8 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, Json::Value coulJson)
         parameterSet1 = std::vector<double>();
         parameterSet2 = std::vector<double>();
 
-        parameterSet1.push_back(0);
-        parameterSet2.push_back(onSiteE);
+        parameterSet1.push_back(onSiteE);
+        parameterSet2.push_back(0);
 
         uint nSites = fhLattice->getnSites();
         U = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -39,6 +39,7 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, Json::Value coulJson)
 
 FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, double onSiteInteraction)
 {
+
     CoulombInteractionType = FHCoulombInteractionType::CEonSite;
     fhLattice = lat;
 
@@ -46,6 +47,7 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, double onSiteInteract
     parameterSet2 = std::vector<double>();
 
     parameterSet1.push_back(onSiteInteraction);
+    parameterSet2.push_back(0);
 
 
 
@@ -64,8 +66,8 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, std::vector<double> C
     CoulombInteractionType = FHCoulombInteractionType::CEdistanceInteraction;
     fhLattice = lat;
 
-    parameterSet1 = std::vector<double>(CoulombDs);
-    parameterSet2 = std::vector<double>(CoulombEs);
+    parameterSet1 = std::vector<double>(CoulombEs);
+    parameterSet2 = std::vector<double>(CoulombDs);
 
     uint nSites = fhLattice->getnSites();
     U = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -75,7 +77,7 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, std::vector<double> C
 
     for (uint iDist = 0; iDist < nParam; iDist++)
     {
-        addCoulomb(parameterSet1[iDist], parameterSet2[iDist]);
+        addCoulomb(parameterSet2[iDist], parameterSet1[iDist]);
     }
 
 }
@@ -154,11 +156,13 @@ Json::Value         FHCoulombInteraction::writeCoulombInteractionJson()
         case(FHCoulombInteractionType::CEnull):
         {
             jpot["type"] = "null";
+            break;
         }
         case(FHCoulombInteractionType::CEonSite):
         {
             jpot["type"] = "onSite";
-            jpot["onSiteInteraction"] = parameterSet2[0];
+            jpot["onSiteInteraction"] = parameterSet1[0];
+            break;
         }
         case(FHCoulombInteractionType::CEdistanceInteraction):
         {
@@ -167,20 +171,22 @@ Json::Value         FHCoulombInteraction::writeCoulombInteractionJson()
             Json::Value dVecJ = Json::Value(Json::arrayValue);
             for (uint i = 0; i<parameterSet1.size(); i++)
             {
-                dVecJ.append(parameterSet1[i]);
+                dVecJ.append(parameterSet2[i]);
             }
             jpot["distances"] = dVecJ;
 
             Json::Value eVecJ = Json::Value(Json::arrayValue);
             for (uint i = 0; i<parameterSet2.size(); i++)
             {
-                eVecJ.append(parameterSet2[i]);
+                eVecJ.append(parameterSet1[i]);
             }
             jpot["energies"] = eVecJ;
+            break;
         }
         default:
         {
             jpot["type"] = "null";
+            break;
         }
     }
 
@@ -237,4 +243,10 @@ void                        FHCoulombInteraction::addCoulombinV(double distance,
             }
         }
     }
+}
+
+
+FHCoulombInteraction::~FHCoulombInteraction()
+{
+
 }

@@ -17,13 +17,10 @@
 #include "include/json/json.h"
 
 #define DEF_MAX_THREAD_NUM 4
-#define FPS_VERSION_MAJOR 0
-#define FPS_VERSION_MINOR 1
-#define FPS_VERSION_PATCH 0
+
 
 int main(int argc, char* argv[])
 {
-
 
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
 
@@ -31,12 +28,6 @@ int main(int argc, char* argv[])
 
    arma::arma_version ver;
    std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
-
-
-
-
-
-
 
 
 // Environment variables :
@@ -103,15 +94,6 @@ int main(int argc, char* argv[])
       std::cout << "   -- Work folder : " << workFolder << std::endl;
 
 
-      enum task
-      {
-         nothing,
-         readSystemFile,
-         compute_ED,
-         compute_FH,
-         compute_fTWA,
-         compute_GPSR
-      };
 
       enum dynamicMethod
       {
@@ -173,6 +155,8 @@ int main(int argc, char* argv[])
       fhSystem = FHSystem(systemJSON, workFolder);
       systemLoaded = true;
       std::cout << "   -- System loaded" << std::endl;
+
+      systemJSON["fpsVersion"] = std::to_string(FPS_VERSION_MAJOR) + "." + std::to_string(FPS_VERSION_MINOR) + "." + std::to_string(FPS_VERSION_PATCH); 
 
       const auto startSimTime{std::chrono::steady_clock::now()};
 

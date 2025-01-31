@@ -108,7 +108,7 @@ private:
 // operators :
     arma::sp_dmat H_U;
     arma::sp_dmat H_t;
-    arma::sp_dmat H_J;
+   // arma::sp_dmat H_J;
     arma::sp_dmat H_externalPotential;
     arma::sp_dmat H;
 
@@ -136,7 +136,7 @@ private:
 
     void buildHamiltonian_U();                                                              //<- Build and store the operator "Interaction part of the Hamiltonian"
     void buildHamiltonian_tM();                                                              //<- Build and store the operator "Tunneling part of the Hamiltonian"
-    void buildHamiltonian_J();                                                              //<- Build and store the operator "Exchange coupling part of the Hamiltonian"
+    //void buildHamiltonian_J();                                                              //<- Build and store the operator "Exchange coupling part of the Hamiltonian"
     void buildHamiltonian_ExternalPotential(double t);                                      //<- Build and store the operator "External Potential part of the Hamiltonian"
     void buildPairOperators();                                                              //<- Build and store all the usefull number and tunneling operators.
 

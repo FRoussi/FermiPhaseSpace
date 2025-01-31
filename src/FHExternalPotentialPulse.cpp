@@ -16,7 +16,7 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
 
     if (A0 !=0)
     {
-        potentialType = FHExternalPotentialType::pulse;
+        potentialType = FHExternalPotentialType::EPpulse;
         nullPotential = false;
         timeDependantPotential = true;
     }
@@ -38,7 +38,7 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
 
     if (A0 !=0)
     {
-        potentialType = FHExternalPotentialType::pulse;
+        potentialType = FHExternalPotentialType::EPpulse;
         nullPotential = false;
         timeDependantPotential = true;
     }

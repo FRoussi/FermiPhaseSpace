@@ -7,7 +7,7 @@ FHExternalPotentialConstant::FHExternalPotentialConstant(FHLattice* lat, arma::d
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     externalPotential.diag() = arma::cx_dmat(Pot, arma::dvec(Pot.size(), arma::fill::zeros));
     nullPotential = false;
-    potentialType = FHExternalPotentialType::constant;
+    potentialType = FHExternalPotentialType::EPconstant;
 }
 
 

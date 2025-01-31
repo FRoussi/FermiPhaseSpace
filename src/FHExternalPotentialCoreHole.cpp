@@ -10,7 +10,7 @@ FHExternalPotentialCoreHole::FHExternalPotentialCoreHole(FHLattice* lat, uint iS
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     externalPotential(iSite, iSite) = std::complex<double>(pot);
     nullPotential = false;
-    potentialType = FHExternalPotentialType::coreHole;
+    potentialType = FHExternalPotentialType::EPcoreHole;
 }
 
 

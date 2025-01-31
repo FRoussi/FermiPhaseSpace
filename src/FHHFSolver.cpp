@@ -22,7 +22,7 @@ FHHFSolver::FHHFSolver(FHSystem* fhS) : FHSolver(fhS)
 
     U = fhSystem->getUMatrixPointer();
     tM = fhSystem->gettMatrixPointer();
-    J = fhSystem->getJMatrixPointer();
+    //J = fhSystem->getJMatrixPointer();
     V = fhSystem->getVMatrixPointer();
     extPot = fhSystem->getExtPotPointer();
 
@@ -360,6 +360,7 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Mkkd;
     arma::cx_drowvec EU;
     arma::cx_drowvec EtH;
+    arma::cx_drowvec EpotExt;
     arma::cx_drowvec E;
     arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
@@ -397,8 +398,13 @@ void FHHFSolver::runSimulation( )
     {
         EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         EtH(0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
         EU(0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
+        {
+            EpotExt(0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+        }
     }
 
 
@@ -474,6 +480,11 @@ void FHHFSolver::runSimulation( )
         {
             EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
             EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
+            {
+                EpotExt(t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+            }
+
         }
         
     }
@@ -483,7 +494,7 @@ void FHHFSolver::runSimulation( )
 //std::cout << "Save En tot" << std::endl;
     if (saveEnergies)
     {
-       E = EU + EtH;
+       E = EU + EtH + EpotExt;
     }
 
     if (talkative)
@@ -532,6 +543,7 @@ void FHHFSolver::runSimulation( )
         {
             results.writeLineInReal("EU", EU);
             results.writeLineInReal("EtH", EtH);
+            results.writeLineInReal("Epe", EpotExt);
             results.writeLineInReal("E", E);
         }
 
@@ -568,6 +580,7 @@ void FHHFSolver::runSimulation( )
             Json::Value EJson(Json::objectValue);
             EJson["U"] = rJson.writeLineInReal(EU);
             EJson["tH"] = rJson.writeLineInReal(EtH);
+            EJson["pe"] = rJson.writeLineInReal(EpotExt);
             EJson["tot"] = rJson.writeLineInReal(E);
             resJson["E"] = EJson;
         }

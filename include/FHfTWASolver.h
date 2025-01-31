@@ -47,8 +47,7 @@ public:
                                             arma::cx_dmat &Niiu_t, arma::cx_dmat &Niid_t, 
                                             arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
                                             arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
-                                            arma::cx_drowvec &EU, arma::cx_drowvec &EtH, 
-                                            arma::cx_drowvec &E,std::vector<double> &timeLine);
+                                            arma::cx_dmat &E,std::vector<double> &timeLine);
 
     ~FHfTWASolver();
 

@@ -18,7 +18,9 @@
 
 
 
-
+#define FPS_VERSION_MAJOR 0
+#define FPS_VERSION_MINOR 1
+#define FPS_VERSION_PATCH 0
 
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
@@ -39,44 +41,7 @@ public:
         groundState
     };
 
-    enum FHOppositeSpinInteractionType {
-        Unone,
-        UonSiteConstant,
-        UonSiteBySiteType,
-        UonSiteGivenDiagonal,
-        UdistanceFunction,
-        UGivenMatrix
-    };
 
-    enum FHSameSpinInteractionType {
-        Vnone,
-        VonSiteConstant,
-        VonSiteBySiteType,
-        VonSiteGivenDiagonal,
-        VdistanceFunction,
-        VGivenMatrix
-    };
-
-    enum tJExchangeCouplingType {
-        tJJnone,
-        tJNearestNeighboursConstant,
-        tJGivenMatrix,
-        tJBySiteType
-    };
-
-    enum FHTunnelingType {
-        tHnone,
-        nearestNeighboursConstant,
-        nearestNeighboursBySiteType,
-        tunnelingDistanceFunction,
-        tunnelingGivenMatrix
-    };
-
-    enum ExternalPotentialType {
-        ExtPotNone,
-        ExtPotConstant,
-        ExtPotPulse
-    };
 
 // CONSTRUCTORS
 
@@ -121,6 +86,7 @@ FHLattice                               getLattice();
 
     FHCoulombInteractionType            getCoulombInteractionType();
     FHTunnelingInteractionType          getTunnelingInteractionType();
+    FHExternalPotentialType             getExternalPotentialType();
    // FHSameSpinInteractionType           getSameSpinInteractionType();
    // tJExchangeCouplingType              getExchangeCouplingEnergyType();
 
@@ -176,6 +142,8 @@ FHLattice                               getLattice();
     void                                setInitialConditions(FHInitialConditionType initialCondType);
     void                                setInitialConditions(FHInitialConditionType initialCondType, std::vector<unsigned int> partNumber );
 
+    void                                setBasisInteractions();
+
    // void                                setOppositeSpinInteractionType(FHOppositeSpinInteractionType UType);
    // void                                setTunnelingType(FHTunnelingType tType);
    // void                                setSameSpinInteractionType(FHSameSpinInteractionType VType);
@@ -190,7 +158,7 @@ FHLattice                               getLattice();
     //void                                setTunneling_SamePosition(double tH1, bool add = false);
     //void                                setTunneling_BySiteType(arma::dmat& tHs1s2, double d, bool add = false);
    // void                                setTunneling_GivenMatrix(arma::dmat tH, bool add = false);
-    void                                setExchangeCoupling(double J, bool add = false);
+   // void                                setExchangeCoupling(double J, bool add = false);
 
     void                                setName(std::string name);
 

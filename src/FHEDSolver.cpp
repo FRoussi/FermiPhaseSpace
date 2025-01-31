@@ -54,8 +54,8 @@ arma::cx_dvec FHEDSolver::getMFGroundState()
 
     for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
     {     
-        H_mfu = H_mfu + mfNu->at(iSite,iSite).real() * fhSystem->getInteractionEnergy(iSite, iSite).real() * NijdSet[iSite][iSite];
-        H_mfu = H_mfu + mfNd->at(iSite,iSite).real() * fhSystem->getInteractionEnergy(iSite, iSite).real() * NijuSet[iSite][iSite];
+        H_mfu = H_mfu + mfNu->at(iSite,iSite).real() * fhSystem->getCoulombInteraction(iSite, iSite).real() * NijdSet[iSite][iSite];
+        H_mfu = H_mfu + mfNd->at(iSite,iSite).real() * fhSystem->getCoulombInteraction(iSite, iSite).real() * NijuSet[iSite][iSite];
     }
       
     arma::sp_dmat H_mf = arma::real(H_mfu) + arma::real(H_t);
@@ -177,7 +177,7 @@ void FHEDSolver::buildPairOperators()
         {
             for (uint j = i + 1; j < nSites; j++)
             {
-                if ((storeNiju == storeOperators::SOall) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
+                if ((storeNiju == storeOperators::SOall) || ((fhSystem->getTunnelingInteraction(i, j) != arma::cx_double(0,0)) ))
                 {
                     NijuSet[i][j] = tunnelingOperatorSpinUp(i, j);
                 }
@@ -201,7 +201,7 @@ void FHEDSolver::buildPairOperators()
         {
             for (uint j = i + 1; j < nSites; j++)
             {
-                if ((storeNijd == storeOperators::SOall) || ((fhSystem->getTunnelingEnergy(i, j) != arma::cx_double(0,0)) || (fhSystem->getExchangeCouplingEnergy(i, j) != arma::cx_double(0,0))))
+                if ((storeNijd == storeOperators::SOall) || ((fhSystem->getTunnelingInteraction(i, j) != arma::cx_double(0,0)) ))
                 {
                     NijdSet[i][j] = tunnelingOperatorSpinDown(i, j);
                 }
@@ -229,10 +229,10 @@ void FHEDSolver::buildHamiltonian_U()
     {
         for (uint jSite = 0 ; jSite < fhSystem->getnSites(); jSite ++)
         {
-            if(fhSystem->getInteractionEnergy(iSite,jSite) != arma::cx_double(0,0))
+            if(fhSystem->getCoulombInteraction(iSite,jSite) != arma::cx_double(0,0))
             {
-                H_U = H_U + fhSystem->getInteractionEnergy(iSite,jSite).real() * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
-                                std::cout << "HU building, i=" << iSite << ", j=" << jSite << " Uij=" <<fhSystem->getInteractionEnergy(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
+                H_U = H_U + fhSystem->getCoulombInteraction(iSite,jSite).real() * NijuSet[iSite][iSite] * NijdSet[jSite][jSite];
+                                std::cout << "HU building, i=" << iSite << ", j=" << jSite << " Uij=" <<fhSystem->getCoulombInteraction(iSite,jSite) << " HU.nnz="<< H_U.n_nonzero << std::endl;
             }
         }
     }
@@ -250,30 +250,30 @@ void FHEDSolver::buildHamiltonian_tM()
     {
         for (uint jSite = iSite + 1; jSite < fhSystem->getnSites(); jSite++)
         {
-            if (fhSystem->getTunnelingEnergy(iSite, jSite) != arma::cx_double(0,0))
+            if (fhSystem->getTunnelingInteraction(iSite, jSite) != arma::cx_double(0,0))
             {
                 
                 // SPIN UP
                 if (storeNiju == storeOperators::SOnone)
                 {
                     nij = tunnelingOperatorSpinUp(iSite, jSite);
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * nij + fhSystem->getTunnelingEnergy(jSite, iSite).real() * nij.t(); 
+                    H_t = H_t + fhSystem->getTunnelingInteraction(iSite, jSite).real() * nij + fhSystem->getTunnelingInteraction(jSite, iSite).real() * nij.t(); 
                 }
                 else
                 {
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * NijuSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite).real() * NijuSet[iSite][jSite].t(); 
+                    H_t = H_t + fhSystem->getTunnelingInteraction(iSite, jSite).real() * NijuSet[iSite][jSite] + fhSystem->getTunnelingInteraction(jSite, iSite).real() * NijuSet[iSite][jSite].t(); 
                 }
                 // SPIN DOWN
                 if (storeNijd == storeOperators::SOnone)
                 {
                     nij = tunnelingOperatorSpinDown(iSite, jSite);
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * nij + fhSystem->getTunnelingEnergy(jSite, iSite).real() * nij.t(); 
+                    H_t = H_t + fhSystem->getTunnelingInteraction(iSite, jSite).real() * nij + fhSystem->getTunnelingInteraction(jSite, iSite).real() * nij.t(); 
                 }
                 else
                 {
-                    H_t = H_t + fhSystem->getTunnelingEnergy(iSite, jSite).real() * NijdSet[iSite][jSite] + fhSystem->getTunnelingEnergy(jSite, iSite).real() * NijdSet[iSite][jSite].t(); 
+                    H_t = H_t + fhSystem->getTunnelingInteraction(iSite, jSite).real() * NijdSet[iSite][jSite] + fhSystem->getTunnelingInteraction(jSite, iSite).real() * NijdSet[iSite][jSite].t(); 
                 }
-                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << " Jij=" <<fhSystem->getTunnelingEnergy(iSite,jSite) << " Ht.nnz="<< H_t.n_nonzero << std::endl;
+                std::cout << "Ht building, i=" << iSite << ", j=" << jSite << " Jij=" <<fhSystem->getTunnelingInteraction(iSite,jSite) << " Ht.nnz="<< H_t.n_nonzero << std::endl;
             }
         }
     }
@@ -281,6 +281,7 @@ void FHEDSolver::buildHamiltonian_tM()
 }
 
 
+/*
 ///@brief Compute the system's Hamiltonian tunneling part
 ///@return void
 void FHEDSolver::buildHamiltonian_J()
@@ -297,7 +298,7 @@ void FHEDSolver::buildHamiltonian_J()
         }
     }
 }
-
+*/
 
 void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 {
@@ -325,10 +326,10 @@ void FHEDSolver::buildHamiltonian()
 
     buildHamiltonian_U();
     buildHamiltonian_tM();
-    buildHamiltonian_J();
+    //buildHamiltonian_J();
     buildHamiltonian_ExternalPotential(0);
     
-    H = H_U + H_t + H_J + H_externalPotential;
+    H = H_U + H_t  + H_externalPotential;
 
     //printf("Test 2 - small system Hamiltonian : \n");
     //H.print_dense();
@@ -340,7 +341,7 @@ void FHEDSolver::updateHamiltonian(double time)
 {
     buildHamiltonian_ExternalPotential(time);
 
-    H = H_U + H_t + H_J + H_externalPotential;
+    H = H_U + H_t  + H_externalPotential;
 }
 
 
@@ -637,7 +638,7 @@ std::complex<double> FHEDSolver::U_os_psil(uint phi_l)
             for (uint i_d = 0; i_d < fhSystem->getnSites(); i_d++)
             {
                 if ((*posPD)[i_d])
-                    u = u + fhSystem->getInteractionEnergy(i_u, i_d);
+                    u = u + fhSystem->getCoulombInteraction(i_u, i_d);
             }
         }
     }
@@ -676,6 +677,7 @@ void FHEDSolver::runSimulation()
     arma::dmat niid = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_dmat mk; 
 
@@ -702,7 +704,8 @@ void FHEDSolver::runSimulation()
         }     
         EU[t] = static_cast<double>(std::real(arma::cdot(psi, H_U * psi)));
         EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_t * psi)));
-        E[t] = EU[t] + EtH[t];
+        EpotExt[t] = static_cast<double>(std::real(arma::cdot(psi, H_externalPotential * psi)));
+        E[t] = EU[t] + EtH[t] + EpotExt[t];
 
         if (computeMomenta)
         {
@@ -744,6 +747,8 @@ void FHEDSolver::runSimulation()
         }
         results.writeLine("EU", EU);
         results.writeLine("EtH", EtH);
+        results.writeLine("Epe", EpotExt);
+        
         results.writeLine("E", E);
 
         std::cout << "   -- Results written in " << folderName << "/" << workName << ".txt" << std::endl;
@@ -754,6 +759,7 @@ void FHEDSolver::runSimulation()
 
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
+
 
         resJson["t"] = rJson.writeLine(timeLine);
 
@@ -773,7 +779,9 @@ void FHEDSolver::runSimulation()
         Json::Value EJson(Json::objectValue);
         EJson["U"] = rJson.writeLine(EU);
         EJson["tH"] = rJson.writeLine(EtH);
+        EJson["pe"] = rJson.writeLine(EpotExt);
         EJson["tot"] = rJson.writeLine(E);
+ 
         resJson["E"] = EJson;
 
         if (fhSystem->isTBGroundStateComputed())

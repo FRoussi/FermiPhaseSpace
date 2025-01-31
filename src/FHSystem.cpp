@@ -152,15 +152,15 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     coulombInteraction = FHCoulombInteraction(&lattice, coulJson);
 
 // External Potential
-    Json::Value ExtPotJ = rootSystem["ExternalPotential"];
+    Json::Value ExtPotJ = rootSystem["externalPotential"];
     if (ExtPotJ == Json::nullValue)
     {
         externalPotential = FHExternalPotential(&lattice);
     }
     else
     {
-        std::string extPotType = ExtPotJ.get("type", "none").asString();
-        if (extPotType == "none")
+        std::string extPotType = ExtPotJ.get("type", "null").asString();
+        if (extPotType == "null")
         {
             externalPotential = FHExternalPotential(&lattice);
         }
@@ -343,6 +343,7 @@ unsigned int                                FHSystem::getDownSpinParticleNumber(
 
 FHCoulombInteractionType                    FHSystem::getCoulombInteractionType()                   {    return coulombInteraction.getCoulombInteractionType();}
 FHTunnelingInteractionType                  FHSystem::getTunnelingInteractionType()                 {    return tunnelingInteraction.getTunnelingInteractionType();}
+FHExternalPotentialType                     FHSystem::getExternalPotentialType()                    {    return externalPotential.getExternalPotentialType();}
 //FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  {    return VInteractionType;}
 //FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               {    return tJExCType;}
 std::complex<double>                        FHSystem::getCoulombInteraction(int i, int j)            {    return coulombInteraction.getCoulombUInteraction(i,j);}
@@ -592,6 +593,13 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
     }
 }
 
+
+
+void                               FHSystem::setBasisInteractions()
+{
+    tunnelingInteraction = FHTunnelingInteraction(&lattice, 1., -1.);
+    coulombInteraction = FHCoulombInteraction(&lattice, 1.);
+}
 
 
 /*
@@ -1102,7 +1110,7 @@ Json::Value                    FHSystem::writeFHSystemJson()
 */
         // External potential
     Json::Value ExtPotJ = externalPotential.writePotentialJson();
-    systemRoot["ExternalPotential"] = ExtPotJ;
+    systemRoot["externalPotential"] = ExtPotJ;
 
 
     // TB Ground State

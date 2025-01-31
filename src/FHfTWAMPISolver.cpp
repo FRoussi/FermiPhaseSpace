@@ -41,6 +41,7 @@ void FHfTWAMPISolver::runSimulation( )
     arma::cx_dmat rho2iid;
     arma::cx_drowvec EU;  
     arma::cx_drowvec EtH; 
+    arma::cx_drowvec EpotExt; 
 
     if (saveWholeDMatrix)
     {
@@ -61,6 +62,7 @@ void FHfTWAMPISolver::runSimulation( )
     {
         EU          = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EpotExt     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     }
 
 
@@ -98,6 +100,7 @@ void FHfTWAMPISolver::runSimulation( )
     arma::cx_dmat rho2iid_loc; 
     arma::cx_drowvec EU_loc;   
     arma::cx_drowvec EtH_loc;  
+    arma::cx_drowvec EpotExt_loc; 
 
 
     if (saveWholeDMatrix)
@@ -119,6 +122,7 @@ void FHfTWAMPISolver::runSimulation( )
     {
         EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EpotExt_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     }
 
     arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
@@ -209,6 +213,10 @@ void FHfTWAMPISolver::runSimulation( )
                     Nd_loc =  rhod + halfDiagMatrix;
                     EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
                     EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+                    if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
+                    {
+                        EpotExt_loc(t) = EpotExt_loc(t) + arma::accu((Nu_loc + Nd_loc) % *extPot);
+                    }
                 }
 
                 // We do 'nStepsPerTimePoint' simulation steps
@@ -252,6 +260,7 @@ void FHfTWAMPISolver::runSimulation( )
             {
                 EU += EU_loc;
                 EtH += EtH_loc;
+                EpotExt += EpotExt_loc;
             }
         }
 
@@ -491,10 +500,17 @@ void FHfTWAMPISolver::runSimulation( )
         {
             EU = EU/nTraj_arma;
             EtH = EtH/nTraj_arma;
-            E = EtH+ EU;
+            EpotExt = EpotExt/nTraj_arma;
+            E = EtH + EU + EpotExt;
         }
     //std::cout << "Wrintin results" << std::endl;
-       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, EU, EtH, E, timeLine);
+    arma::cx_dmat Energies = arma::cx_dmat(nTimePoints, 4);
+    Energies.row(0) = EU;
+    Energies.row(1) = EtH;
+    Energies.row(2) = EpotExt;
+    Energies.row(3) = E;
+
+       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, Energies, timeLine);
     }
 
 

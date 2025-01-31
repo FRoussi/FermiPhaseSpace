@@ -34,8 +34,10 @@ public:
     FHTunnelingInteractionType       getTunnelingInteractionType();
 
     virtual                     std::vector<double>         getParameters(uint set);
-    virtual Json::Value         writeTunnelingInteractionJson();                 
+    virtual Json::Value         writeTunnelingInteractionJson();        
 
+
+    ~FHTunnelingInteraction();
 
 private:  
 
@@ -47,8 +49,8 @@ private:
     FHTunnelingInteractionType       tunnelingInteractionType;    
     
 
-    std::vector<double>         parameterSet1;
-    std::vector<double>         parameterSet2;
+    std::vector<double>         parameterSet1;      //<- Energies
+    std::vector<double>         parameterSet2;      //<- Distances
 
 
     void                        addTunneling(double distance, double energy);
