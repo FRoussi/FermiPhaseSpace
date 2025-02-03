@@ -374,6 +374,7 @@ const arma::dvec*                           FHSystem::get_mfgs_Ed_Pointer()     
 
 std::string                                 FHSystem::getName()                                     { return systemName;}
 std::string                                 FHSystem::getFolder()                                   { return systemFolder;}
+std::string                                 FHSystem::getFPSVersion()                               { return std::to_string(FPS_VERSION_MAJOR) + "." + std::to_string(FPS_VERSION_MINOR) + "." + std::to_string(FPS_VERSION_PATCH);}
 
 
 

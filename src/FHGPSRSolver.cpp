@@ -78,6 +78,8 @@ void FHGPSRSolver::setGPSRParameters(unsigned int nT)
 void FHGPSRSolver::initiateSolver()
 {
 
+    std::cout << "   -- GPSR Solver initiation." << std::endl;
+
     driftIntegrator = GPSRDriftIntegrator::RungeKutta4_38;
     diffusionIntegrator = GPSRDiffusionIntegrator::numerical_rsvd;
 
@@ -656,7 +658,7 @@ void FHGPSRSolver::runSimulation( )
 {
 
     //printf("GPSR dynamic, nTraj=%i \n", nTraj);
-    std::cout << "- Start simulation" << std::endl;
+    std::cout << "   -- Start simulation." << std::endl;
     unsigned int nSites = fhSystem->getnSites();
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     arma::cx_dcube rhou_t = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
@@ -713,7 +715,7 @@ void FHGPSRSolver::runSimulation( )
 unsigned int tt = std::floor(nTraj/10);
     if ((i_traj%tt) == 0)
     {
-        std::cout<< "  -- Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
+        std::cout<< "    - Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
     }
    
     }
@@ -760,7 +762,7 @@ unsigned int tt = std::floor(nTraj/10);
         results.writeLineInReal("EtH", EtH);
         results.writeLineInReal("E", E);
 
-        std::cout << "- Results written in " << folderName << workName << ".txt" << std::endl;
+        std::cout << "   -- Results written in " << folderName << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -770,27 +772,7 @@ unsigned int tt = std::floor(nTraj/10);
         Json::Value resJson = jsonFile;
 
             
-        resJson["t"] = rJson.writeLine(timeLine);
-
-        Json::Value niiuJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
-        {
-            niiuJson.append(rJson.writeLineInReal(Nu.tube(iSite, iSite)));
-        }
-        resJson["Niiu"] = niiuJson;
-        
-        Json::Value niidJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-        {
-            niidJson.append(rJson.writeLineInReal(Nd.tube(iSite, iSite)));
-        }
-        resJson["Niid"] = niidJson;
-
-        Json::Value EJson(Json::objectValue);
-        EJson["U"] = rJson.writeLineInReal(EU);
-        EJson["tH"] = rJson.writeLineInReal(EtH);
-        EJson["tot"] = rJson.writeLineInReal(E);
-        resJson["E"] = EJson;
+        resJson["fpsVersion"] = fhSystem->getFPSVersion();
 
         if (fhSystem->isTBGroundStateComputed())
         {
@@ -801,6 +783,33 @@ unsigned int tt = std::floor(nTraj/10);
             resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
         }
 
+
+        Json::Value simJson = Json::Value();
+
+        simJson["t"] = rJson.writeLine(timeLine);
+
+        Json::Value niiuJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
+        {
+            niiuJson.append(rJson.writeLineInReal(Nu.tube(iSite, iSite)));
+        }
+        simJson["Niiu"] = niiuJson;
+        
+        Json::Value niidJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niidJson.append(rJson.writeLineInReal(Nd.tube(iSite, iSite)));
+        }
+        simJson["Niid"] = niidJson;
+
+        Json::Value EJson(Json::objectValue);
+        EJson["U"] = rJson.writeLineInReal(EU);
+        EJson["tH"] = rJson.writeLineInReal(EtH);
+        EJson["tot"] = rJson.writeLineInReal(E);
+        simJson["E"] = EJson;
+
+        resJson["simulation"] = simJson;
+ 
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);
@@ -809,7 +818,7 @@ unsigned int tt = std::floor(nTraj/10);
         resultFile << document;
         resultFile.close();
 
-        std::cout << "- Results written in " << folderName  << workName << ".json" << std::endl;
+        std::cout << "   -- Results written in " << folderName  << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

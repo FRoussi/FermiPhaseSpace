@@ -1,0 +1,49 @@
+{
+	"method" : "fTWA",
+	"parameters" : 
+	{
+		"dt" : 0.01,
+		"int_order" : 4,
+		"n_traj" : 100000,
+		"stepsPerTimePoints" : 1,
+		"t_max" : 5.0
+	},
+	"results" : 
+	{
+		"diag2DMatrix" : false,
+		"diagDMatrix" : true,
+		"energies" : true,
+		"momenta" : false,
+		"wholeDMatrix" : false
+	},
+	"sim_name" : "graph3",
+	"system" : 
+	{
+		"IC" : 
+		{
+			"subtype" : "spinWave",
+			"type" : "mfGroundState"
+		},
+		"coulombInteraction" : 
+		{
+			"onSiteInteraction" : 1.0,
+			"type" : "onSite"
+		},
+		"externalPotential" : 
+		{
+			"type" : "null"
+		},
+		"lattice" : 
+		{
+			"latticeType" : "graphene",
+			"periodic" : false,
+			"positionsFile" : "graph3.xyz"
+		},
+		"tunnelingInteraction" : 
+		{
+			"neighborDistance" : 1.0,
+			"neighborInteraction" : -1.0,
+			"type" : "nearestNeighbors"
+		}
+	}
+}

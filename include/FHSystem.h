@@ -116,11 +116,13 @@ FHLattice                               getLattice();
     const arma::dvec*                   get_mfgs_Ed_Pointer();
 
 
-    std::string                         getName();
-    std::string                         getFolder();
-
     std::vector<bool>                   getInitialCondition_upSpin();
     std::vector<bool>                   getInitialCondition_downSpin();
+
+    std::string                         getName();
+    std::string                         getFolder();
+    std::string                         getFPSVersion();
+
 
 
 // SETTERS      

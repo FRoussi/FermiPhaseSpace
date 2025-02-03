@@ -73,7 +73,7 @@ void FHEDSolver::initiateSolver()
 {
 
 
-    std::cout << "   -- Initialisation     "  << std::endl;
+    std::cout << "   -- ED Solver initiation." << std::endl;
     // N PARTICLES
     nPartU = fhSystem->getUpSpinParticleNumber();
     nPartD = fhSystem->getDownSpinParticleNumber();
@@ -668,7 +668,7 @@ void FHEDSolver::step(double d_t)
 void FHEDSolver::runSimulation()
 {
 
-    std::cout << "   -- Start simulation" << std::endl << std::flush;
+    std::cout << "   -- Start simulation." << std::endl << std::flush;
 
 
 
@@ -760,30 +760,10 @@ void FHEDSolver::runSimulation()
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
 
+        // FPS Version
+        resJson["fpsVersion"] = fhSystem->getFPSVersion();          
 
-        resJson["t"] = rJson.writeLine(timeLine);
-
-        Json::Value niiuJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-        {
-            niiuJson.append(rJson.writeLine(niiu.row(iSite)));
-        }
-        resJson["Niiu"] = niiuJson;
-        Json::Value niidJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-        {
-            niidJson.append(rJson.writeLine(niid.row(iSite)));
-        }
-        resJson["Niid"] = niidJson;
-
-        Json::Value EJson(Json::objectValue);
-        EJson["U"] = rJson.writeLine(EU);
-        EJson["tH"] = rJson.writeLine(EtH);
-        EJson["pe"] = rJson.writeLine(EpotExt);
-        EJson["tot"] = rJson.writeLine(E);
- 
-        resJson["E"] = EJson;
-
+        // one particle density matrices
         if (fhSystem->isTBGroundStateComputed())
         {
             resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
@@ -792,6 +772,36 @@ void FHEDSolver::runSimulation()
         {
             resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
         }
+
+        // simulation Results
+        Json::Value simJson = Json::Value();
+
+        simJson["t"] = rJson.writeLine(timeLine);
+  
+        Json::Value niiuJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niiuJson.append(rJson.writeLine(niiu.row(iSite)));
+        }
+        simJson["Niiu"] = niiuJson;
+        Json::Value niidJson(Json::arrayValue);
+        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+        {
+            niidJson.append(rJson.writeLine(niid.row(iSite)));
+        }
+        simJson["Niid"] = niidJson;
+
+        Json::Value EJson(Json::objectValue);
+        EJson["U"] = rJson.writeLine(EU);
+        EJson["tH"] = rJson.writeLine(EtH);
+        EJson["pe"] = rJson.writeLine(EpotExt);
+        EJson["tot"] = rJson.writeLine(E);
+ 
+        simJson["E"] = EJson;
+
+        resJson["simulation"] = simJson;
+
+
 
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";

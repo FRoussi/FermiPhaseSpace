@@ -15,6 +15,8 @@ FHfTWAMPISolver::FHfTWAMPISolver(FHSystem* fhS) : FHfTWASolver(fhS)
 void FHfTWAMPISolver::runSimulation( )
 {
 
+
+
    int world_size;
    MPI_Comm_size(MPI_COMM_WORLD, &world_size); // Get the number of processes
 
@@ -25,6 +27,11 @@ void FHfTWAMPISolver::runSimulation( )
    int name_len;
    MPI_Get_processor_name(processor_name, &name_len); // Get the name of the processor
 
+
+    if (world_rank == 0)
+    {
+        std::cout << "   -- Start simulation." << std::endl;
+    }
 
 
 
@@ -437,18 +444,18 @@ void FHfTWAMPISolver::runSimulation( )
 
        // std::cout << "Computin results" << std::endl;
 
-// Computation of different observables :
+        // Computation of different observables :
 
-    arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
-   arma::cx_dcube Nu;      
-    arma::cx_dcube Nd   ;   
-    arma::cx_dmat Niiu  ;   
-    arma::cx_dmat Niid  ;   
-    arma::cx_dmat N2iiu  ;  
-    arma::cx_dmat N2iid ;   
-    arma::cx_dmat Mkku  ;   
-    arma::cx_dmat Mkkd  ;   
-    arma::cx_drowvec E;
+        arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
+        arma::cx_dcube Nu;      
+        arma::cx_dcube Nd   ;   
+        arma::cx_dmat Niiu  ;   
+        arma::cx_dmat Niid  ;   
+        arma::cx_dmat N2iiu  ;  
+        arma::cx_dmat N2iid ;   
+        arma::cx_dmat Mkku  ;   
+        arma::cx_dmat Mkkd  ;   
+        arma::cx_drowvec E;
 
 
     if (saveWholeDMatrix)
@@ -503,12 +510,13 @@ void FHfTWAMPISolver::runSimulation( )
             EpotExt = EpotExt/nTraj_arma;
             E = EtH + EU + EpotExt;
         }
-    //std::cout << "Wrintin results" << std::endl;
-    arma::cx_dmat Energies = arma::cx_dmat(nTimePoints, 4);
-    Energies.row(0) = EU;
-    Energies.row(1) = EtH;
-    Energies.row(2) = EpotExt;
-    Energies.row(3) = E;
+
+        //std::cout << "Wrintin results" << std::endl;
+        arma::cx_dmat Energies = arma::cx_dmat(nTimePoints, 4);
+        Energies.row(0) = EU;
+        Energies.row(1) = EtH;
+        Energies.row(2) = EpotExt;
+        Energies.row(3) = E;
 
        writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, Energies, timeLine);
     }

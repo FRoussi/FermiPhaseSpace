@@ -83,6 +83,8 @@ void FHfTWASolver::setfTWAParameters(unsigned int nT)
 void FHfTWASolver::initiateSolver()
 {
 
+    std::cout << "   -- fTWA Solver initiation." << std::endl;
+
     integrator = fTWAIntegrator::RungeKutta4_38;
     unsigned int nSites = fhSystem->getnSites(); 
 
@@ -219,7 +221,7 @@ void FHfTWASolver::setComputeMomenta(bool yn)
 void FHfTWASolver::runSimulation( )
 {
 
-    std::cout << "   -- Start simulation" << std::endl;
+    std::cout << "   -- Start simulation." << std::endl;
     //printf("Test 7 - fTWA dynamic, nTraj=%i \n", nTraj);
 
 
@@ -302,8 +304,9 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EU_loc      = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EtH_loc     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        EpotExt_loc = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     }
 
     arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
@@ -389,7 +392,7 @@ void FHfTWASolver::runSimulation( )
                 Nd_loc =  rhod + halfDiag;
                 EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
                 EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
-                EpotExt_loc(t) = EpotExt_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
+                //EpotExt_loc(t) = EpotExt_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
             }
 
             // We do 'nStepsPerTimePoint' simulation steps
@@ -511,14 +514,14 @@ void FHfTWASolver::runSimulation( )
     }
 
     
-   arma::cx_dmat Energies = arma::cx_dmat(nTimePoints, 4);
+   arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints);
    Energies.row(0) = EU;
    Energies.row(1) = EtH;
    Energies.row(2) = EpotExt;
    Energies.row(3) = E;
    
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, Energies, timeLine);
 
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, Energies, timeLine);
 
 }
 
@@ -569,7 +572,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         }
 
 
-         std::cout << "== Results written in " << folderName  << workName << ".txt" << std::endl;
+         std::cout << "   -- Results written in " << folderName  << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -579,40 +582,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         Json::Value resJson = jsonFile;
 
 
-        resJson["t"] = rJson.writeLine(timeLine);
-
-        if (saveWholeDMatrix)
-        {
-            //Json::Value n12uJS(Json::arrayValue);
-            //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
-            resJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
-        }
-
-        if (saveDiagDMatrix)
-        {
-            Json::Value niiuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
-            }
-            resJson["Niiu"] = niiuJson;
-            Json::Value niidJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
-            }
-            resJson["Niid"] = niidJson;
-        }
-
-        if (saveEnergies)
-        {
-            Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
-            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
-            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
-            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
-            resJson["E"] = EJson;
-        }
+        resJson["fpsVersion"] = fhSystem->getFPSVersion();
 
         if (fhSystem->isTBGroundStateComputed())
         {
@@ -623,6 +593,45 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
             resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
         }
 
+        Json::Value simJson = Json::Value();
+
+        simJson["t"] = rJson.writeLine(timeLine);
+
+        if (saveWholeDMatrix)
+        {
+            //Json::Value n12uJS(Json::arrayValue);
+            //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
+            simJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
+        }
+
+        if (saveDiagDMatrix)
+        {
+            Json::Value niiuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
+            }
+            simJson["Niiu"] = niiuJson;
+            Json::Value niidJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
+            }
+            simJson["Niid"] = niidJson;
+        }
+
+        if (saveEnergies)
+        {
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
+            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
+            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
+            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
+            simJson["E"] = EJson;
+        }
+
+        resJson["simulation"] = simJson;
+
 
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
@@ -632,7 +641,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
         resultFile << document;
         resultFile.close();
 
-        std::cout << "== Results written in " << folderName << workName << ".json" << std::endl;
+        std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)

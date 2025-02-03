@@ -344,6 +344,8 @@ void FHHFSolver::runSimulation( )
 {
 
 
+    std::cout << "   -- Start simulation." << std::endl;
+
 
     unsigned int nSites = fhSystem->getnSites();
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
@@ -548,7 +550,7 @@ void FHHFSolver::runSimulation( )
         }
 
 
-        std::cout << "== Results written in " << folderName << workName << ".txt" << std::endl;
+        std::cout << "   -- Results written in " << folderName << workName << ".txt" << std::endl;
     }
 
     if (writeResultsJson)
@@ -557,35 +559,10 @@ void FHHFSolver::runSimulation( )
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
 
-        resJson["t"] = rJson.writeLine(timeLine);
 
-        if (saveDiagDMatrix)
-        {
+        resJson["fpsVersion"] = fhSystem->getFPSVersion();
+
         
-            Json::Value niiuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
-            {
-                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
-            }
-            resJson["Niiu"] = niiuJson;
-            Json::Value niidJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
-            {
-                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
-            }
-            resJson["Niid"] = niidJson;
-        }
-        if (saveEnergies)
-        {
-            Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(EU);
-            EJson["tH"] = rJson.writeLineInReal(EtH);
-            EJson["pe"] = rJson.writeLineInReal(EpotExt);
-            EJson["tot"] = rJson.writeLineInReal(E);
-            resJson["E"] = EJson;
-        }
-
-
         if (fhSystem->isTBGroundStateComputed())
         {
             resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
@@ -595,6 +572,40 @@ void FHHFSolver::runSimulation( )
             resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
         }
 
+
+        Json::Value simJson = Json::Value();
+
+        simJson["t"] = rJson.writeLine(timeLine);
+
+        if (saveDiagDMatrix)
+        {
+        
+            Json::Value niiuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
+            {
+                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
+            }
+            simJson["Niiu"] = niiuJson;
+            Json::Value niidJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
+            {
+                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
+            }
+            simJson["Niid"] = niidJson;
+        }
+        if (saveEnergies)
+        {
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLineInReal(EU);
+            EJson["tH"] = rJson.writeLineInReal(EtH);
+            EJson["pe"] = rJson.writeLineInReal(EpotExt);
+            EJson["tot"] = rJson.writeLineInReal(E);
+            simJson["E"] = EJson;
+        }
+
+        resJson["simulation"] = simJson;
+
+
         Json::StreamWriterBuilder wbuilder;
         wbuilder["indentation"] = "\t";
         std::string document = Json::writeString(wbuilder, resJson);
@@ -603,7 +614,7 @@ void FHHFSolver::runSimulation( )
         resultFile << document;
         resultFile.close();
 
-        std::cout << "== Results written in " << folderName   << workName << ".json" << std::endl;
+        std::cout << "   -- Results written in " << folderName   << workName << ".json" << std::endl;
     }
 
     if (writeResultsHDF5)
