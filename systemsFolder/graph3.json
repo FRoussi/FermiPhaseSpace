@@ -31,7 +31,9 @@
 		},
 		"externalPotential" : 
 		{
-			"type" : "null"
+			"type" : "coreHole",
+			"site" : 5,
+			"holePotential" : -2
 		},
 		"lattice" : 
 		{
