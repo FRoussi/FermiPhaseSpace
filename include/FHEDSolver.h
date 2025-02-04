@@ -154,7 +154,7 @@ private:
     arma::sp_dmat tunnelingOperatorSpinDown(uint iSite, uint jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
 
 
-    void        computeOneParticleDensityMatrix();
+    arma::cx_dmat        computeOneParticleDensityMatrix(arma::cx_dvec psi);
 
 };
 
