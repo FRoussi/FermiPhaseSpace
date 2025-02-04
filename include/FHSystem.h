@@ -19,7 +19,7 @@
 
 
 #define FPS_VERSION_MAJOR 0
-#define FPS_VERSION_MINOR 1
+#define FPS_VERSION_MINOR 2
 #define FPS_VERSION_PATCH 0
 
 

@@ -21,18 +21,21 @@ class FHSolver
 public:
     FHSolver(FHSystem* fhSystem);
 
-    void        setResultFile(std::string workName, std::string folderNameName);
-    void        setResultsWriter(std::string how, bool yn = true);
-    void        setTimeParameters(double t_max, double dt, uint nPerTS = 1);
-    void        setComputeMomenta(bool yn);
-    void        setTalkative(bool yn);
-    void        setJsonFile(Json::Value file);
+    void                    setResultFile(std::string workName, std::string folderNameName);
+    void                    setResultsWriter(std::string how, bool yn = true);
+    void                    setTimeParameters(double t_max, double dt, uint nPerTS = 1);
+    void                    setTalkative(bool yn);
+    void                    setJsonFile(Json::Value file);
 
-void                        setResultsSaved(Json::Value res);
+    void                    setComputeTBStates(bool yn);
+    void                    setComputeMFStates(bool yn);
+
+    void                    setResultsSaved(Json::Value res);
     void                    setSaveWholeDMatrix(bool yn);
     void                    setSaveDiagDMatrix(bool yn);
     void                    setSaveDiag2DMatrix(bool yn);
-    void                    setSaveMomenta(bool yn);
+    void                    setSaveTBStates(bool yn);
+    void                    setSaveMFStates(bool yn);
     void                    setSaveEnergies(bool yn);
 
 
@@ -57,17 +60,20 @@ protected:
     bool                    writeResultsJson;
     bool                    writeResultsHDF5;
 
+
     bool                    saveWholeDMatrix;
     bool                    saveDiagDMatrix;
     bool                    saveDiag2DMatrix;
-    bool                    saveMomenta;
+    bool                    saveTBStates;
+    bool                    saveMFStates;
     bool                    saveEnergies;
 
     std::string             workName;                     //<- A name for the work, for the results file
     std::string             folderName;                   //<- A name for the work folder, for the results file
 
-    //Momentum space :
-    bool                    computeMomenta;
+    //Momentum spaces :
+    //bool                    computeTBStates;
+    //bool                    computeMFStates;
 
 // Work parameters
     bool                    talkative;

@@ -65,9 +65,6 @@ public:
     FHEDSolver(FHSystem* fhSystem);
 
 
-    void setComputeMomenta(bool yn);
-
-
     void initiateSolver();
 
     double currentSimulationTime;
@@ -112,6 +109,12 @@ private:
     arma::sp_dmat H_externalPotential;
     arma::sp_dmat H;
 
+    // Current one-particle density matrix :
+    arma::cx_dmat Nut;
+    arma::cx_dmat Ndt;
+    bool oPDensityMatUpToDate;
+
+
     //arma::cx_dmat Hdense;
     //std::vector<arma::sp_cx_dmat> NiiuSet;
     //std::vector<arma::sp_cx_dmat> NiidSet;
@@ -134,6 +137,7 @@ private:
     std::complex<double> U_os_psil(uint phi_l);                                     //<- Compute the interation energy of the basis vector 'phi_l'
 
 
+
     void buildHamiltonian_U();                                                              //<- Build and store the operator "Interaction part of the Hamiltonian"
     void buildHamiltonian_tM();                                                              //<- Build and store the operator "Tunneling part of the Hamiltonian"
     //void buildHamiltonian_J();                                                              //<- Build and store the operator "Exchange coupling part of the Hamiltonian"
@@ -148,6 +152,9 @@ private:
     arma::sp_dmat numberOperatorSpinDown(uint iSite);                            //<- Build the operator "Number of down-spin particles on site 'iSite'".
     arma::sp_dmat tunnelingOperatorSpinUp(uint iSite, uint jSite);       //<- Build the operator "Tunneling of up-spin particles between sites 'iSite' and 'jSite'".
     arma::sp_dmat tunnelingOperatorSpinDown(uint iSite, uint jSite);     //<- Build the operator "Tunneling of down-spin particles between sites 'iSite' and 'jSite'".
+
+
+    void        computeOneParticleDensityMatrix();
 
 };
 

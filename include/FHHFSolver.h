@@ -31,7 +31,6 @@ public:
     FHHFSolver(FHSystem* fhs);
 
     void                        initiateSolver();
-    void                        setComputeMomenta(bool yn);
 
     void                        setIntegratorOrder(int order);
     void                        setMethodParameters(Json::Value param);

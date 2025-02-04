@@ -4,7 +4,7 @@ FHSolver::FHSolver(FHSystem *fhS)
 {
     fhSystem = fhS;
 
-    computeMomenta = false;
+ 
     talkative = false;
     jsonFile = Json::Value();
 
@@ -15,7 +15,8 @@ FHSolver::FHSolver(FHSystem *fhS)
     saveWholeDMatrix = false;
     saveDiagDMatrix = true;
     saveDiag2DMatrix = true;
-    saveMomenta = false;
+    saveTBStates = false;
+    saveMFStates = false;
     saveEnergies = true;
 
 }
@@ -48,15 +49,49 @@ void                        FHSolver::setResultsSaved(Json::Value res)
     saveDiagDMatrix = res.get("diagDMatrix", true).asBool();
     saveDiag2DMatrix = res.get("diag2DMatrix", false).asBool();
     saveWholeDMatrix = res.get("wholeDMatrix", false).asBool();
-    saveMomenta = res.get("momenta", false).asBool();
+    saveTBStates = res.get("tbStates", false).asBool();
+    saveMFStates = res.get("mfStates", false).asBool();
     saveEnergies = res.get("energies", true).asBool();
 }
+
+
+    void                    FHSolver::setComputeTBStates(bool yn)
+    {
+
+    }
+    void                    FHSolver::setComputeMFStates(bool yn)
+    {
+
+    }
 
 void FHSolver::setSaveWholeDMatrix(bool yn)     {saveWholeDMatrix = yn;}
 void FHSolver::setSaveDiagDMatrix(bool yn)      {saveDiagDMatrix = yn;}
 void FHSolver::setSaveDiag2DMatrix(bool yn)     {saveDiag2DMatrix = yn;}
-void FHSolver::setSaveMomenta(bool yn)          {saveMomenta = yn;}
 void FHSolver::setSaveEnergies(bool yn)         {saveEnergies = yn;}
+
+void FHSolver::setSaveTBStates(bool yn)         
+{
+    saveTBStates = yn;
+    if (saveTBStates)
+    {
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
+    }
+}
+
+void FHSolver::setSaveMFStates(bool yn)   
+{
+    saveMFStates = yn;
+    if (saveMFStates)
+    {
+        if (!fhSystem->isMFGroundStateComputed())
+        {
+            fhSystem->computeMFGroundState();
+        }
+    }
+}
 
 void FHSolver::setTimeParameters(double t_max, double d_t, uint nPerTS)
 {
@@ -71,11 +106,6 @@ void FHSolver::setTalkative(bool yn)
     talkative = yn;
 }
 
-void FHSolver::setComputeMomenta(bool yn)
-{
-    computeMomenta = yn;
-
-}
 
 void FHSolver::setJsonFile(Json::Value file)
 {

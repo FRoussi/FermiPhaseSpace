@@ -33,9 +33,6 @@ public:
     void                        setMethodParameters(Json::Value param);
 
 
-   
-    void                        setComputeMomenta(bool yn);
-
 
     void                        initiateSolver();
 

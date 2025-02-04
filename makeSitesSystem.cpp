@@ -203,7 +203,8 @@ int main(int argc, char* argv[])
     res["diagDMatrix"] = true;
     res["diag2DMatrix"] = false;
     res["wholeDMatrix"] = false;
-    res["momenta"] = false;
+    res["tbStates"] = false;
+    res["mfStates"] = false;
     res["energies"] = true;
     simRoot["results"] = res;
 

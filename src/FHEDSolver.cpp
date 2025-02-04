@@ -9,37 +9,18 @@ FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
     storeNiju = storeOperators::SOnone;
     storeNijd = storeOperators::SOnone;
 
+    oPDensityMatUpToDate = false;
 
 }
 
 
 
-
-
-
-void FHEDSolver::setComputeMomenta(bool yn)
-{
-    computeMomenta = yn;
-    if (yn)
-    {
-        if (basisSize > 1000)
-        {
-            std::cout << "! Caution, The ED basis size is " << basisSize << ", the computation of the momentum space could be long." << std::endl << std::flush;
-        }
-
-        nOfMomentumStates = std::min(basisSize, (uint)10);
-
-        //arma::sp_dmat H_t_real = arma::real(H_t);
-        arma::eigs_sym(momentaNRJ, momentaVec, H_t, nOfMomentumStates);  
-    }
-}
 
 arma::cx_dvec FHEDSolver::getTBGroundState()
 {
-    arma::sp_dmat H_t_real = arma::real(H_t);
     arma::dmat eigVec;
     arma::dvec eigVal;
-    arma::eigs_sym(eigVal, eigVec, H_t_real,1,"sa") ;  
+    arma::eigs_sym(eigVal, eigVec, H_t,1,"sa") ;  
     arma::dvec psi_tbgs = eigVec.col(0);
     return arma::cx_dvec(psi_tbgs, arma::dvec(psi_tbgs.size(), arma::fill::zeros));
 }
@@ -58,7 +39,7 @@ arma::cx_dvec FHEDSolver::getMFGroundState()
         H_mfu = H_mfu + mfNd->at(iSite,iSite).real() * fhSystem->getCoulombInteraction(iSite, iSite).real() * NijuSet[iSite][iSite];
     }
       
-    arma::sp_dmat H_mf = arma::real(H_mfu) + arma::real(H_t);
+    arma::sp_dmat H_mf = H_mfu + H_t;
     arma::dmat eigVec;
     arma::dvec eigVal;
     arma::eigs_sym(eigVal, eigVec, H_mf,1,"sa");  
@@ -77,8 +58,8 @@ void FHEDSolver::initiateSolver()
     // N PARTICLES
     nPartU = fhSystem->getUpSpinParticleNumber();
     nPartD = fhSystem->getDownSpinParticleNumber();
-    // BASIS DEFINITION
 
+    // BASIS DEFINITION
     this->basisSizeSpinUp = nChoosep(fhSystem->getnSites(), nPartU);
     this->basisSizeSpinDown = nChoosep(fhSystem->getnSites(), nPartD);
     this->basisSize = basisSizeSpinUp * basisSizeSpinDown;
@@ -118,6 +99,13 @@ void FHEDSolver::initiateSolver()
     }
 
     std::cout << "     - Hilbert space dimension :     " << basisSize << std::endl;
+
+    // Check the operators to build
+    if (saveTBStates || saveMFStates)
+    {
+        storeNiju = storeOperators::SOall;
+        storeNijd = storeOperators::SOall;
+    }    
 
     // OPERATORS
 
@@ -679,11 +667,11 @@ void FHEDSolver::runSimulation()
     arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_dmat mk; 
+    arma::cx_dmat Mkku; 
 
-    if (computeMomenta)
+    if (saveTBStates)
     {
-        mk = arma::cx_dmat(nOfMomentumStates, nTimePoints, arma::fill::zeros);
+        Mkku = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     }
 
     this->psi = this->psi_0;
@@ -707,12 +695,14 @@ void FHEDSolver::runSimulation()
         EpotExt[t] = static_cast<double>(std::real(arma::cdot(psi, H_externalPotential * psi)));
         E[t] = EU[t] + EtH[t] + EpotExt[t];
 
-        if (computeMomenta)
+        if (saveTBStates)
         {
-           mk.col(t) = arma::dot( momentaVec,  psi);
+
+           Mkku.col(t) = arma::dot( momentaVec,  psi);
         }     
 
         step(this->dt);
+        oPDensityMatUpToDate = false;
 
         if ((t%tt) == 0) {  std::cout << "=" << std::flush ;   }
 
@@ -738,11 +728,11 @@ void FHEDSolver::runSimulation()
         {
             results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", niid.row(iSite));
         }
-        if (computeMomenta)
+        if (saveTBStates)
         {
             for (uint kMom = 0; kMom < nOfMomentumStates ; kMom++)
             {
-                results.writeLineInReal("M_" + std::to_string(kMom), mk.row(kMom));
+                results.writeLineInReal("M_" + std::to_string(kMom), Mkku.row(kMom));
             }
         }
         results.writeLine("EU", EU);

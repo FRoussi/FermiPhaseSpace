@@ -133,7 +133,6 @@ void FHfTWASolver::initiateSolver()
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
         
-        setComputeMomenta(true);
 
         diagMu0 = arma::dvec(nSites, arma::fill::zeros);
         diagMd0 = arma::dvec(nSites, arma::fill::zeros);
@@ -165,7 +164,6 @@ void FHfTWASolver::initiateSolver()
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
         
-        setComputeMomenta(true);
 
         diagMu0 = arma::dvec(nSites, arma::fill::zeros);
         diagMd0 = arma::dvec(nSites, arma::fill::zeros);
@@ -201,17 +199,6 @@ void FHfTWASolver::initiateSolver()
 }
 
 
-void FHfTWASolver::setComputeMomenta(bool yn)
-{
-    computeMomenta = yn;
-    if (yn)
-    {
-        if (!fhSystem->isTBGroundStateComputed())
-        {
-            fhSystem->computeTBGroundState();
-        }
-    }
-}
 
 
 
@@ -449,13 +436,15 @@ void FHfTWASolver::runSimulation( )
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
     arma::cx_dcube Nu;      
-    arma::cx_dcube Nd   ;   
-    arma::cx_dmat Niiu  ;   
-    arma::cx_dmat Niid  ;   
-    arma::cx_dmat N2iiu  ;  
-    arma::cx_dmat N2iid ;   
-    arma::cx_dmat Mkku  ;   
-    arma::cx_dmat Mkkd  ;   
+    arma::cx_dcube Nd;   
+    arma::cx_dmat Niiu;   
+    arma::cx_dmat Niid;   
+    arma::cx_dmat N2iiu;  
+    arma::cx_dmat N2iid;   
+    arma::cx_dmat Mkku;   
+    arma::cx_dmat Mkkd;   
+    arma::cx_dmat Mukku;   
+    arma::cx_dmat Mukkd;  
     arma::cx_drowvec E;
 
 
@@ -491,19 +480,27 @@ void FHfTWASolver::runSimulation( )
             N2iid.col(t) = rho2iid.col(t) / nTraj_arma + (rhoiid.col(t) + arma::conj(rhoiid.col(t)))/ arma::cx_double(2*nTraj,0) + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
         }
     }
-    if (saveMomenta)
+    if (saveTBStates)
     {
         Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
 
-        if (computeMomenta)
+        for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            for (unsigned int t = 0; t < nTimePoints; t++)
-            {
-                Mkku.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
-                Mkkd.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
-            }
-        }
+            Mkku.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
+            Mkkd.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
+        } 
+    }
+    if (saveMFStates)
+    {
+        Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+
+        for (unsigned int t = 0; t < nTimePoints; t++)
+        {
+            Mukku.col(t) = arma::diagvec((*fhSystem->get_mfgs_Vu_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_mfgs_Vu_Pointer()));
+            Mukkd.col(t) = arma::diagvec((*fhSystem->get_mfgs_Vd_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_mfgs_Vd_Pointer()));
+        } 
     }
     if (saveEnergies)
     {
@@ -552,8 +549,8 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
             }
         }
 
-        if (computeMomenta)
-        {/*
+        if (saveTBStates)
+        {
             for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
             {
                 results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mkku.row(kMom));
@@ -561,7 +558,7 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
             for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
             {
                 results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mkkd.row(kMom));
-            }*/
+            }
         }
         if (saveEnergies)
         {

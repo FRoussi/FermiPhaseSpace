@@ -131,7 +131,6 @@ void FHHFSolver::initiateSolver()
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
 
-        setComputeMomenta(true);
 
         Nu0 =  arma::cx_dmat(*fhSystem->get_tbgs_Nu_Pointer());
         Nd0 =  arma::cx_dmat(*fhSystem->get_tbgs_Nd_Pointer());
@@ -150,7 +149,6 @@ void FHHFSolver::initiateSolver()
         nPartU = fhSystem->getUpSpinParticleNumber();
         nPartD = fhSystem->getDownSpinParticleNumber();
 
-        setComputeMomenta(true);
 
         Nu0 =  arma::cx_dmat(*fhSystem->get_mfgs_Nu_Pointer());
         Nd0 =  arma::cx_dmat(*fhSystem->get_mfgs_Nd_Pointer());
@@ -166,18 +164,10 @@ void FHHFSolver::initiateSolver()
 
 }
 
-void FHHFSolver::setComputeMomenta(bool yn)
-{
-    computeMomenta = yn;
-    if (yn)
-    {
-        if (!fhSystem->isTBGroundStateComputed())
-        {
-            fhSystem->computeTBGroundState();
-        }
-    }
 
-}
+
+
+
 
 /// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
 /// @param d_t the time step
@@ -360,6 +350,8 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Niid;
     arma::cx_dmat Mkku;
     arma::cx_dmat Mkkd;
+    arma::cx_dmat Mukku;
+    arma::cx_dmat Mukkd;
     arma::cx_drowvec EU;
     arma::cx_drowvec EtH;
     arma::cx_drowvec EpotExt;
@@ -383,17 +375,34 @@ void FHHFSolver::runSimulation( )
         Niiu.col(0) = Nut.diag();
         Niid.col(0) = Ndt.diag();
     }
-    if (saveMomenta)
+    if (saveTBStates)
     {
         Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        if (computeMomenta)
+        if (fhSystem->isTBGroundStateComputed())
         {
             arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
-            arma::cx_dmat Mu = V_1p.t() * Nut * V_1p;
-            arma::cx_dmat Md = V_1p.t() * Ndt * V_1p;
-            Mkku.col(0) = Mu.diag();
-            Mkkd.col(0) = Md.diag();
+
+            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+            Mkku.col(0) = M.diag();
+
+            M = V_1p.t() * Ndt * V_1p;
+            Mkkd.col(0) = M.diag();
+        }
+    }
+    if (saveMFStates)
+    {
+        Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        if (fhSystem->isTBGroundStateComputed())
+        {
+            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
+            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+            Mukku.col(0) = M.diag();
+
+            V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
+            M = V_1p.t() * Ndt * V_1p;
+            Mukkd.col(0) = M.diag();
         }
     }
     if (saveEnergies)
@@ -466,16 +475,25 @@ void FHHFSolver::runSimulation( )
         if (saveDiag2DMatrix)
         {
         }
-        if (saveMomenta)
+        if (saveTBStates)
         {
-            if (computeMomenta)
-            {
-                arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
-                arma::cx_dmat Mu = V_1p.t() * Nut * V_1p;
-                arma::cx_dmat Md = V_1p.t() * Ndt * V_1p;
-                Mkku.col(t) = Mu.diag();
-                Mkkd.col(t) = Md.diag();
-            }
+            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+
+            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+            Mkku.col(t) = M.diag();
+
+            M = V_1p.t() * Ndt * V_1p;
+            Mkkd.col(t) = M.diag();
+        }
+        if (saveMFStates)
+        {
+            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
+            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+            Mukku.col(t) = M.diag();
+            
+            V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
+            M = V_1p.t() * Ndt * V_1p;
+            Mukkd.col(t) = M.diag();
         }
         //std::cout << "Save En, t " << t << std::endl;
         if (saveEnergies)
@@ -526,20 +544,27 @@ void FHHFSolver::runSimulation( )
                 results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
             }
         }
-        if (saveMomenta)
+        if (saveTBStates)
         {
-            if (computeMomenta)
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
             {
-                for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-                {
-                    results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mkku.row(iSite));
-                }
-                for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-                {
-                    results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mkkd.row(iSite));
-                }
-
+                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mkku.row(iSite));
             }
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mkkd.row(iSite));
+            }     
+        }
+        if (saveMFStates)
+        {
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("Mu_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mukku.row(iSite));
+            }
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("Mu_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mukkd.row(iSite));
+            }     
         }
         if (saveEnergies)
         {

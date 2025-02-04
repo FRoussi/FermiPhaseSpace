@@ -802,11 +802,69 @@ unsigned int tt = std::floor(nTraj/10);
         }
         simJson["Niid"] = niidJson;
 
-        Json::Value EJson(Json::objectValue);
-        EJson["U"] = rJson.writeLineInReal(EU);
-        EJson["tH"] = rJson.writeLineInReal(EtH);
-        EJson["tot"] = rJson.writeLineInReal(E);
-        simJson["E"] = EJson;
+        if (saveTBStates)
+        {
+            arma::cx_dmat Mkk = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            Json::Value mkkuJson(Json::arrayValue);
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                Mkk.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
+            } 
+            for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
+            {
+                mkkuJson.append(rJson.writeLineInReal(Mkk.row(iSite)));
+            }
+            simJson["Mkku"] = mkkuJson;
+
+            Mkk = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            Json::Value mkkdJson(Json::arrayValue);
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                Mkk.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
+            } 
+            for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
+            {
+                mkkdJson.append(rJson.writeLineInReal(Mkk.row(iSite)));
+            }
+            simJson["Mkkd"] = mkkdJson;
+        }
+        if (saveMFStates)
+        {
+            arma::cx_dmat Mukk = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            Json::Value mukkuJson(Json::arrayValue);
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                Mukk.col(t) = arma::diagvec((*fhSystem->get_mfgs_Vu_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_mfgs_Vu_Pointer()));
+            } 
+            for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
+            {
+                mukkuJson.append(rJson.writeLineInReal(Mukk.row(iSite)));
+            }
+            simJson["Mukku"] = mukkuJson;
+
+            Mukk = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            Json::Value mukkdJson(Json::arrayValue);
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                Mukk.col(t) = arma::diagvec((*fhSystem->get_mfgs_Vd_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_mfgs_Vd_Pointer()));
+            } 
+            for (uint iSite = 0 ; iSite <fhSystem->getnSites() ; iSite++)
+            {
+                mukkdJson.append(rJson.writeLineInReal(Mukk.row(iSite)));
+            }
+            simJson["Mukkd"] = mukkdJson;
+        }
+
+
+        if (saveEnergies)
+        {
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLineInReal(EU);
+            EJson["tH"] = rJson.writeLineInReal(EtH);
+            EJson["tot"] = rJson.writeLineInReal(E);
+            simJson["E"] = EJson;
+        }
+
 
         resJson["simulation"] = simJson;
  
