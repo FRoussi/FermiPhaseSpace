@@ -344,7 +344,6 @@ void FHfTWASolver::runSimulation( )
 
         double currentSimulationTime = 0;
 
-
         // Complex white noise matrices for initial conditions :
         arma::arma_rng::set_seed_random();
         arma::cx_dmat  wnM = arma::cx_dmat(nSites, nSites, arma::fill::randn)/sqrt(2);  //<- Complex white noise
@@ -412,13 +411,13 @@ void FHfTWASolver::runSimulation( )
             }
             if (saveTBStates)
             {
-                mkku_loc.col(t)     =  (rhou + halfDiag);
-                mkkd_loc.col(t)     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+                mkku_loc.col(t)     += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhou *(*fhSystem->get_tbgs_V_Pointer()));
+                mkkd_loc.col(t)     += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhod *(*fhSystem->get_tbgs_V_Pointer()));
             }
             if (saveMFStates)
             {
-                mukku_loc.col(t)     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-                mukkd_loc.col(t)     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+                mukku_loc.col(t)     += arma::diagvec((*fhSystem->get_mfgs_Vu_Pointer()).t() * rhou *(*fhSystem->get_mfgs_Vu_Pointer()));
+                mukkd_loc.col(t)     += arma::diagvec((*fhSystem->get_mfgs_Vd_Pointer()).t() * rhod *(*fhSystem->get_mfgs_Vd_Pointer()));
             }
             if (saveEnergies)
             {
@@ -465,6 +464,16 @@ void FHfTWASolver::runSimulation( )
         {
             rho2iiu += rho2iiu_loc;
             rho2iid += rho2iid_loc;
+        }
+        if (saveTBStates)
+        {
+            mkku += mkku_loc;
+            mkkd += mkkd_loc;
+        }
+        if (saveTBStates)
+        {
+            mukku += mukku_loc;
+            mukkd += mukkd_loc;
         }
         if (saveEnergies)
         {
@@ -539,8 +548,8 @@ void FHfTWASolver::runSimulation( )
 
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            Mkku.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
-            Mkkd.col(t) = arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_tbgs_V_Pointer()));
+            Mkku.col(t) = mkku.col(t) / nTraj_arma + halfVec;
+            Mkkd.col(t) = mkkd.col(t) / nTraj_arma + halfVec;
         } 
     }
     if (saveMFStates)
@@ -555,8 +564,8 @@ void FHfTWASolver::runSimulation( )
 
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            Mukku.col(t) = arma::diagvec((*fhSystem->get_mfgs_Vu_Pointer()).t() * Nu.slice(t) * (*fhSystem->get_mfgs_Vu_Pointer()));
-            Mukkd.col(t) = arma::diagvec((*fhSystem->get_mfgs_Vd_Pointer()).t() * Nd.slice(t) * (*fhSystem->get_mfgs_Vd_Pointer()));
+            Mukku.col(t) = mukku.col(t) / nTraj_arma + halfVec;
+            Mukkd.col(t) = mukkd.col(t) / nTraj_arma + halfVec;
         } 
     }
     if (saveEnergies)
@@ -575,17 +584,13 @@ void FHfTWASolver::runSimulation( )
    Energies.row(3) = E;
    
 
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, N2iiu, N2iid, Energies, timeLine);
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
 
 }
 
 
 
-
-
-
-
-void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
+void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
 {
 
     // Writing the results :
@@ -615,6 +620,17 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
             for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
             {
                 results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mkkd.row(kMom));
+            }
+        }
+        if (saveMFStates)
+        {
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("Mu_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mukku.row(kMom));
+            }
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("Mu_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mukkd.row(kMom));
             }
         }
         if (saveEnergies)
@@ -672,6 +688,37 @@ void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::c
                 niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
             }
             simJson["Niid"] = niidJson;
+        }
+
+        if (saveTBStates)
+        {
+            Json::Value mkkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mkkuJson.append(rJson.writeLineInReal(Mkku.row(iSite)));
+            }
+            simJson["Mkku"] = mkkuJson;
+            Json::Value mkkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mkkdJson.append(rJson.writeLineInReal(Mkkd.row(iSite)));
+            }
+            simJson["Mkkd"] = mkkdJson;
+        }
+        if (saveMFStates)
+        {
+            Json::Value mukkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mukkuJson.append(rJson.writeLineInReal(Mukku.row(iSite)));
+            }
+            simJson["Mukku"] = mukkuJson;
+            Json::Value mukkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mukkdJson.append(rJson.writeLineInReal(Mukkd.row(iSite)));
+            }
+            simJson["Mukkd"] = mukkdJson;
         }
 
         if (saveEnergies)
