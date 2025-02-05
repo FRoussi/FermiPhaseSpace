@@ -7,7 +7,7 @@
 #include <vector>
 
 //#include <cmath>
-
+#include "json/json.h"
 
 #include "FHSystem.h"
 #include "ResultWriterTxt.h"
@@ -19,6 +19,7 @@
 class FHSolver  	
 {
 public:
+
     FHSolver(FHSystem* fhSystem);
 
     void                    setResultFile(std::string workName, std::string folderNameName);
@@ -30,7 +31,7 @@ public:
     void                    setComputeTBStates(bool yn);
     void                    setComputeMFStates(bool yn);
 
-    void                    setResultsSaved(Json::Value res);
+    void                    setResultsToSave(Json::Value res);
     void                    setSaveWholeDMatrix(bool yn);
     void                    setSaveDiagDMatrix(bool yn);
     void                    setSaveDiag2DMatrix(bool yn);

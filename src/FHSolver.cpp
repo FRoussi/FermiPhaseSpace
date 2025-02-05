@@ -1,5 +1,7 @@
 #include "../include/FHSolver.h"
 
+
+
 FHSolver::FHSolver(FHSystem *fhS)
 {
     fhSystem = fhS;
@@ -44,25 +46,35 @@ void                        FHSolver::setResultsWriter(std::string how, bool yn)
     }
 }
 
-void                        FHSolver::setResultsSaved(Json::Value res)
+void                        FHSolver::setResultsToSave(Json::Value res)
 {
     saveDiagDMatrix = res.get("diagDMatrix", true).asBool();
     saveDiag2DMatrix = res.get("diag2DMatrix", false).asBool();
     saveWholeDMatrix = res.get("wholeDMatrix", false).asBool();
+    saveEnergies = res.get("energies", true).asBool();
     saveTBStates = res.get("tbStates", false).asBool();
     saveMFStates = res.get("mfStates", false).asBool();
-    saveEnergies = res.get("energies", true).asBool();
+
 }
 
 
-    void                    FHSolver::setComputeTBStates(bool yn)
+void                    FHSolver::setComputeTBStates(bool yn)
+{
+    saveTBStates = yn;
+    if (saveTBStates && (!fhSystem->isTBGroundStateComputed()))
     {
-
+        fhSystem->computeTBGroundState();
     }
-    void                    FHSolver::setComputeMFStates(bool yn)
+}
+
+void                    FHSolver::setComputeMFStates(bool yn)
+{
+    saveMFStates = yn;
+    if (saveMFStates && (!fhSystem->isMFGroundStateComputed()))
     {
-
+        fhSystem->computeMFGroundState();
     }
+}
 
 void FHSolver::setSaveWholeDMatrix(bool yn)     {saveWholeDMatrix = yn;}
 void FHSolver::setSaveDiagDMatrix(bool yn)      {saveDiagDMatrix = yn;}

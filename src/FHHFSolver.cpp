@@ -333,9 +333,7 @@ void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const 
 void FHHFSolver::runSimulation( )
 {
 
-
     std::cout << "   -- Start simulation." << std::endl;
-
 
     unsigned int nSites = fhSystem->getnSites();
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
@@ -379,31 +377,31 @@ void FHHFSolver::runSimulation( )
     {
         Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        if (fhSystem->isTBGroundStateComputed())
+        if (!fhSystem->isTBGroundStateComputed())
         {
-            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
-
-            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
-            Mkku.col(0) = M.diag();
-
-            M = V_1p.t() * Ndt * V_1p;
-            Mkkd.col(0) = M.diag();
+            fhSystem->computeTBGroundState();
         }
+        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+        arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+        Mkku.col(0) = M.diag();
+        M = V_1p.t() * Ndt * V_1p;
+        Mkkd.col(0) = M.diag();
     }
     if (saveMFStates)
     {
         Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        if (fhSystem->isTBGroundStateComputed())
+        if (!fhSystem->isTBGroundStateComputed())
         {
-            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
-            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
-            Mukku.col(0) = M.diag();
-
-            V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
-            M = V_1p.t() * Ndt * V_1p;
-            Mukkd.col(0) = M.diag();
+            fhSystem->computeMFGroundState();
         }
+        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
+        arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+        Mukku.col(0) = M.diag();
+        V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
+        M = V_1p.t() * Ndt * V_1p;
+        Mukkd.col(0) = M.diag();
+        
     }
     if (saveEnergies)
     {
@@ -617,6 +615,36 @@ void FHHFSolver::runSimulation( )
                 niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
             }
             simJson["Niid"] = niidJson;
+        }
+        if (saveTBStates)
+        {
+            Json::Value mkkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Mkku.n_rows ; iSite++)
+            {
+                mkkuJson.append(rJson.writeLineInReal(Mkku.row(iSite)));
+            }
+            simJson["Mkku"] = mkkuJson;
+            Json::Value mkkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Mkkd.n_rows ; iSite++)
+            {
+                mkkdJson.append(rJson.writeLineInReal(Mkkd.row(iSite)));
+            }
+            simJson["Mkkd"] = mkkdJson;
+        }
+        if (saveMFStates)
+        {
+            Json::Value mukkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Mukku.n_rows ; iSite++)
+            {
+                mukkuJson.append(rJson.writeLineInReal(Mukku.row(iSite)));
+            }
+            simJson["Mukku"] = mukkuJson;
+            Json::Value mukkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < Mukkd.n_rows ; iSite++)
+            {
+                mukkdJson.append(rJson.writeLineInReal(Mukkd.row(iSite)));
+            }
+            simJson["Mukkd"] = mukkdJson;
         }
         if (saveEnergies)
         {

@@ -101,11 +101,24 @@ void FHEDSolver::initiateSolver()
     std::cout << "     - Hilbert space dimension :     " << basisSize << std::endl;
 
     // Check the operators to build
-    if (saveTBStates || saveMFStates)
+    if (saveTBStates)
     {
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
         storeNiju = storeOperators::SOall;
         storeNijd = storeOperators::SOall;
     }    
+    if (saveMFStates)
+    {
+        if (!fhSystem->isMFGroundStateComputed())
+        {
+            fhSystem->computeMFGroundState();
+        }
+        storeNiju = storeOperators::SOall;
+        storeNijd = storeOperators::SOall;
+    }  
 
     // OPERATORS
 
@@ -667,11 +680,13 @@ void FHEDSolver::runSimulation()
     arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Mkku; 
+    arma::dmat Mkku; 
+    arma::dmat Mkkd;
 
     if (saveTBStates)
     {
-        Mkku = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mkku = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mkkd = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     }
 
     this->psi = this->psi_0;
@@ -697,8 +712,10 @@ void FHEDSolver::runSimulation()
 
         if (saveTBStates)
         {
-
-           Mkku.col(t) = arma::dot( momentaVec,  psi);
+           arma::cx_dmat nt = computeOneParticleDensityMatrixSpinUp(psi);
+           Mkku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer())));
+           nt = computeOneParticleDensityMatrixSpinDown(psi);
+           Mkkd.col(t) = arma::real(arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer())));
         }     
 
         step(this->dt);
@@ -732,7 +749,7 @@ void FHEDSolver::runSimulation()
         {
             for (uint kMom = 0; kMom < nOfMomentumStates ; kMom++)
             {
-                results.writeLineInReal("M_" + std::to_string(kMom), Mkku.row(kMom));
+                results.writeLine("M_" + std::to_string(kMom), Mkku.row(kMom));
             }
         }
         results.writeLine("EU", EU);
@@ -781,13 +798,34 @@ void FHEDSolver::runSimulation()
         }
         simJson["Niid"] = niidJson;
 
-        Json::Value EJson(Json::objectValue);
-        EJson["U"] = rJson.writeLine(EU);
-        EJson["tH"] = rJson.writeLine(EtH);
-        EJson["pe"] = rJson.writeLine(EpotExt);
-        EJson["tot"] = rJson.writeLine(E);
- 
-        simJson["E"] = EJson;
+        if (saveTBStates)
+        {
+            Json::Value mkkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mkkuJson.append(rJson.writeLine(Mkku.row(iSite)));
+            }
+            simJson["Mkku"] = mkkuJson;
+
+            Json::Value mkkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mkkdJson.append(rJson.writeLine(Mkkd.row(iSite)));
+            }
+            simJson["Mkkd"] = mkkdJson;
+        }
+
+        if (saveEnergies)
+        {
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLine(EU);
+            EJson["tH"] = rJson.writeLine(EtH);
+            EJson["pe"] = rJson.writeLine(EpotExt);
+            EJson["tot"] = rJson.writeLine(E);
+    
+            simJson["E"] = EJson;
+        }
+
 
         resJson["simulation"] = simJson;
 
@@ -814,7 +852,7 @@ void FHEDSolver::runSimulation()
 
 
 
-arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrix(arma::cx_dvec psi)
+arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinUp(arma::cx_dvec psi)
 {
 
     uint nSites = fhSystem->getnSites();
@@ -829,6 +867,24 @@ arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrix(arma::cx_dvec 
         }  
     }
     return nu; 
+}
+
+
+arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinDown(arma::cx_dvec psi)
+{
+
+    uint nSites = fhSystem->getnSites();
+    arma::cx_dmat nd = arma::cx_dmat(nSites, nSites, arma::fill::zeros); 
+    for (uint iSite = 0; iSite < nSites; iSite++)
+    {
+        nd(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][iSite] * psi)));
+        for (uint jSite = iSite + 1; jSite < nSites; jSite++)
+        {
+            nd(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][jSite] * psi)));
+            nd(jSite, iSite) = std::conj( nd(iSite, jSite));
+        }  
+    }
+    return nd; 
 }
 
 /// @brief Destructor

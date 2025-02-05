@@ -171,9 +171,10 @@ int main(int argc, char* argv[])
             hfSolver.setResultFile(simName + "_HF_res", workFolder);
             hfSolver.setJsonFile(rootSim);
             hfSolver.setResultsWriter("json");
-            hfSolver.setResultsSaved(rootSim["results"]);
-            hfSolver.initiateSolver();
+            hfSolver.setResultsToSave(rootSim["results"]);
             hfSolver.setMethodParameters(rootSim["parameters"]);
+
+            hfSolver.initiateSolver();
             hfSolver.runSimulation();
 
             break;
@@ -186,9 +187,10 @@ int main(int argc, char* argv[])
             fTWASolver.setResultFile(simName + "_fTWA_res", workFolder);
             fTWASolver.setJsonFile(rootSim);
             fTWASolver.setResultsWriter("json");
-            fTWASolver.setResultsSaved(rootSim["results"]);
-            fTWASolver.initiateSolver();
+            fTWASolver.setResultsToSave(rootSim["results"]);
             fTWASolver.setMethodParameters(rootSim["parameters"]);
+
+            fTWASolver.initiateSolver();
             fTWASolver.runSimulation();
 
             break;
@@ -202,9 +204,10 @@ int main(int argc, char* argv[])
             GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
             GPSRSolver.setJsonFile(rootSim);
             GPSRSolver.setResultsWriter("json");
-            GPSRSolver.setResultsSaved(rootSim["results"]);
-            GPSRSolver.initiateSolver();
+            GPSRSolver.setResultsToSave(rootSim["results"]);
             GPSRSolver.setMethodParameters(rootSim["parameters"]);
+
+            GPSRSolver.initiateSolver();
             GPSRSolver.runSimulation();
 
             break;
@@ -220,9 +223,10 @@ int main(int argc, char* argv[])
             EDSolver.setResultFile(simName + "_ED_res", workFolder);
             EDSolver.setJsonFile(rootSim);
             EDSolver.setResultsWriter("json");
-            EDSolver.setResultsSaved(rootSim["results"]);
-            EDSolver.initiateSolver();
+            EDSolver.setResultsToSave(rootSim["results"]);
             EDSolver.setTimeParameters(param_tm, param_dt, param_sptp);
+
+            EDSolver.initiateSolver();
             EDSolver.runSimulation();
 
             break;

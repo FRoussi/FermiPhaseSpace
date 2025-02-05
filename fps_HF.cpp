@@ -22,6 +22,9 @@ int main(int argc, char* argv[])
 
    std::cout << "--- Fermi-Hubbard Dynamic with Hartree-Fock method --- " << std::endl;
 
+   
+   std::cout << "== FPS version:  " << FPS_VERSION_MAJOR << "." << FPS_VERSION_MINOR << "." << FPS_VERSION_PATCH << std::endl;
+
 
    arma::arma_version ver;
    std::cout << "== ARMA version: "<< ver.as_string() << std::endl;
@@ -134,7 +137,7 @@ int main(int argc, char* argv[])
       hfSolver.setResultFile(simName + "_HF_res", workFolder);
       hfSolver.setJsonFile(rootSim);
       hfSolver.setResultsWriter("json");
-      hfSolver.setResultsSaved(rootSim["results"]);
+      hfSolver.setResultsToSave(rootSim["results"]);
       hfSolver.initiateSolver();
       hfSolver.setMethodParameters(rootSim["parameters"]);
       hfSolver.runSimulation();
