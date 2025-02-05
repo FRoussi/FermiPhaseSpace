@@ -185,6 +185,22 @@ void FHfTWASolver::initiateSolver()
         }
     }
 
+
+    if (saveTBStates)
+    {
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
+    }
+    if (saveMFStates)
+    {
+        if (!fhSystem->isMFGroundStateComputed())
+        {
+            fhSystem->computeMFGroundState();
+        }
+    }
+
     //sqrtNoiseVarianceMatrixU.print();
     
     //sqrtNoiseVarianceMatrixU = arma::sqrt(sqrtNoiseVarianceMatrixU);
@@ -225,6 +241,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_drowvec EU;  
     arma::cx_drowvec EtH; 
     arma::cx_drowvec EpotExt;
+    arma::cx_dmat mkku, mkkd, mukku, mukkd;
 
     if (saveWholeDMatrix)
     {
@@ -247,7 +264,16 @@ void FHfTWASolver::runSimulation( )
         EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         EpotExt     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     }
-
+    if (saveTBStates)
+    {
+        mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveMFStates)
+    {
+        mukku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mukkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
 
    // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
@@ -272,6 +298,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_drowvec EU_loc;   
     arma::cx_drowvec EtH_loc;  
     arma::cx_drowvec EpotExt_loc;
+    arma::cx_dmat mkku_loc, mkkd_loc, mukku_loc, mukkd_loc;
 
 
     if (saveWholeDMatrix)
@@ -288,6 +315,16 @@ void FHfTWASolver::runSimulation( )
     {
         rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveTBStates)
+    {
+        mkku_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mkkd_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveMFStates)
+    {
+        mukku_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mukkd_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveEnergies)
     {
@@ -372,6 +409,16 @@ void FHfTWASolver::runSimulation( )
             {
                 rho2iiu_loc.col(t) += arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
                 rho2iid_loc.col(t) += arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
+            }
+            if (saveTBStates)
+            {
+                mkku_loc.col(t)     =  (rhou + halfDiag);
+                mkkd_loc.col(t)     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            }
+            if (saveMFStates)
+            {
+                mukku_loc.col(t)     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+                mukkd_loc.col(t)     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
             }
             if (saveEnergies)
             {

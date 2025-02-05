@@ -162,6 +162,22 @@ void FHHFSolver::initiateSolver()
     }
 
 
+    if (saveTBStates)
+    {
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
+    }
+    if (saveMFStates)
+    {
+        if (!fhSystem->isMFGroundStateComputed())
+        {
+            fhSystem->computeMFGroundState();
+        }
+    }
+
+
 }
 
 
@@ -391,7 +407,7 @@ void FHHFSolver::runSimulation( )
     {
         Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        if (!fhSystem->isTBGroundStateComputed())
+        if (!fhSystem->isMFGroundStateComputed())
         {
             fhSystem->computeMFGroundState();
         }

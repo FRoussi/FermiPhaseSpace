@@ -680,14 +680,20 @@ void FHEDSolver::runSimulation()
     arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::dmat Mkku; 
-    arma::dmat Mkkd;
+    arma::dmat Mkku, Mkkd, Mukku, Mukkd; 
+
 
     if (saveTBStates)
     {
         Mkku = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
         Mkkd = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     }
+    if (saveMFStates)
+    {
+        Mukku = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mukkd = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+    }
+
 
     this->psi = this->psi_0;
 
@@ -716,6 +722,13 @@ void FHEDSolver::runSimulation()
            Mkku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer())));
            nt = computeOneParticleDensityMatrixSpinDown(psi);
            Mkkd.col(t) = arma::real(arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer())));
+        }   
+        if (saveMFStates)
+        {
+           arma::cx_dmat nt = computeOneParticleDensityMatrixSpinUp(psi);
+           Mukku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_mfgs_Vu_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vu_Pointer())));
+           nt = computeOneParticleDensityMatrixSpinDown(psi);
+           Mukku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_mfgs_Vd_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vd_Pointer())));
         }     
 
         step(this->dt);
@@ -813,6 +826,22 @@ void FHEDSolver::runSimulation()
                 mkkdJson.append(rJson.writeLine(Mkkd.row(iSite)));
             }
             simJson["Mkkd"] = mkkdJson;
+        }
+        if (saveMFStates)
+        {
+            Json::Value mukkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mukkuJson.append(rJson.writeLine(Mukku.row(iSite)));
+            }
+            simJson["Mukku"] = mukkuJson;
+
+            Json::Value mukkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mukkdJson.append(rJson.writeLine(Mukkd.row(iSite)));
+            }
+            simJson["Mukkd"] = mukkdJson;
         }
 
         if (saveEnergies)

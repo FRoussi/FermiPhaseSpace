@@ -91,6 +91,22 @@ void FHGPSRSolver::initiateSolver()
            rhod0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0);
     }
 
+
+    if (saveTBStates)
+    {
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
+    }
+    if (saveMFStates)
+    {
+        if (!fhSystem->isMFGroundStateComputed())
+        {
+            fhSystem->computeMFGroundState();
+        }
+    }
+
 }
 
 
@@ -669,6 +685,7 @@ void FHGPSRSolver::runSimulation( )
 
     arma::cx_drowvec EU   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EtH  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec Epe  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
 
 
 // PARALLEL LOOP ON TRAJECTORIES
@@ -682,6 +699,7 @@ void FHGPSRSolver::runSimulation( )
 
     arma::cx_drowvec EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_drowvec EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_drowvec Epe_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
 
     double simulationTime = 0;
 
@@ -704,6 +722,10 @@ void FHGPSRSolver::runSimulation( )
 
             EU_loc(t) = EU_loc(t) + (arma::dot(rhou.diag(), *U * rhod.diag() ) + arma::dot(rhod.diag(), *U * rhou.diag() )) / arma::cx_double(2,0);
             EtH_loc(t) = EtH_loc(t) + arma::accu((rhou + rhod) % *tM);
+            if (!fhSystem->isExternalPotentialNull())
+            {
+                Epe_loc(t) = Epe_loc(t) + arma::accu((rhou + rhod) % *extPot);
+            }
 
             
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s++)
@@ -728,6 +750,7 @@ unsigned int tt = std::floor(nTraj/10);
         rho2iid +=rho2iid_loc;
         EU += EU_loc;
         EtH += EtH_loc;
+        Epe += Epe_loc;
     }
 }
     
@@ -739,6 +762,7 @@ unsigned int tt = std::floor(nTraj/10);
     arma::cx_dmat N2iid     = rho2iid / nTrajComplex ;
     EU = EU/ nTrajComplex;
     EtH = EtH / nTrajComplex;
+    Epe = Epe / nTrajComplex;
 
     arma::cx_drowvec E = EtH + EU;
 
@@ -861,6 +885,7 @@ unsigned int tt = std::floor(nTraj/10);
             Json::Value EJson(Json::objectValue);
             EJson["U"] = rJson.writeLineInReal(EU);
             EJson["tH"] = rJson.writeLineInReal(EtH);
+            EJson["pe"] = rJson.writeLineInReal(Epe);
             EJson["tot"] = rJson.writeLineInReal(E);
             simJson["E"] = EJson;
         }
