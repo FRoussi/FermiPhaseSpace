@@ -737,7 +737,7 @@ void FHGPSRSolver::runSimulation( )
 unsigned int tt = std::floor(nTraj/10);
     if ((i_traj%tt) == 0)
     {
-        std::cout<< "    - Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
+        std::cout<< "     - Trajectory " << i_traj << " computed by thread " << omp_get_thread_num() << std::endl;    
     }
    
     }

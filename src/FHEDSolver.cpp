@@ -881,17 +881,17 @@ void FHEDSolver::runSimulation()
 
 
 
-arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinUp(arma::cx_dvec psi)
+arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinUp(arma::cx_dvec psi_t)
 {
 
     uint nSites = fhSystem->getnSites();
     arma::cx_dmat nu = arma::cx_dmat(nSites, nSites, arma::fill::zeros); 
     for (uint iSite = 0; iSite < nSites; iSite++)
     {
-        nu(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi, NijuSet[iSite][iSite] * psi)));
+        nu(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijuSet[iSite][iSite] * psi_t)));
         for (uint jSite = iSite + 1; jSite < nSites; jSite++)
         {
-            nu(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi, NijuSet[iSite][jSite] * psi)));
+            nu(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijuSet[iSite][jSite] * psi_t)));
             nu(jSite, iSite) = std::conj( nu(iSite, jSite));
         }  
     }
@@ -899,17 +899,17 @@ arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinUp(arma::cx
 }
 
 
-arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinDown(arma::cx_dvec psi)
+arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinDown(arma::cx_dvec psi_t)
 {
 
     uint nSites = fhSystem->getnSites();
     arma::cx_dmat nd = arma::cx_dmat(nSites, nSites, arma::fill::zeros); 
     for (uint iSite = 0; iSite < nSites; iSite++)
     {
-        nd(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][iSite] * psi)));
+        nd(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijdSet[iSite][iSite] * psi_t)));
         for (uint jSite = iSite + 1; jSite < nSites; jSite++)
         {
-            nd(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][jSite] * psi)));
+            nd(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijdSet[iSite][jSite] * psi_t)));
             nd(jSite, iSite) = std::conj( nd(iSite, jSite));
         }  
     }

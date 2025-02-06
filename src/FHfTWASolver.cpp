@@ -470,7 +470,7 @@ void FHfTWASolver::runSimulation( )
             mkku += mkku_loc;
             mkkd += mkkd_loc;
         }
-        if (saveTBStates)
+        if (saveMFStates)
         {
             mukku += mukku_loc;
             mukkd += mukkd_loc;
@@ -538,10 +538,6 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveTBStates)
     {
-        if (!fhSystem->isTBGroundStateComputed())
-        {
-            fhSystem->computeTBGroundState();
-        }
 
         Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
@@ -554,10 +550,6 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveMFStates)
     {
-        if (!fhSystem->isMFGroundStateComputed())
-        {
-            fhSystem->computeMFGroundState();
-        }
 
         Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
