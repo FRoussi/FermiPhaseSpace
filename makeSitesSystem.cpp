@@ -70,7 +70,8 @@ int main(int argc, char* argv[])
     };
 
 // Default values
-    FHLatticeType geom = FHLatticeType::none;                     
+    FHLatticeType geom = FHLatticeType::none;        
+    std::string latticeTypeName = "grid";             
 
     IC initC = IC::spinWave;                            //<- default initial condition
 
@@ -97,7 +98,46 @@ int main(int argc, char* argv[])
     else
     {
 
-    cout << "== Writing a new FH system." << endl;
+        cout << "== Writing a new FH system." << endl;
+
+
+
+        for (int iArg = 1; iArg < argc ; iArg++)        //<- for each entry
+        {
+            if (iArg == 1)
+            {
+                fileName = argv[1];
+            }
+            else if (iArg == 2)
+            {
+                latticeTypeName = argv[2];
+            }
+            else if (isIn(string(argv[iArg]), possibleIC)) //((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
+            {
+                if (string(argv[iArg]) == possibleIC[0])  initC = IC::spinWave; 
+                if (string(argv[iArg]) == possibleIC[1])  initC = IC::chargeWave;           
+                if (string(argv[iArg]) == possibleIC[2])  initC = IC::tbGroundState;       //<- we note the initial condition
+                if (string(argv[iArg]) == possibleIC[3])  initC = IC::mfGroundState;       //<- we note the initial condition
+                wtr = whatToRead::nothing;                  //<- We stop reading geometry parameters
+            }
+            else
+            {
+                try                                         //<- We check if it's a number with a try/catch block
+                {
+                    argDouble = stod(argv[iArg]);
+                }  catch(const std::invalid_argument& ia) 
+                {
+                    isANumber = false;
+                }
+
+                if (isANumber)   //<- if it's a number and we are reading the geometry parameters
+                {
+                    geomParam.push_back(argDouble);                         //<- we store the number in the goemetry parameter vector
+                }
+            }
+        }
+
+/*
     for (int iArg = 1; iArg < argc ; iArg++)        //<- for each entry
     {
 
@@ -137,100 +177,106 @@ int main(int argc, char* argv[])
              {
                 fileName = argv[1];
              }
+             else if (iArg == 2)
+             {
+                latticeTypeName = argv[2];
+             }
         }
 
     }
+   */ 
 
 // Computation of the geometry
-    for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
-    {
-        geomParam.push_back(1.);
-    }
+        for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
+        {
+            geomParam.push_back(1.);
+        }
 
-    FHLattice  lat0 = FHLattice(geom, geomParam);
-    lat0.setLatticeName(fileName);
+        //FHLattice  lat0 = FHLattice(geom, geomParam);
+        FHLattice  lat0 = FHLattice(latticeTypeName, geomParam);
+        lat0.setLatticeName(fileName);
 
-    //std::cout << "Lattice done" << std::endl;
+        //std::cout << "Lattice done" << std::endl;
 
 
 // MAKING OF THE FHSystem
 
-    FHSystem newSystem = FHSystem(lat0);
-    newSystem.setName(fileName);    
-    
-    newSystem.setBasisInteractions();
+        FHSystem newSystem = FHSystem(lat0);
+        newSystem.setName(fileName);    
 
-    
-    switch (initC)
-    {
-    case IC::spinWave:
-        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);
-        break;
-    case IC::chargeWave:
-        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::chargeWave);
-        break;
-    case IC::tbGroundState:
-        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::tbGroundState);
-        break; 
-    case IC::mfGroundState:
-        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::mfGroundState);
-        break; 
-    default:
-        newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);
-        break;
-    }
-                                                       //<- Initial conditions
-    //cout << "file folder : " <<  fileFolder << endl; 
+        newSystem.setBasisInteractions();
 
 
-    Json::Value simRoot;
-    simRoot["sim_name"] = fileName;
-    simRoot["method"] = "HF";
+        switch (initC)
+        {
+        case IC::spinWave:
+            newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);
+            break;
+        case IC::chargeWave:
+            newSystem.setInitialConditions(FHSystem::FHInitialConditionType::chargeWave);
+            break;
+        case IC::tbGroundState:
+            newSystem.setInitialConditions(FHSystem::FHInitialConditionType::tbGroundState);
+            break; 
+        case IC::mfGroundState:
+            newSystem.setInitialConditions(FHSystem::FHInitialConditionType::mfGroundState);
+            break; 
+        default:
+            newSystem.setInitialConditions(FHSystem::FHInitialConditionType::spinWave);
+            break;
+        }
+                                                           //<- Initial conditions
+        //cout << "file folder : " <<  fileFolder << endl; 
 
-    Json::Value param;
-    param["t_max"] = 2.;
-    param["dt"] = 0.01;
-    param["stepsPerTimePoints"] = 1;
-    param["n_traj"] = 1000;
-    param["int_order"] = 4;
-    simRoot["parameters"] = param;
+
+        Json::Value simRoot;
+        simRoot["sim_name"] = fileName;
+        simRoot["method"] = "HF";
+
+        Json::Value param;
+        param["t_max"] = 2.;
+        param["dt"] = 0.01;
+        param["stepsPerTimePoints"] = 1;
+        param["n_traj"] = 1000;
+        param["int_order"] = 4;
+        simRoot["parameters"] = param;
 
 
 
-    simRoot["system"] = newSystem.writeFHSystemJson();
+        simRoot["system"] = newSystem.writeFHSystemJson();
 
-    Json::Value res;
-    res["diagDMatrix"] = true;
-    res["diag2DMatrix"] = false;
-    res["wholeDMatrix"] = false;
-    res["tbStates"] = false;
-    res["mfStates"] = false;
-    res["energies"] = true;
-    simRoot["results"] = res;
+        Json::Value res;
+        res["diagDMatrix"] = true;
+        res["diag2DMatrix"] = false;
+        res["wholeDMatrix"] = false;
+        res["tbStates"] = false;
+        res["mfStates"] = false;
+        res["energies"] = true;
+        simRoot["results"] = res;
 
 
     
     //std::cout << simRoot << std::endl;
 
-    std::string  fileAdress = fileFolder + "/" + fileName;
-    std::string fileAdressJSON = fileAdress + ".json";
+        std::string  fileAdress = fileFolder + "/" + fileName;
+        std::string fileAdressJSON = fileAdress + ".json";
 
-    std::ofstream streamSystem(fileAdressJSON);
-    if (streamSystem.is_open())
-    {
-        streamSystem << simRoot ;
-        streamSystem.close();
-    }
+        std::ofstream streamSystem(fileAdressJSON);
+        if (streamSystem.is_open())
+        {
+            streamSystem << simRoot ;
+            streamSystem.close();
+        }
 
-    lat0.writePositions(fileName, fileFolder);
+        lat0.writePositions(fileName, fileFolder);
 
    //std::cout << "In system, file adress : "<< fileAdress << std::endl;
 
 //    newSystem.writeFHSystemBis(fileFolder);
 
 
-    cout << "== " << fileName << " system created with " << lat0.getnSites() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
-    cout << "== Particle positions in " << fileFolder << "/" << fileName << ".xyz" << endl; 
+        cout << "== " << fileName << " system created with " << lat0.getnSites() << " sites and " << newSystem.getUpSpinParticleNumber() + newSystem.getDownSpinParticleNumber() << " particles." << endl;  
+        cout << "== Particle positions in " << fileFolder << "/" << fileName << ".xyz" << endl; 
     }
     return 0;
 }

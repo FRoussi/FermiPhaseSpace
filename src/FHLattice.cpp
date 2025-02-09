@@ -12,6 +12,7 @@ FHLattice::FHLattice(bool talk)
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    init_latticeNameMap();
 
     arma::dmat pos = arma::dmat(2,  3, arma::fill::zeros);
     pos(1,0) = 1;
@@ -33,6 +34,7 @@ FHLattice::FHLattice(int x, bool talk)
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    init_latticeNameMap();
 
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
@@ -71,6 +73,7 @@ FHLattice::FHLattice(int x, int y, int z, bool talk)
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    init_latticeNameMap();
 
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
@@ -107,6 +110,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    init_latticeNameMap();
 
 // Positions
     std::string positionFile = rootSystem.get("positionsFile", "").asString();
@@ -120,8 +124,15 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     readPositions(positionFile);
 
 
-
     latticeType = FHLatticeType::none;
+
+    std::string latticeTypeString = rootSystem.get("latticeType", "none").asString();
+    std::map< std::string, FHLatticeType>::iterator lti = latticeTypeNamesReverse.find(latticeTypeString);
+
+    if (lti != latticeTypeNamesReverse.end())
+    {
+        latticeType = lti->second;
+    }
 
 // Periodicity
     isPeriodicBool = rootSystem.get("periodic", false).asBool();
@@ -164,6 +175,56 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 
 }
 
+FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters)
+{
+    
+    vector<vector<double>> pos = makeBCGrid(2,1,1,1);
+
+    isPeriodicBool = false;
+    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    init_latticeNameMap();
+    latticeType = FHLatticeType::none;
+
+    std::map<std::string, FHLatticeType>::iterator itLatType = latticeTypeNamesReverse.find(latticeTypeString);
+    if (itLatType != latticeTypeNamesReverse.end())
+    {
+        latticeType = itLatType->second;
+    }
+
+
+
+switch (latticeType)
+{
+case none:
+    break;
+    case cubic:
+        pos = makeBCGrid(static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2]), parameters[3]);
+        latticeName = "CubicGrid";
+    break;
+    case bulkCenteredCubic:
+        pos = makeBCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
+        latticeName = "BCCGrid";
+    break;
+    case faceCenteredCubic:
+        pos = makeFCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
+        latticeName = "FCCGrid";
+    break;
+    case graphene:
+        pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
+        latticeName = "Graphene";
+    break;
+
+    default:
+    break;
+}
+
+
+    setPositions(armaMatfromVectorsVector(pos), "C");
+
+    computeMatrices();
+}
 
 FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters)
 {
@@ -174,6 +235,7 @@ FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters)
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    init_latticeNameMap();
 
     latticeType = latType;
 
@@ -216,6 +278,7 @@ FHLattice::FHLattice(FHLattice* lat)
 {
     uint nSites = lat->getnSites();
     uint nDim = lat->getnDimension();
+    init_latticeNameMap();
     sitePositions = arma::dmat( lat->getSitePositions()->memptr(), nSites, nDim);
 
     siteTypes = lat->getSiteTypes();
@@ -566,39 +629,8 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
     {
         Json::Value rootLattice;
 
-        switch (latticeType)
-        {
-        case FHLatticeType::none:
-        {
-            rootLattice["latticeType"] = "none";
-            break;
-        }
-        case FHLatticeType::cubic:
-        {
-            rootLattice["latticeType"] = "grid";
-            break;
-        }
-        case FHLatticeType::bulkCenteredCubic:
-        {
-            rootLattice["latticeType"] = "bcc";
-            break;
-        }
-        case FHLatticeType::faceCenteredCubic:
-        {
-            rootLattice["latticeType"] = "fcc";
-            break;
-        }
-        case FHLatticeType::graphene:
-        {
-            rootLattice["latticeType"] = "graphene";
-            break;
-        }
-        default :
-        {
-            rootLattice["latticeType"] = "none";
-            break;
-        }
-        }
+        rootLattice["latticeType"] = latticeTypeNames[latticeType];
+
 
         rootLattice["positionsFile"] = latticeName + ".xyz";
 
@@ -679,6 +711,27 @@ void                    FHLattice::computeMatrices()
 
 
 
+void FHLattice::init_latticeNameMap()
+{
+    latticeTypeNames = std::map<FHLatticeType, std::string>();
+    latticeTypeNames[FHLatticeType::none] = "none";
+    latticeTypeNames[FHLatticeType::cubic] = "grid";
+    latticeTypeNames[FHLatticeType::bulkCenteredCubic] = "bcc";
+    latticeTypeNames[FHLatticeType::faceCenteredCubic] = "fcc";
+    latticeTypeNames[FHLatticeType::triangular] = "triangular";
+    latticeTypeNames[FHLatticeType::graphene] = "graphene";
+    latticeTypeNames[FHLatticeType::moire] = "moire";
+    latticeTypeNames[FHLatticeType::kagome] = "kagome";
+
+    latticeTypeNamesReverse = std::map<std::string, FHLatticeType>();
+
+    for (std::map<FHLatticeType, std::string>::iterator it = latticeTypeNames.begin(); it != latticeTypeNames.end(); it ++)
+    {
+        latticeTypeNamesReverse.emplace(it->second, it->first);
+    }
+
+ }
+ 
 
 
 FHLattice::~FHLattice()

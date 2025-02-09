@@ -6,8 +6,11 @@
 //#define ARMA_DONT_USE_OPENMP
 #include <armadillo>
 #include <cmath>
+#include <map>
 #include <iostream>
 #include <fstream>
+
+
 
 #include "json/json.h"
 
@@ -48,6 +51,7 @@ public:
     FHLattice(int x, int y, int z, bool talk = true);
   //  FHSystem(std::string fileName, std::string folderName = "");
     FHLattice(Json::Value rootSystem, std::string folderName, bool talk = true);
+    FHLattice(std::string latticeTypeString, vector<double> parameters);
     FHLattice(FHLatticeType latType, vector<double> parameters);
 
     FHLattice(FHLattice* fhLattice);
@@ -141,6 +145,12 @@ private:
     arma::dmat                      distanceMatrix;
     vector<vector<bool>>            neighbourMatrix;
     vector<vector<bool>>            sameSiteMatrix;
+
+// Lattice type names
+    std::map<FHLatticeType, std::string> latticeTypeNames;
+    std::map<std::string, FHLatticeType> latticeTypeNamesReverse;
+    void init_latticeNameMap();
+
 
 
     std::string                     latticeName;
