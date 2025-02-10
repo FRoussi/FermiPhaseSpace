@@ -20,7 +20,7 @@
 
 #define FPS_VERSION_MAJOR 0
 #define FPS_VERSION_MINOR 2
-#define FPS_VERSION_PATCH 2
+#define FPS_VERSION_PATCH 3
 
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);

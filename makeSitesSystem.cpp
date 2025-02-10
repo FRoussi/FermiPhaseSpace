@@ -52,9 +52,6 @@ int main(int argc, char* argv[])
     string fileName = "newSystem";
     string fileFolder = "systemsFolder";
 
-    // Possible values
-    vector<string> possibleGeometry = {"grid", "graphene", "bcc", "fcc"};
-
     vector<string> possibleIC = {"ic_sw", "ic_cw", "ic_tbgs", "ic_mfgs"};
     enum IC{
         spinWave,
@@ -70,24 +67,13 @@ int main(int argc, char* argv[])
     };
 
 // Default values
-    FHLatticeType geom = FHLatticeType::none;        
     std::string latticeTypeName = "grid";             
-
     IC initC = IC::spinWave;                            //<- default initial condition
-
     //NRJ en = NRJ::HF;
     vector<double> energyParam = {-1,1};                 //<- default energy parameters
-
-
-
-    enum whatToRead{                                //<- what are we reading next
-        nothing,
-        geometryParameters,
-        energyParameters
-    };                  
+            
     vector<double> geomParam = vector<double>();    //<- list of geometry parameters stored in double
     double argDouble = 0;                           //<- the current entry in double
-    whatToRead wtr = whatToRead::nothing;
     bool isANumber = true;                          //<- is the current entry a number
 
     if (argc < 2)
@@ -118,7 +104,6 @@ int main(int argc, char* argv[])
                 if (string(argv[iArg]) == possibleIC[1])  initC = IC::chargeWave;           
                 if (string(argv[iArg]) == possibleIC[2])  initC = IC::tbGroundState;       //<- we note the initial condition
                 if (string(argv[iArg]) == possibleIC[3])  initC = IC::mfGroundState;       //<- we note the initial condition
-                wtr = whatToRead::nothing;                  //<- We stop reading geometry parameters
             }
             else
             {
@@ -137,54 +122,6 @@ int main(int argc, char* argv[])
             }
         }
 
-/*
-    for (int iArg = 1; iArg < argc ; iArg++)        //<- for each entry
-    {
-
-        isANumber = true;
-        try                                         //<- We check if it's a number with a try/catch block
-        {
-            argDouble = stod(argv[iArg]);
-        }  catch(const std::invalid_argument& ia) 
-        {
-            isANumber = false;
-        }
-
-        if (isANumber && (wtr == whatToRead::geometryParameters))   //<- if it's a number and we are reading the geometry parameters
-        {
-            geomParam.push_back(argDouble);                         //<- we store the number in the goemetry parameter vector
-        }
-        else if (isIn(string(argv[iArg]), possibleGeometry))        //<- else, if the word is among the geometry types
-        {
-            if (string(argv[iArg]) == possibleGeometry[0])  geom = FHLatticeType::cubic;       //<- we note the geometry
-            if (string(argv[iArg]) == possibleGeometry[1])  geom = FHLatticeType::graphene; 
-            if (string(argv[iArg]) == possibleGeometry[2])  geom = FHLatticeType::bulkCenteredCubic;  
-            if (string(argv[iArg]) == possibleGeometry[3])  geom = FHLatticeType::faceCenteredCubic;
-            wtr = whatToRead::geometryParameters;                   //<- We stand ready to read the geometry parameters
-        } 
-        else if (isIn(string(argv[iArg]), possibleIC)) //((argv[iArg]==string("ic_sw")) || (argv[iArg]==string("ic_cw")))    //<- else, if the word is among the Initial conditions types
-        {
-            if (string(argv[iArg]) == possibleIC[0])  initC = IC::spinWave; 
-            if (string(argv[iArg]) == possibleIC[1])  initC = IC::chargeWave;           
-            if (string(argv[iArg]) == possibleIC[2])  initC = IC::tbGroundState;       //<- we note the initial condition
-            if (string(argv[iArg]) == possibleIC[3])  initC = IC::mfGroundState;       //<- we note the initial condition
-            wtr = whatToRead::nothing;                  //<- We stop reading geometry parameters
-        }
-        else 
-        {
-             wtr = whatToRead::nothing;                 //<- Else we don't stand ready for anything
-             if (iArg==1)                           //<- and if it's the first argumentm that's the name of the file
-             {
-                fileName = argv[1];
-             }
-             else if (iArg == 2)
-             {
-                latticeTypeName = argv[2];
-             }
-        }
-
-    }
-   */ 
 
 // Computation of the geometry
         for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)

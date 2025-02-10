@@ -650,7 +650,7 @@ void FHfTWAMPISolver::runSimulation( )
         }
 
         //std::cout << "Wrintin results" << std::endl;
-        arma::cx_dmat Energies = arma::cx_dmat(nTimePoints, 4);
+        arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints);
         Energies.row(0) = EU;
         Energies.row(1) = EtH;
         Energies.row(2) = EpotExt;

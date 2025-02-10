@@ -9,8 +9,8 @@ FHLattice::FHLattice(bool talk)
     latticeType = FHLatticeType::cubic;
 
     isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+    latticeMatrix = arma::dmat(3,3,arma::fill::eye);
+    latticeZeroVector = arma::drowvec(3, arma::fill::eye);
     inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     init_latticeNameMap();
 
@@ -19,7 +19,7 @@ FHLattice::FHLattice(bool talk)
 
 
     setPositions(pos);
-   
+
 
 }
 
@@ -57,7 +57,7 @@ FHLattice::FHLattice(int x, bool talk)
 
 
     setPositions(pos);
-  
+    latticeMatrix = findBCGridBox(x, 1, 1, 1);
 
 }
 
@@ -95,6 +95,7 @@ FHLattice::FHLattice(int x, int y, int z, bool talk)
 
     setPositions(pos);
      
+    latticeMatrix = findBCGridBox(x, y, z, 1);
 
 }
 
@@ -194,31 +195,58 @@ FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters)
     }
 
 
+uint nx, ny, nz;
+double a;
 
 switch (latticeType)
 {
-case none:
-    break;
+    case none:
+        break;
     case cubic:
-        pos = makeBCGrid(static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2]), parameters[3]);
+    {
+        nx = static_cast<int>(parameters[0]);
+        ny = static_cast<int>(parameters[1]);
+        nz = static_cast<int>(parameters[2]);
+        a = (parameters[3]);
+        pos = makeBCGrid(nx, ny, nz, a);
+        latticeMatrix = findBCGridBox(nx, ny, nz, a);
         latticeName = "CubicGrid";
-    break;
+        break;
+    }
     case bulkCenteredCubic:
-        pos = makeBCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
+    {
+        nx = static_cast<int>(parameters[0]);
+        ny = static_cast<int>(parameters[1]);
+        nz = static_cast<int>(parameters[2]);
+        a = (parameters[3]);
+        pos = makeBCCGrid(nx, ny, nz, a);
+        latticeMatrix = findBCGridBox(nx, ny, nz, a);
         latticeName = "BCCGrid";
-    break;
+        break;
+    }
     case faceCenteredCubic:
-        pos = makeFCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
+    {
+        nx = static_cast<int>(parameters[0]);
+        ny = static_cast<int>(parameters[1]);
+        nz = static_cast<int>(parameters[2]);
+        a = (parameters[3]);
+        pos = makeFCCGrid(nx, ny, nz, a);
+        latticeMatrix = findBCGridBox(nx, ny, nz, a);
         latticeName = "FCCGrid";
-    break;
+        break;
+    }
     case graphene:
+    {
+        nx = static_cast<int>(parameters[0]);
+        a = (parameters[1]);
         pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
+        latticeMatrix = findHoneyCombGridBox(nx, a);
         latticeName = "Graphene";
-    break;
-
+        break;
+    }
     default:
-    break;
-}
+        break;
+    }
 
 
     setPositions(armaMatfromVectorsVector(pos), "C");
@@ -448,6 +476,28 @@ double                                      FHLattice::computeDistance(uint iSit
     return d;
 }
 
+
+double                                      FHLattice::evaluateNearestNeighbor()
+{
+    double minNeib = 0;
+    if (distanceMatrix.n_cols > 1)
+    {
+        minNeib = 1000;
+        for (uint iSite = 0; iSite < distanceMatrix.n_rows; iSite++)
+        {
+            for (uint jSite = iSite+1; jSite < distanceMatrix.n_cols; jSite++)
+            {
+                if (distanceMatrix(iSite, jSite) >  samePointDistance)
+                {
+                    minNeib = std::min(minNeib, distanceMatrix(iSite, jSite));
+                }
+            }
+        }
+    }
+    return minNeib;
+}
+
+
 double                                      FHLattice::getDistance(uint i, uint j)      {   return distanceMatrix(i,j);}
 bool                                        FHLattice::areNeighbour(uint i, uint j)     {   return neighbourMatrix[i][j];}
 bool                                        FHLattice::areSameSite(uint i, uint j)      {   return sameSiteMatrix[i][j];}
@@ -635,20 +685,22 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
         rootLattice["positionsFile"] = latticeName + ".xyz";
 
         // Periodicity
-        if (isPeriodicBool)
+        rootLattice["periodic"] = isPeriodicBool;
+        Json::Value vecJson(Json::arrayValue);
+        Json::Value matJson(Json::arrayValue);
+        for (uint i = 0; i<3; i++)  vecJson[i] = latticeZeroVector(i);
+        for (uint i = 0; i<3; i++)
         {
-            rootLattice["periodic"] = true;
-            Json::Value zeroVecJson(Json::arrayValue);
-            Json::Value zeroMatJson(Json::arrayValue);
-            for (uint i = 0; i<3; i++)  zeroVecJson[i] = 0;
-            for (uint i = 0; i<3; i++)  zeroMatJson[i] = zeroVecJson;
-            rootLattice["latticeMatrix"] = zeroMatJson;
-            rootLattice["latticeZero"] = zeroVecJson;
-        }
-        else
-        {
-            rootLattice["periodic"] = false;
-        }
+            Json::Value vJson(Json::arrayValue);
+            for (uint j = 0; j<3; j++)
+            {
+                vJson.append(latticeMatrix(i,j));
+            }
+            matJson.append(vJson);
+        }  
+        rootLattice["latticeMatrix"] = matJson;
+        rootLattice["latticeZero"] = vecJson;
+        
 
         return rootLattice;
 
@@ -780,6 +832,12 @@ vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int
     }
 
     return pos;
+}
+
+arma::dmat findBCGridBox(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+{
+    arma::dvec diag = {nx * a, ny * a, nz * a};
+    return arma::diagmat(diag);
 }
 
 /// @brief Makes a Body-centered Cubic grid of sites 
@@ -945,6 +1003,30 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
     
     pos.shrink_to_fit();
     return pos;
+}
+
+arma::dmat findHoneyCombGridBox(unsigned int nCombs, double a)
+{
+    double sqrt3 = std::sqrt(3);
+    arma::dmat part2d = {{sqrt3 *a, sqrt3/2 *a}, {0, 1.5 * a}};
+
+    double sqrtnCombs = std::sqrt((double)nCombs);
+    uint fsnc = (uint)std::floor(sqrtnCombs);
+    uint csnc = (uint)std::ceil(sqrtnCombs);
+
+    uint nx = csnc;
+    uint ny = fsnc + (uint)((nCombs - fsnc*fsnc)> fsnc);
+
+
+    part2d.col(0) = part2d.col(0) * nx;
+    part2d.col(1) = part2d.col(1) * ny; 
+
+    arma::dmat box = arma::dmat(3,3,arma::fill::zeros);
+    box.submat(0,0,1,1) = part2d;
+    box(2,2) = 10*a;
+
+
+    return box;
 }
 
 

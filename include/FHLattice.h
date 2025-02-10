@@ -17,9 +17,11 @@
 using std::vector;
 
 vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
+arma::dmat findBCGridBox(unsigned int nx, unsigned int ny, unsigned int nz, double a);
 vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
 vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
 vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a);
+arma::dmat findHoneyCombGridBox(unsigned int nCombs, double a);
 
 void getNextIndex(unsigned int& i, unsigned int& j);
 
@@ -109,6 +111,7 @@ public:
     void                                        setLatticeName(std::string newName);
 
     void                                        computeMatrices();
+    double                                      evaluateNearestNeighbor();
 
     // XYZ file     
     void                                        readPositions(std::string xyzFile);
