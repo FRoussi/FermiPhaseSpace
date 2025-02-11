@@ -40,12 +40,6 @@ public:
     void                        step_RK4_38(double currentSimulationTime, arma::cx_dmat& rhou, arma::cx_dmat& rhod, double d_t);
     void                        runSimulation();
 
-    void                        writeResults(arma::cx_dcube &Nu_t, arma::cx_dcube &Nd_t, 
-                                            arma::cx_dmat &Niiu_t, arma::cx_dmat &Niid_t, 
-                                            arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
-                                            arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd,                                             
-                                            arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
-                                            arma::cx_dmat &E,std::vector<double> &timeLine);
 
     ~FHfTWASolver();
 

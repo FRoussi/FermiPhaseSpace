@@ -58,6 +58,7 @@ FHLattice::FHLattice(int x, bool talk)
 
     setPositions(pos);
     latticeMatrix = findBCGridBox(x, 1, 1, 1);
+    computeInverseLatticeMatrix();
 
 }
 
@@ -96,6 +97,7 @@ FHLattice::FHLattice(int x, int y, int z, bool talk)
     setPositions(pos);
      
     latticeMatrix = findBCGridBox(x, y, z, 1);
+    computeInverseLatticeMatrix();
 
 }
 
@@ -150,11 +152,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
                 latticeMatrix(i,j) = latRow[j].asDouble();
             }
         }
-        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
-        if (!isInv)
-        {
-            std::cout << "Caution : the lattice matrix is singular." << std::endl;
-        }
+        computeInverseLatticeMatrix();
     }
     
 
@@ -210,6 +208,7 @@ switch (latticeType)
         a = (parameters[3]);
         pos = makeBCGrid(nx, ny, nz, a);
         latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        computeInverseLatticeMatrix();
         latticeName = "CubicGrid";
         break;
     }
@@ -221,6 +220,7 @@ switch (latticeType)
         a = (parameters[3]);
         pos = makeBCCGrid(nx, ny, nz, a);
         latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        computeInverseLatticeMatrix();
         latticeName = "BCCGrid";
         break;
     }
@@ -232,6 +232,7 @@ switch (latticeType)
         a = (parameters[3]);
         pos = makeFCCGrid(nx, ny, nz, a);
         latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        computeInverseLatticeMatrix();
         latticeName = "FCCGrid";
         break;
     }
@@ -241,6 +242,7 @@ switch (latticeType)
         a = (parameters[1]);
         pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
         latticeMatrix = findHoneyCombGridBox(nx, a);
+        computeInverseLatticeMatrix();
         latticeName = "Graphene";
         break;
     }
@@ -327,7 +329,7 @@ FHLattice::FHLattice(FHLattice* lat)
     neighbourDistance = lat->getNeighbourDistance();
     samePointDistance = lat->getSamePointDistance();
 
-
+    computeInverseLatticeMatrix();
     computeMatrices();
 
 }
@@ -561,29 +563,24 @@ void                    FHLattice::setSymmetry(arma::dmat symVectors)
 
 }
 
-void                                FHLattice::setLatticeZero(arma::drowvec latticeZ)
+void                                FHLattice::setLatticeZero(arma::drowvec latticeZ){    latticeZeroVector = latticeZ;}
+void                                FHLattice::setNeighbourDistance(double neigbD){    neighbourDistance = neigbD;}
+void                                FHLattice::setSamePointDistance(double samePointD){    samePointDistance = samePointD;}
+void                                FHLattice::setLatticeName(std::string newName){ latticeName = newName;}
+
+void                                FHLattice::computeInverseLatticeMatrix()
 {
-    latticeZeroVector = latticeZ;
-}
-
-
-void                                FHLattice::setNeighbourDistance(double neigbD)
-{
-    neighbourDistance = neigbD;
-}
-
-
-void                                FHLattice::setSamePointDistance(double samePointD)
-{
-    samePointDistance = samePointD;
-}
-
-    void                                FHLattice::setLatticeName(std::string newName)
+    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    double rcond = 0;
+    bool success = arma::inv(inverseLatticeMatrix, rcond, latticeMatrix);
+    if (!success)
     {
-        latticeName = newName;
+        std::cout << "! Problem ! Lattice matrice not inversible." << std::endl;
     }
 
-void                    FHLattice::readPositions(std::string xyzFile)
+}
+
+void                                FHLattice::readPositions(std::string xyzFile)
 {
 
     uint nSites = 0;

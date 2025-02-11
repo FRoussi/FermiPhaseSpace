@@ -126,6 +126,168 @@ void FHSolver::setJsonFile(Json::Value file)
 
 
 
+void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
+{
+
+    // Writing the results :
+    if (writeResultsTxt)
+    {
+        ResultWriterTxt results = ResultWriterTxt(workName, folderName);
+        results.newResults();
+        results.writeLine("t", timeLine);
+        if (saveDiagDMatrix)
+        {
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
+            }
+            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            {
+                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
+            }
+        }
+
+        if (saveTBStates)
+        {
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mkku.row(kMom));
+            }
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mkkd.row(kMom));
+            }
+        }
+        if (saveMFStates)
+        {
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("Mu_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mukku.row(kMom));
+            }
+            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
+            {
+                results.writeLineInReal("Mu_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mukkd.row(kMom));
+            }
+        }
+        if (saveEnergies)
+        {
+            results.writeLineInReal("EU", Energies.row(0));
+            results.writeLineInReal("EtH", Energies.row(1));
+            results.writeLineInReal("Epe", Energies.row(2));
+            results.writeLineInReal("E", Energies.row(3));
+        }
+
+
+         std::cout << "   -- Results written in " << folderName  << workName << ".txt" << std::endl;
+    }
+
+    if (writeResultsJson)
+    {
+
+        ResultWriterJson rJson; 
+        Json::Value resJson = jsonFile;
+
+
+        resJson["fpsVersion"] = fhSystem->getFPSVersion(); 
+
+        if (fhSystem->isTBGroundStateComputed())
+        {
+            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
+        }
+        if (fhSystem->isMFGroundStateComputed())
+        {
+            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
+        }
+
+        Json::Value simJson = Json::Value();
+
+        simJson["t"] = rJson.writeLine(timeLine);
+
+        if (saveWholeDMatrix)
+        {
+            //Json::Value n12uJS(Json::arrayValue);
+            //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
+            simJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
+        }
+
+        if (saveDiagDMatrix)
+        {
+            Json::Value niiuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
+            }
+            simJson["Niiu"] = niiuJson;
+            Json::Value niidJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
+            }
+            simJson["Niid"] = niidJson;
+        }
+
+        if (saveTBStates)
+        {
+            Json::Value mkkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mkkuJson.append(rJson.writeLineInReal(Mkku.row(iSite)));
+            }
+            simJson["Mkku"] = mkkuJson;
+            Json::Value mkkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mkkdJson.append(rJson.writeLineInReal(Mkkd.row(iSite)));
+            }
+            simJson["Mkkd"] = mkkdJson;
+        }
+        if (saveMFStates)
+        {
+            Json::Value mukkuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mukkuJson.append(rJson.writeLineInReal(Mukku.row(iSite)));
+            }
+            simJson["Mukku"] = mukkuJson;
+            Json::Value mukkdJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            {
+                mukkdJson.append(rJson.writeLineInReal(Mukkd.row(iSite)));
+            }
+            simJson["Mukkd"] = mukkdJson;
+        }
+
+        if (saveEnergies)
+        {
+            Json::Value EJson(Json::objectValue);
+            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
+            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
+            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
+            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
+            simJson["E"] = EJson;
+        }
+
+        resJson["simulation"] = simJson;
+
+
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["indentation"] = "\t";
+        std::string document = Json::writeString(wbuilder, resJson);
+        std::string fileAdressName = folderName + workName + ".json";
+        std::ofstream resultFile(fileAdressName);
+        resultFile << document;
+        resultFile.close();
+
+        std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
+    }
+
+    if (writeResultsHDF5)
+    {
+        
+    }
+}
+
+
 /// @brief Initiate the ED solver, compute the initial wave-function, then the usefull operators.
 ///@return void
 void FHSolver::initiateSolver()

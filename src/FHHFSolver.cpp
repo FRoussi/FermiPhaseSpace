@@ -366,10 +366,12 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Mkkd;
     arma::cx_dmat Mukku;
     arma::cx_dmat Mukkd;
-    arma::cx_drowvec EU;
-    arma::cx_drowvec EtH;
-    arma::cx_drowvec EpotExt;
-    arma::cx_drowvec E;
+    arma::cx_dmat Energies;
+    arma::cx_dmat N2iiu, N2iid;
+    //arma::cx_drowvec EU;
+    //arma::cx_drowvec EtH;
+    //arma::cx_drowvec EpotExt;
+    //arma::cx_drowvec E;
     arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
     nPartU_t(0) = std::real(arma::trace(Nut));
@@ -421,14 +423,15 @@ void FHHFSolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH(0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-        EU(0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        //EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        Energies = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
+        Energies(0,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+        Energies(1,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
         if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
         {
-            EpotExt(0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+            Energies(2,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
         }
     }
 
@@ -512,11 +515,11 @@ void FHHFSolver::runSimulation( )
         //std::cout << "Save En, t " << t << std::endl;
         if (saveEnergies)
         {
-            EtH(t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-            EU(t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            Energies(0,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+            Energies(1,t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
             if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
             {
-                EpotExt(t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+                Energies(2,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
             }
 
         }
@@ -528,7 +531,7 @@ void FHHFSolver::runSimulation( )
 //std::cout << "Save En tot" << std::endl;
     if (saveEnergies)
     {
-       E = EU + EtH + EpotExt;
+        Energies.row(3) = Energies.row(0) + Energies.row(1) + Energies.row(2); 
     }
 
     if (talkative)
@@ -536,164 +539,14 @@ void FHHFSolver::runSimulation( )
         printf("--- Mean field dynamic, n1u : \n");
         (arma::real(Niiu.row(0))).print();
         printf("--- Mean field dynamic, E : \n");
-        (arma::real(E)).print();
+        (arma::real(Energies.row(3))).print();
     }
 
 
        // Writing the results :
-    if (writeResultsTxt)
-    {
-        ResultWriterTxt results = ResultWriterTxt(workName, folderName);
-        results.newResults();
-
-        results.writeLine("t", timeLine);
-        if (saveDiagDMatrix)
-        {
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
-            }
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
-            }
-        }
-        if (saveTBStates)
-        {
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mkku.row(iSite));
-            }
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("M_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mkkd.row(iSite));
-            }     
-        }
-        if (saveMFStates)
-        {
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("Mu_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Mukku.row(iSite));
-            }
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("Mu_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Mukkd.row(iSite));
-            }     
-        }
-        if (saveEnergies)
-        {
-            results.writeLineInReal("EU", EU);
-            results.writeLineInReal("EtH", EtH);
-            results.writeLineInReal("Epe", EpotExt);
-            results.writeLineInReal("E", E);
-        }
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
 
 
-        std::cout << "   -- Results written in " << folderName << workName << ".txt" << std::endl;
-    }
-
-    if (writeResultsJson)
-    {
-
-        ResultWriterJson rJson; 
-        Json::Value resJson = jsonFile;
-
-
-        resJson["fpsVersion"] = fhSystem->getFPSVersion();
-
-        
-        if (fhSystem->isTBGroundStateComputed())
-        {
-            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
-        }
-        if (fhSystem->isMFGroundStateComputed())
-        {
-            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
-        }
-
-
-        Json::Value simJson = Json::Value();
-
-        simJson["t"] = rJson.writeLine(timeLine);
-
-        if (saveDiagDMatrix)
-        {
-        
-            Json::Value niiuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Niiu.n_rows ; iSite++)
-            {
-                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
-            }
-            simJson["Niiu"] = niiuJson;
-            Json::Value niidJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
-            {
-                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
-            }
-            simJson["Niid"] = niidJson;
-        }
-        if (saveTBStates)
-        {
-            Json::Value mkkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Mkku.n_rows ; iSite++)
-            {
-                mkkuJson.append(rJson.writeLineInReal(Mkku.row(iSite)));
-            }
-            simJson["Mkku"] = mkkuJson;
-            Json::Value mkkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Mkkd.n_rows ; iSite++)
-            {
-                mkkdJson.append(rJson.writeLineInReal(Mkkd.row(iSite)));
-            }
-            simJson["Mkkd"] = mkkdJson;
-        }
-        if (saveMFStates)
-        {
-            Json::Value mukkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Mukku.n_rows ; iSite++)
-            {
-                mukkuJson.append(rJson.writeLineInReal(Mukku.row(iSite)));
-            }
-            simJson["Mukku"] = mukkuJson;
-            Json::Value mukkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < Mukkd.n_rows ; iSite++)
-            {
-                mukkdJson.append(rJson.writeLineInReal(Mukkd.row(iSite)));
-            }
-            simJson["Mukkd"] = mukkdJson;
-        }
-        if (saveEnergies)
-        {
-            Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(EU);
-            EJson["tH"] = rJson.writeLineInReal(EtH);
-            EJson["pe"] = rJson.writeLineInReal(EpotExt);
-            EJson["tot"] = rJson.writeLineInReal(E);
-            simJson["E"] = EJson;
-        }
-
-        resJson["simulation"] = simJson;
-
-
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["indentation"] = "\t";
-        std::string document = Json::writeString(wbuilder, resJson);
-        std::string fileAdressName = folderName  + workName + ".json";
-        std::ofstream resultFile(fileAdressName);
-        resultFile << document;
-        resultFile.close();
-
-        std::cout << "   -- Results written in " << folderName   << workName << ".json" << std::endl;
-    }
-
-    if (writeResultsHDF5)
-    {
-        
-    }
-
-
-
-    
 
 }
 

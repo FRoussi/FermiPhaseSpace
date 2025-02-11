@@ -238,9 +238,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rhoiid;
     arma::cx_dmat rho2iiu;
     arma::cx_dmat rho2iid;
-    arma::cx_drowvec EU;  
-    arma::cx_drowvec EtH; 
-    arma::cx_drowvec EpotExt;
+    arma::cx_dmat Energies;
     arma::cx_dmat mkku, mkkd, mukku, mukkd;
 
     if (saveWholeDMatrix)
@@ -260,9 +258,7 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU          = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EpotExt     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        Energies          = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
     }
     if (saveTBStates)
     {
@@ -295,9 +291,7 @@ void FHfTWASolver::runSimulation( )
     arma::cx_dmat rhoiid_loc; 
     arma::cx_dmat rho2iiu_loc; 
     arma::cx_dmat rho2iid_loc; 
-    arma::cx_drowvec EU_loc;   
-    arma::cx_drowvec EtH_loc;  
-    arma::cx_drowvec EpotExt_loc;
+    arma::cx_dmat En_loc;   
     arma::cx_dmat mkku_loc, mkkd_loc, mukku_loc, mukkd_loc;
 
 
@@ -328,9 +322,7 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU_loc      = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH_loc     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EpotExt_loc = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        En_loc      = arma::cx_dmat(3,nTimePoints, arma::fill::zeros);
     }
 
     arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
@@ -423,9 +415,12 @@ void FHfTWASolver::runSimulation( )
             {
                 Nu_loc =  rhou + halfDiag;
                 Nd_loc =  rhod + halfDiag;
-                EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
-                //EpotExt_loc(t) = EpotExt_loc(t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
+                En_loc(0,t)=  En_loc(0,t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+                En_loc(1,t) = En_loc(1,t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
+                if (!fhSystem->isExternalPotentialNull())
+                {
+                    En_loc(2,t) = En_loc(2,t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
+                }
             }
 
             // We do 'nStepsPerTimePoint' simulation steps
@@ -477,9 +472,10 @@ void FHfTWASolver::runSimulation( )
         }
         if (saveEnergies)
         {
-            EU += EU_loc;
-            EtH += EtH_loc;
-            EpotExt += EpotExt_loc;
+            for (uint ie =0; ie < 3; ie ++)
+            {
+                Energies.row(ie) +=En_loc.row(ie);
+            }
         }
 
     }
@@ -562,19 +558,12 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU = EU/nTraj_arma;
-        EtH = EtH/nTraj_arma;
-        EpotExt = EpotExt/nTraj_arma;
-        E = EtH + EU + EpotExt;
+        Energies = Energies/nTraj_arma;
+        Energies.row(3) = Energies.row(0) + Energies.row(1) + Energies.row(2);
     }
 
     
-   arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints);
-   Energies.row(0) = EU;
-   Energies.row(1) = EtH;
-   Energies.row(2) = EpotExt;
-   Energies.row(3) = E;
-   
+
 
     writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
 
@@ -582,166 +571,6 @@ void FHfTWASolver::runSimulation( )
 
 
 
-void FHfTWASolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
-{
-
-    // Writing the results :
-    if (writeResultsTxt)
-    {
-        ResultWriterTxt results = ResultWriterTxt(workName, folderName);
-        results.newResults();
-        results.writeLine("t", timeLine);
-        if (saveDiagDMatrix)
-        {
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
-            }
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
-            {
-                results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
-            }
-        }
-
-        if (saveTBStates)
-        {
-            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
-            {
-                results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mkku.row(kMom));
-            }
-            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
-            {
-                results.writeLineInReal("M_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mkkd.row(kMom));
-            }
-        }
-        if (saveMFStates)
-        {
-            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
-            {
-                results.writeLineInReal("Mu_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_u", Mukku.row(kMom));
-            }
-            for (unsigned int kMom=0; kMom<fhSystem->getnSites(); kMom++)
-            {
-                results.writeLineInReal("Mu_" + std::to_string(kMom) + "_" + std::to_string(kMom) + "_d", Mukkd.row(kMom));
-            }
-        }
-        if (saveEnergies)
-        {
-            results.writeLineInReal("EU", Energies.row(0));
-            results.writeLineInReal("EtH", Energies.row(1));
-            results.writeLineInReal("Epe", Energies.row(2));
-            results.writeLineInReal("E", Energies.row(3));
-        }
-
-
-         std::cout << "   -- Results written in " << folderName  << workName << ".txt" << std::endl;
-    }
-
-    if (writeResultsJson)
-    {
-
-        ResultWriterJson rJson; 
-        Json::Value resJson = jsonFile;
-
-
-        resJson["fpsVersion"] = fhSystem->getFPSVersion();
-
-        if (fhSystem->isTBGroundStateComputed())
-        {
-            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
-        }
-        if (fhSystem->isMFGroundStateComputed())
-        {
-            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
-        }
-
-        Json::Value simJson = Json::Value();
-
-        simJson["t"] = rJson.writeLine(timeLine);
-
-        if (saveWholeDMatrix)
-        {
-            //Json::Value n12uJS(Json::arrayValue);
-            //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
-            simJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
-        }
-
-        if (saveDiagDMatrix)
-        {
-            Json::Value niiuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
-            }
-            simJson["Niiu"] = niiuJson;
-            Json::Value niidJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
-            }
-            simJson["Niid"] = niidJson;
-        }
-
-        if (saveTBStates)
-        {
-            Json::Value mkkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mkkuJson.append(rJson.writeLineInReal(Mkku.row(iSite)));
-            }
-            simJson["Mkku"] = mkkuJson;
-            Json::Value mkkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mkkdJson.append(rJson.writeLineInReal(Mkkd.row(iSite)));
-            }
-            simJson["Mkkd"] = mkkdJson;
-        }
-        if (saveMFStates)
-        {
-            Json::Value mukkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mukkuJson.append(rJson.writeLineInReal(Mukku.row(iSite)));
-            }
-            simJson["Mukku"] = mukkuJson;
-            Json::Value mukkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mukkdJson.append(rJson.writeLineInReal(Mukkd.row(iSite)));
-            }
-            simJson["Mukkd"] = mukkdJson;
-        }
-
-        if (saveEnergies)
-        {
-            Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
-            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
-            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
-            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
-            simJson["E"] = EJson;
-        }
-
-        resJson["simulation"] = simJson;
-
-
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["indentation"] = "\t";
-        std::string document = Json::writeString(wbuilder, resJson);
-        std::string fileAdressName = folderName + workName + ".json";
-        std::ofstream resultFile(fileAdressName);
-        resultFile << document;
-        resultFile.close();
-
-        std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
-    }
-
-    if (writeResultsHDF5)
-    {
-        
-    }
-}
 
 
 /// @brief Time derivative of the trajectories

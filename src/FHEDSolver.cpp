@@ -674,24 +674,26 @@ void FHEDSolver::runSimulation()
 
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
-    arma::dmat niiu = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-    arma::dmat niid = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-    arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::dmat Mkku, Mkkd, Mukku, Mukkd; 
+    arma::cx_dmat niiu = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+    arma::cx_dmat niid = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+    arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints, arma::fill::zeros);
+    //arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
+    //arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
+    //arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
+    //arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::cx_dmat Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid; 
+    arma::cx_dcube Nu, Nd;
 
 
     if (saveTBStates)
     {
-        Mkku = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-        Mkkd = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mkku = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mkkd = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     }
     if (saveMFStates)
     {
-        Mukku = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-        Mukkd = arma::dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mukku = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mukkd = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
     }
 
 
@@ -708,27 +710,27 @@ void FHEDSolver::runSimulation()
         timeLine[t] = t * dt;
         for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
         {
-            niiu(iSite,t) = static_cast<double>(std::real(arma::cdot(psi, NijuSet[iSite][iSite] * psi)));
-            niid(iSite,t) = static_cast<double>(std::real(arma::cdot(psi, NijdSet[iSite][iSite] * psi)));
-        }     
-        EU[t] = static_cast<double>(std::real(arma::cdot(psi, H_U * psi)));
-        EtH[t] = static_cast<double>(std::real(arma::cdot(psi, H_t * psi)));
-        EpotExt[t] = static_cast<double>(std::real(arma::cdot(psi, H_externalPotential * psi)));
-        E[t] = EU[t] + EtH[t] + EpotExt[t];
+            niiu(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
+            niid(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
+        }
+        Energies(0,t) = arma::cdot(psi, H_U * psi);
+        Energies(1,t) = arma::cdot(psi, H_t * psi);
+        Energies(2,t) = arma::cdot(psi, H_externalPotential * psi);
+        Energies(3,t) = Energies(0,t) + Energies(1,t) + Energies(2,t);
 
         if (saveTBStates)
         {
            arma::cx_dmat nt = computeOneParticleDensityMatrixSpinUp(psi);
-           Mkku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer())));
+           Mkku.col(t) = arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer()));
            nt = computeOneParticleDensityMatrixSpinDown(psi);
-           Mkkd.col(t) = arma::real(arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer())));
+           Mkkd.col(t) = arma::diagvec( (*fhSystem->get_tbgs_V_Pointer()).t() * nt * (*fhSystem->get_tbgs_V_Pointer()));
         }   
         if (saveMFStates)
         {
            arma::cx_dmat nt = computeOneParticleDensityMatrixSpinUp(psi);
-           Mukku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_mfgs_Vu_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vu_Pointer())));
+           Mukku.col(t) = arma::diagvec( (*fhSystem->get_mfgs_Vu_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vu_Pointer()));
            nt = computeOneParticleDensityMatrixSpinDown(psi);
-           Mukku.col(t) = arma::real(arma::diagvec( (*fhSystem->get_mfgs_Vd_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vd_Pointer())));
+           Mukku.col(t) = arma::diagvec( (*fhSystem->get_mfgs_Vd_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vd_Pointer()));
         }     
 
         step(this->dt);
@@ -743,138 +745,7 @@ void FHEDSolver::runSimulation()
     //printf("Test 3 - small system dynamic, n_1u : \n");
     //niiu.row(0).print();
     
-
-    // Writing the results :
-    if (writeResultsTxt)
-    {
-        ResultWriterTxt results = ResultWriterTxt(workName, folderName);
-        results.newResults();
-        results.writeLine("t", timeLine);
-        for (uint iSite=0; iSite<fhSystem->getnSites(); iSite++)
-        {
-            results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", niiu.row(iSite));
-        }
-        for (uint iSite=0; iSite<fhSystem->getnSites(); iSite++)
-        {
-            results.writeLine("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", niid.row(iSite));
-        }
-        if (saveTBStates)
-        {
-            for (uint kMom = 0; kMom < nOfMomentumStates ; kMom++)
-            {
-                results.writeLine("M_" + std::to_string(kMom), Mkku.row(kMom));
-            }
-        }
-        results.writeLine("EU", EU);
-        results.writeLine("EtH", EtH);
-        results.writeLine("Epe", EpotExt);
-        
-        results.writeLine("E", E);
-
-        std::cout << "   -- Results written in " << folderName << "/" << workName << ".txt" << std::endl;
-    }
-
-    if (writeResultsJson)
-    {
-
-        ResultWriterJson rJson; 
-        Json::Value resJson = jsonFile;
-
-        // FPS Version
-        resJson["fpsVersion"] = fhSystem->getFPSVersion();          
-
-        // one particle density matrices
-        if (fhSystem->isTBGroundStateComputed())
-        {
-            resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
-        }
-        if (fhSystem->isMFGroundStateComputed())
-        {
-            resJson["mfGroundState"] = fhSystem->writeMFGroundStateJson();
-        }
-
-        // simulation Results
-        Json::Value simJson = Json::Value();
-
-        simJson["t"] = rJson.writeLine(timeLine);
-  
-        Json::Value niiuJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-        {
-            niiuJson.append(rJson.writeLine(niiu.row(iSite)));
-        }
-        simJson["Niiu"] = niiuJson;
-        Json::Value niidJson(Json::arrayValue);
-        for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-        {
-            niidJson.append(rJson.writeLine(niid.row(iSite)));
-        }
-        simJson["Niid"] = niidJson;
-
-        if (saveTBStates)
-        {
-            Json::Value mkkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mkkuJson.append(rJson.writeLine(Mkku.row(iSite)));
-            }
-            simJson["Mkku"] = mkkuJson;
-
-            Json::Value mkkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mkkdJson.append(rJson.writeLine(Mkkd.row(iSite)));
-            }
-            simJson["Mkkd"] = mkkdJson;
-        }
-        if (saveMFStates)
-        {
-            Json::Value mukkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mukkuJson.append(rJson.writeLine(Mukku.row(iSite)));
-            }
-            simJson["Mukku"] = mukkuJson;
-
-            Json::Value mukkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
-            {
-                mukkdJson.append(rJson.writeLine(Mukkd.row(iSite)));
-            }
-            simJson["Mukkd"] = mukkdJson;
-        }
-
-        if (saveEnergies)
-        {
-            Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLine(EU);
-            EJson["tH"] = rJson.writeLine(EtH);
-            EJson["pe"] = rJson.writeLine(EpotExt);
-            EJson["tot"] = rJson.writeLine(E);
-    
-            simJson["E"] = EJson;
-        }
-
-
-        resJson["simulation"] = simJson;
-
-
-
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["indentation"] = "\t";
-        std::string document = Json::writeString(wbuilder, resJson);
-        std::string fileAdressName = folderName + workName + ".json";
-        std::ofstream resultFile(fileAdressName);
-        resultFile << document;
-        resultFile.close();
-
-        std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
-    }
-
-    if (writeResultsHDF5)
-    {
-        
-    }
+    writeResults(Nu, Nd, niiu, niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
     
 
 }

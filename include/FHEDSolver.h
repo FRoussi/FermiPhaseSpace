@@ -124,9 +124,9 @@ private:
     std::vector<std::vector<arma::sp_dmat>> NijdSet;
 
     //Momentum space :
-    uint nOfMomentumStates;
-    arma::dmat momentaVec;
-    arma::dvec momentaNRJ;
+    //uint nOfMomentumStates;
+    //arma::dmat momentaVec;
+    //arma::dvec momentaNRJ;
 
     storeOperators storeNiju;
     storeOperators storeNijd;

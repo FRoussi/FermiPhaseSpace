@@ -105,6 +105,7 @@ public:
 
     void                                        setSymmetry(arma::dmat latticeMat); 
     void                                        setLatticeZero(arma::drowvec latticeZ);
+    void                                        computeInverseLatticeMatrix();
     void                                        setNeighbourDistance(double neigbD); 
     void                                        setSamePointDistance(double samePointD); 
 

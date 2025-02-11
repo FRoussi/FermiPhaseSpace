@@ -84,7 +84,17 @@ protected:
     double                  dt;                           //<- Time step of calculated observables        
     unsigned int            nStepsPerTimePoint;           //<- Number of simulated time steps between the calculation of observable
     unsigned int            nTimePoints;                  //<- Number of time steps (=tMax/dt)
-                                    
+              
+    
+
+    
+    void                        writeResults(arma::cx_dcube &Nu_t, arma::cx_dcube &Nd_t, 
+        arma::cx_dmat &Niiu_t, arma::cx_dmat &Niid_t, 
+        arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
+        arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd,                                             
+        arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
+        arma::cx_dmat &E,std::vector<double> &timeLine);
+
 
 };
 
