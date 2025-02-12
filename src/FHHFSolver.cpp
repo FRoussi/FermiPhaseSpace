@@ -368,6 +368,7 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Mukkd;
     arma::cx_dmat Energies;
     arma::cx_dmat N2iiu, N2iid;
+    arma::cx_dmat NiuNid;   
     //arma::cx_drowvec EU;
     //arma::cx_drowvec EtH;
     //arma::cx_drowvec EpotExt;
@@ -489,9 +490,6 @@ void FHHFSolver::runSimulation( )
             Niiu.col(t) = Nut.diag();
             Niid.col(t) = Ndt.diag();
         }
-        if (saveDiag2DMatrix)
-        {
-        }
         if (saveTBStates)
         {
             arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
@@ -533,6 +531,16 @@ void FHHFSolver::runSimulation( )
     {
         Energies.row(3) = Energies.row(0) + Energies.row(1) + Energies.row(2); 
     }
+    if (saveDiag2DMatrix)
+    {
+        N2iiu = Niiu % Niiu;
+        N2iid = Niid % Niid;
+    }
+
+    if (saveNiuNid)
+    {
+        NiuNid = Niiu % Niid;
+    }
 
     if (talkative)
     {
@@ -542,9 +550,8 @@ void FHHFSolver::runSimulation( )
         (arma::real(Energies.row(3))).print();
     }
 
-
        // Writing the results :
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
 
 
 

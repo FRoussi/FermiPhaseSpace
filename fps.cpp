@@ -165,7 +165,6 @@ int main(int argc, char* argv[])
       case dynamicMethod::HF:
       {
 
-
             std::cout << "== Computation of HF dynamic " << std::endl;
             FHHFSolver hfSolver = FHHFSolver(&fhSystem);
             hfSolver.setResultFile(simName + "_HF_res", workFolder);

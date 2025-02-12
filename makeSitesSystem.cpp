@@ -185,6 +185,7 @@ int main(int argc, char* argv[])
         Json::Value res;
         res["diagDMatrix"] = true;
         res["diag2DMatrix"] = false;
+        res["onSiteDoublons"] = false;
         res["wholeDMatrix"] = false;
         res["tbStates"] = false;
         res["mfStates"] = false;

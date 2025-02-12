@@ -670,30 +670,34 @@ void FHEDSolver::runSimulation()
 {
 
     std::cout << "   -- Start simulation." << std::endl << std::flush;
-
+    uint nSites = fhSystem->getnSites();
 
 
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
-    arma::cx_dmat niiu = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-    arma::cx_dmat niid = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+    arma::cx_dmat niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints, arma::fill::zeros);
     //arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid; 
+    arma::cx_dmat Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid; 
     arma::cx_dcube Nu, Nd;
 
 
+    if (saveNiuNid)
+    {
+        NiuNid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
     if (saveTBStates)
     {
-        Mkku = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-        Mkkd = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveMFStates)
     {
-        Mukku = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
-        Mukkd = arma::cx_dmat(fhSystem->getnSites(), nTimePoints, arma::fill::zeros);
+        Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
 
 
@@ -708,16 +712,26 @@ void FHEDSolver::runSimulation()
     for (uint t = 0; t < nTimePoints; t++)
     {
         timeLine[t] = t * dt;
-        for (uint iSite = 0; iSite < fhSystem->getnSites(); iSite++)
+        for (uint iSite = 0; iSite < nSites; iSite++)
         {
             niiu(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
             niid(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
         }
-        Energies(0,t) = arma::cdot(psi, H_U * psi);
-        Energies(1,t) = arma::cdot(psi, H_t * psi);
-        Energies(2,t) = arma::cdot(psi, H_externalPotential * psi);
-        Energies(3,t) = Energies(0,t) + Energies(1,t) + Energies(2,t);
 
+        if (saveEnergies)
+        {
+            Energies(0,t) = arma::cdot(psi, H_U * psi);
+            Energies(1,t) = arma::cdot(psi, H_t * psi);
+            Energies(2,t) = arma::cdot(psi, H_externalPotential * psi);
+            Energies(3,t) = Energies(0,t) + Energies(1,t) + Energies(2,t);
+        }
+        if(saveNiuNid)
+        {
+            for (uint iSite = 0; iSite < nSites; iSite++)
+            {
+                NiuNid.col(t) = arma::cdot(psi, NijuSet[iSite][iSite] * (NijdSet[iSite][iSite] * psi));
+            }
+        }
         if (saveTBStates)
         {
            arma::cx_dmat nt = computeOneParticleDensityMatrixSpinUp(psi);
@@ -745,7 +759,7 @@ void FHEDSolver::runSimulation()
     //printf("Test 3 - small system dynamic, n_1u : \n");
     //niiu.row(0).print();
     
-    writeResults(Nu, Nd, niiu, niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
+    writeResults(Nu, Nd, niiu, niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
     
 
 }

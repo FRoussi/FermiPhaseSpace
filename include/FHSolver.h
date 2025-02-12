@@ -65,6 +65,7 @@ protected:
     bool                    saveWholeDMatrix;
     bool                    saveDiagDMatrix;
     bool                    saveDiag2DMatrix;
+    bool                    saveNiuNid;
     bool                    saveTBStates;
     bool                    saveMFStates;
     bool                    saveEnergies;
@@ -93,6 +94,7 @@ protected:
         arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
         arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd,                                             
         arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
+        arma::cx_dmat &NiuNid, 
         arma::cx_dmat &E,std::vector<double> &timeLine);
 
 

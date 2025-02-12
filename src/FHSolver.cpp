@@ -17,6 +17,7 @@ FHSolver::FHSolver(FHSystem *fhS)
     saveWholeDMatrix = false;
     saveDiagDMatrix = true;
     saveDiag2DMatrix = true;
+    saveNiuNid = false;
     saveTBStates = false;
     saveMFStates = false;
     saveEnergies = true;
@@ -48,12 +49,13 @@ void                        FHSolver::setResultsWriter(std::string how, bool yn)
 
 void                        FHSolver::setResultsToSave(Json::Value res)
 {
-    saveDiagDMatrix = res.get("diagDMatrix", true).asBool();
-    saveDiag2DMatrix = res.get("diag2DMatrix", false).asBool();
-    saveWholeDMatrix = res.get("wholeDMatrix", false).asBool();
-    saveEnergies = res.get("energies", true).asBool();
-    saveTBStates = res.get("tbStates", false).asBool();
-    saveMFStates = res.get("mfStates", false).asBool();
+    saveDiagDMatrix     = res.get("diagDMatrix", true).asBool();
+    saveDiag2DMatrix    = res.get("diag2DMatrix", false).asBool();
+    saveNiuNid          = res.get("onSiteDoublons", false).asBool();
+    saveWholeDMatrix    = res.get("wholeDMatrix", false).asBool();
+    saveEnergies        = res.get("energies", true).asBool();
+    saveTBStates        = res.get("tbStates", false).asBool();
+    saveMFStates        = res.get("mfStates", false).asBool();
 
 }
 
@@ -126,7 +128,7 @@ void FHSolver::setJsonFile(Json::Value file)
 
 
 
-void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
+void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &NiuNid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
 {
 
     // Writing the results :
@@ -137,11 +139,11 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         results.writeLine("t", timeLine);
         if (saveDiagDMatrix)
         {
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            for (unsigned int iSite=0; Niiu.n_rows; iSite++)
             {
                 results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_u", Niiu.row(iSite));
             }
-            for (unsigned int iSite=0; iSite<fhSystem->getnSites(); iSite++)
+            for (unsigned int iSite=0; Niid.n_rows; iSite++)
             {
                 results.writeLineInReal("N_" + std::to_string(iSite) + "_" + std::to_string(iSite) + "_d", Niid.row(iSite));
             }
@@ -187,7 +189,6 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         ResultWriterJson rJson; 
         Json::Value resJson = jsonFile;
 
-
         resJson["fpsVersion"] = fhSystem->getFPSVersion(); 
 
         if (fhSystem->isTBGroundStateComputed())
@@ -213,29 +214,55 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         if (saveDiagDMatrix)
         {
             Json::Value niiuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            for (uint iSite = 0 ;  iSite < Niiu.n_rows ; iSite++)
             {
                 niiuJson.append(rJson.writeLineInReal(Niiu.row(iSite)));
             }
             simJson["Niiu"] = niiuJson;
             Json::Value niidJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            for (uint iSite = 0 ; iSite < Niid.n_rows ; iSite++)
             {
                 niidJson.append(rJson.writeLineInReal(Niid.row(iSite)));
             }
             simJson["Niid"] = niidJson;
         }
 
+        if (saveDiag2DMatrix)
+        {
+            Json::Value n2iiuJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < N2iiu.n_rows ; iSite++)
+            {
+                n2iiuJson.append(rJson.writeLineInReal(N2iiu.row(iSite)));
+            }
+            simJson["N2iiu"] = n2iiuJson;
+            Json::Value n2iidJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < N2iid.n_rows ; iSite++)
+            {
+                n2iidJson.append(rJson.writeLineInReal(N2iid.row(iSite)));
+            }
+            simJson["N2iid"] = n2iidJson;
+        }
+
+        if (saveNiuNid)
+        {
+            Json::Value nundJson(Json::arrayValue);
+            for (uint iSite = 0 ; iSite < NiuNid.n_rows ; iSite++)
+            {
+                nundJson.append(rJson.writeLineInReal(NiuNid.row(iSite)));
+            }
+            simJson["NuNd"] = nundJson;
+        }
+
         if (saveTBStates)
         {
             Json::Value mkkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            for (uint iSite = 0 ; iSite < Mkku.n_rows ; iSite++)
             {
                 mkkuJson.append(rJson.writeLineInReal(Mkku.row(iSite)));
             }
             simJson["Mkku"] = mkkuJson;
             Json::Value mkkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            for (uint iSite = 0 ; iSite < Mkkd.n_rows ; iSite++)
             {
                 mkkdJson.append(rJson.writeLineInReal(Mkkd.row(iSite)));
             }
@@ -244,13 +271,13 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         if (saveMFStates)
         {
             Json::Value mukkuJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            for (uint iSite = 0 ; iSite < Mukku.n_rows ; iSite++)
             {
                 mukkuJson.append(rJson.writeLineInReal(Mukku.row(iSite)));
             }
             simJson["Mukku"] = mukkuJson;
             Json::Value mukkdJson(Json::arrayValue);
-            for (uint iSite = 0 ; iSite < fhSystem->getnSites() ; iSite++)
+            for (uint iSite = 0 ; iSite < Mukkd.n_rows ; iSite++)
             {
                 mukkdJson.append(rJson.writeLineInReal(Mukkd.row(iSite)));
             }

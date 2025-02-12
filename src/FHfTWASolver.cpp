@@ -232,14 +232,12 @@ void FHfTWASolver::runSimulation( )
     
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
-    arma::cx_dcube rhou_t; 
-    arma::cx_dcube rhod_t;
-    arma::cx_dmat rhoiiu;
-    arma::cx_dmat rhoiid;
-    arma::cx_dmat rho2iiu;
-    arma::cx_dmat rho2iid;
-    arma::cx_dmat Energies;
-    arma::cx_dmat mkku, mkkd, mukku, mukkd;
+    arma::cx_dcube  rhou_t,     rhod_t;
+    arma::cx_dmat   rhoiiu,     rhoiid;
+    arma::cx_dmat   rho2iiu,    rho2iid;
+    arma::cx_dmat   rhoiurhoid;
+    arma::cx_dmat   Energies;
+    arma::cx_dmat   mkku, mkkd, mukku, mukkd;
 
     if (saveWholeDMatrix)
     {
@@ -248,27 +246,31 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveDiagDMatrix)
     {
-        rhoiiu    = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        rhoiid    = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiiu      = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiid      = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveDiag2DMatrix)
     {
         rho2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         rho2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
+    if (saveNiuNid)
+    {
+        rhoiurhoid  = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
     if (saveEnergies)
     {
-        Energies          = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
+        Energies    = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
     }
     if (saveTBStates)
     {
-        mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        mkkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mkku        = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mkkd        = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveMFStates)
     {
-        mukku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        mukkd     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mukku       = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mukkd       = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
 
    // arma::cx_dmat rhou_mean = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -285,50 +287,53 @@ void FHfTWASolver::runSimulation( )
 {
     // Local (in threads) versions of important variables :
 
-    arma::cx_dcube rhou_t_loc;
-    arma::cx_dcube rhod_t_loc; 
-    arma::cx_dmat rhoiiu_loc; 
-    arma::cx_dmat rhoiid_loc; 
-    arma::cx_dmat rho2iiu_loc; 
-    arma::cx_dmat rho2iid_loc; 
+    arma::cx_dcube rhou_t_loc, rhod_t_loc;
+    arma::cx_dmat rhoiiu_loc, rhoiid_loc; 
+    arma::cx_dmat rho2iiu_loc, rho2iid_loc; 
+    arma::cx_dmat rhoiurhoid_loc;
+
     arma::cx_dmat En_loc;   
     arma::cx_dmat mkku_loc, mkkd_loc, mukku_loc, mukkd_loc;
 
 
     if (saveWholeDMatrix)
     {
-        rhou_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        rhod_t_loc = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        rhou_t_loc      = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        rhod_t_loc      = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveDiagDMatrix)
     {
-        rhoiiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        rhoiid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiiu_loc      = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rhoiid_loc      = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveDiag2DMatrix)
     {
-        rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rho2iiu_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        rho2iid_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveNiuNid)
+    {
+        rhoiurhoid_loc  = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveTBStates)
     {
-        mkku_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        mkkd_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mkku_loc        = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mkkd_loc        = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveMFStates)
     {
-        mukku_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        mukkd_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mukku_loc       = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        mukkd_loc       = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
     if (saveEnergies)
     {
-        En_loc      = arma::cx_dmat(3,nTimePoints, arma::fill::zeros);
+        En_loc          = arma::cx_dmat(3,nTimePoints, arma::fill::zeros);
     }
 
-    arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
-    arma::cx_dmat Nd_loc = arma::cx_dmat(nSites, nSites);
-    arma::cx_dmat rhou = arma::cx_dmat(nSites, nSites);
-    arma::cx_dmat rhod = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat Nu_loc    = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat Nd_loc    = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhou      = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhod      = arma::cx_dmat(nSites, nSites);
 
     #pragma omp for 
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
@@ -398,18 +403,22 @@ void FHfTWASolver::runSimulation( )
             }
             if (saveDiag2DMatrix)
             {
-                rho2iiu_loc.col(t) += arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
-                rho2iid_loc.col(t) += arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
+                rho2iiu_loc.col(t)      += arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
+                rho2iid_loc.col(t)      += arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
             }
             if (saveTBStates)
             {
-                mkku_loc.col(t)     += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhou *(*fhSystem->get_tbgs_V_Pointer()));
-                mkkd_loc.col(t)     += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhod *(*fhSystem->get_tbgs_V_Pointer()));
+                mkku_loc.col(t)         += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhou *(*fhSystem->get_tbgs_V_Pointer()));
+                mkkd_loc.col(t)         += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhod *(*fhSystem->get_tbgs_V_Pointer()));
             }
             if (saveMFStates)
             {
-                mukku_loc.col(t)     += arma::diagvec((*fhSystem->get_mfgs_Vu_Pointer()).t() * rhou *(*fhSystem->get_mfgs_Vu_Pointer()));
-                mukkd_loc.col(t)     += arma::diagvec((*fhSystem->get_mfgs_Vd_Pointer()).t() * rhod *(*fhSystem->get_mfgs_Vd_Pointer()));
+                mukku_loc.col(t)        += arma::diagvec((*fhSystem->get_mfgs_Vu_Pointer()).t() * rhou *(*fhSystem->get_mfgs_Vu_Pointer()));
+                mukkd_loc.col(t)        += arma::diagvec((*fhSystem->get_mfgs_Vd_Pointer()).t() * rhod *(*fhSystem->get_mfgs_Vd_Pointer()));
+            }
+            if (saveNiuNid)
+            {
+                rhoiurhoid_loc.col(t)   += rhou.diag() % rhod.diag();
             }
             if (saveEnergies)
             {
@@ -460,6 +469,10 @@ void FHfTWASolver::runSimulation( )
             rho2iiu += rho2iiu_loc;
             rho2iid += rho2iid_loc;
         }
+        if (saveNiuNid)
+        {
+            rhoiurhoid = rhoiurhoid_loc;
+        }
         if (saveTBStates)
         {
             mkku += mkku_loc;
@@ -487,74 +500,65 @@ void FHfTWASolver::runSimulation( )
 // Computation of different observables :
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
-    arma::cx_dcube Nu;      
-    arma::cx_dcube Nd;   
-    arma::cx_dmat Niiu;   
-    arma::cx_dmat Niid;   
-    arma::cx_dmat N2iiu;  
-    arma::cx_dmat N2iid;   
-    arma::cx_dmat Mkku;   
-    arma::cx_dmat Mkkd;   
-    arma::cx_dmat Mukku;   
-    arma::cx_dmat Mukkd;  
+    arma::cx_dcube Nu   ;
+    arma::cx_dcube Nd   ;
+    arma::cx_dmat  Niiu ;
+    arma::cx_dmat  Niid ;   
+    arma::cx_dmat  N2iiu;
+    arma::cx_dmat  N2iid;   
+    arma::cx_dmat  Mkku ;
+    arma::cx_dmat  Mkkd ;
+    arma::cx_dmat  Mukku;
+    arma::cx_dmat  Mukkd;
+
+    arma::cx_dmat   NiuNid;
     arma::cx_drowvec E;
 
 
     if (saveWholeDMatrix)
     {
         //std::cout << "Computation of N" << std::endl;
-        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
             Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + halfDiag;
             Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + halfDiag;
         }
+
     }
     if (saveDiagDMatrix)
     {
         //std::cout << "Computation of Nii" << std::endl;
-        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        for (unsigned int t = 0; t < nTimePoints; t++)
-        {
-            Niiu.col(t) = rhoiiu.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
-            Niid.col(t) = rhoiid.col(t) / nTraj_arma + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(2,0);
-        }
+        Niiu = rhoiiu / nTraj_arma + arma::cx_dmat(arma::size(rhoiiu), arma::fill::ones)/ arma::cx_double(2,0);
+        Niid = rhoiid / nTraj_arma + arma::cx_dmat(arma::size(rhoiid), arma::fill::ones)/ arma::cx_double(2,0);
+
     }
     if (saveDiag2DMatrix)
     {
-        N2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        N2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dcolvec vec_4 = arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + (rhoiiu.col(t) + arma::conj(rhoiiu.col(t)))/ arma::cx_double(2*nTraj,0) + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
-            N2iid.col(t) = rho2iid.col(t) / nTraj_arma + (rhoiid.col(t) + arma::conj(rhoiid.col(t)))/ arma::cx_double(2*nTraj,0) + arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
+            N2iiu.col(t) = rho2iiu.col(t) / nTraj_arma + (rhoiiu.col(t) + arma::conj(rhoiiu.col(t)))/ arma::cx_double(2*nTraj,0) + vec_4;
+            N2iid.col(t) = rho2iid.col(t) / nTraj_arma + (rhoiid.col(t) + arma::conj(rhoiid.col(t)))/ arma::cx_double(2*nTraj,0) + vec_4;
+        }
+    }
+    if (saveNiuNid)
+    {
+        NiuNid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        arma::cx_dcolvec vec_4 = arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
+        for (unsigned int t = 0; t < nTimePoints; t++)
+        {
+            NiuNid.col(t) = rhoiurhoid.col(t) / nTraj_arma + (rhoiiu.col(t) + rhoiid.col(t))/ arma::cx_double(2*nTraj,0) + vec_4;
         }
     }
     if (saveTBStates)
     {
-
-        Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-        for (unsigned int t = 0; t < nTimePoints; t++)
-        {
-            Mkku.col(t) = mkku.col(t) / nTraj_arma + halfVec;
-            Mkkd.col(t) = mkkd.col(t) / nTraj_arma + halfVec;
-        } 
+        Mkku = mkku / nTraj_arma + arma::cx_dmat(arma::size(mkku), arma::fill::ones)/ arma::cx_double(2,0);
+        Mkkd = mkkd / nTraj_arma + arma::cx_dmat(arma::size(mkkd), arma::fill::ones)/ arma::cx_double(2,0);
     }
     if (saveMFStates)
     {
-
-        Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-
-        for (unsigned int t = 0; t < nTimePoints; t++)
-        {
-            Mukku.col(t) = mukku.col(t) / nTraj_arma + halfVec;
-            Mukkd.col(t) = mukkd.col(t) / nTraj_arma + halfVec;
-        } 
+        Mukku = mukku / nTraj_arma + arma::cx_dmat(arma::size(mukku), arma::fill::ones)/ arma::cx_double(2,0);
+        Mukkd = mukkd / nTraj_arma + arma::cx_dmat(arma::size(mukkd), arma::fill::ones)/ arma::cx_double(2,0);
     }
     if (saveEnergies)
     {
@@ -562,10 +566,9 @@ void FHfTWASolver::runSimulation( )
         Energies.row(3) = Energies.row(0) + Energies.row(1) + Energies.row(2);
     }
 
-    
 
 
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
 
 }
 
