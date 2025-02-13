@@ -36,20 +36,17 @@ void FHfTWAMPISolver::runSimulation( )
 
 
 
-    unsigned int nSites = fhSystem->getnSites();
+    uint nSites = fhSystem->getnSites();
+    uint nEnergies = 3;     
     
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
-    arma::cx_dcube rhou_t; 
-    arma::cx_dcube rhod_t;
-    arma::cx_dmat rhoiiu;
-    arma::cx_dmat rhoiid;
-    arma::cx_dmat rho2iiu;
-    arma::cx_dmat rho2iid;
-    arma::cx_drowvec EU;  
-    arma::cx_drowvec EtH; 
-    arma::cx_drowvec EpotExt; 
-    arma::cx_dmat mkku, mkkd, mukku, mukkd;
+    arma::cx_dcube  rhou_t,     rhod_t;
+    arma::cx_dmat   rhoiiu,     rhoiid;
+    arma::cx_dmat   rho2iiu,    rho2iid;
+    arma::cx_dmat   rhoiurhoid;
+    arma::cx_dmat   Enrgs;
+    arma::cx_dmat   mkku, mkkd, mukku, mukkd;
 
     if (saveWholeDMatrix)
     {
@@ -66,6 +63,10 @@ void FHfTWAMPISolver::runSimulation( )
         rho2iid     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         rho2iiu     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
+    if (saveNiuNid)
+    {
+        rhoiurhoid  = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
     if (saveTBStates)
     {
         mkku     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
@@ -78,9 +79,7 @@ void FHfTWAMPISolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU          = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH         = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EpotExt     = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        Enrgs    = arma::cx_dmat(nEnergies,nTimePoints, arma::fill::zeros);
     }
 
 
@@ -110,16 +109,14 @@ void FHfTWAMPISolver::runSimulation( )
 #pragma omp parallel shared(rhou0_mean, rhod0_mean)
     {
         // Local (in threads) versions of important variables :
-    arma::cx_dcube rhou_t_loc;
-    arma::cx_dcube rhod_t_loc; 
-    arma::cx_dmat rhoiiu_loc; 
-    arma::cx_dmat rhoiid_loc; 
-    arma::cx_dmat rho2iiu_loc; 
-    arma::cx_dmat rho2iid_loc; 
-    arma::cx_drowvec EU_loc;   
-    arma::cx_drowvec EtH_loc;  
-    arma::cx_drowvec EpotExt_loc; 
-    arma::cx_dmat mkku_loc, mkkd_loc, mukku_loc, mukkd_loc;
+        arma::cx_dcube rhou_t_loc, rhod_t_loc;
+        arma::cx_dmat rhoiiu_loc, rhoiid_loc; 
+        arma::cx_dmat rho2iiu_loc, rho2iid_loc; 
+        arma::cx_dmat rhoiurhoid_loc;
+    
+        arma::cx_dmat En_loc;   
+        arma::cx_dmat mkku_loc, mkkd_loc, mukku_loc, mukkd_loc;
+    
 
 
     if (saveWholeDMatrix)
@@ -137,6 +134,10 @@ void FHfTWAMPISolver::runSimulation( )
         rho2iiu_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         rho2iid_loc = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
+    if (saveNiuNid)
+    {
+        rhoiurhoid_loc  = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
     if (saveTBStates)
     {
         mkku_loc     = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
@@ -149,15 +150,13 @@ void FHfTWAMPISolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        EU_loc   = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EtH_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        EpotExt_loc  = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        En_loc          = arma::cx_dmat(nEnergies,nTimePoints, arma::fill::zeros);
     }
 
-    arma::cx_dmat Nu_loc = arma::cx_dmat(nSites, nSites);
-    arma::cx_dmat Nd_loc = arma::cx_dmat(nSites, nSites);
-    arma::cx_dmat rhou = arma::cx_dmat(nSites, nSites);
-    arma::cx_dmat rhod = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat Nu_loc    = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat Nd_loc    = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhou      = arma::cx_dmat(nSites, nSites);
+    arma::cx_dmat rhod      = arma::cx_dmat(nSites, nSites);
 
 
     #pragma omp for 
@@ -247,6 +246,10 @@ void FHfTWAMPISolver::runSimulation( )
                     rho2iiu_loc.col(t) += arma::conj(rhou.diag()) % rhou.diag();    //<- Diagonal of the squared norm of up-spin density matrix 
                     rho2iid_loc.col(t) += arma::conj(rhod.diag()) % rhod.diag();    //<- Diagonal of the squared norm of down-spin density matrix
                 }
+                if (saveNiuNid)
+                {
+                    rhoiurhoid_loc.col(t)   += rhou.diag() % rhod.diag();
+                }
                 if (saveTBStates)
                 {
                     mkku_loc.col(t)     += arma::diagvec((*fhSystem->get_tbgs_V_Pointer()).t() * rhou *(*fhSystem->get_tbgs_V_Pointer()));
@@ -261,11 +264,11 @@ void FHfTWAMPISolver::runSimulation( )
                 {
                     Nu_loc =  rhou + halfDiagMatrix;
                     Nd_loc =  rhod + halfDiagMatrix;
-                    EU_loc(t)=  EU_loc(t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                    EtH_loc(t) = EtH_loc(t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+                    En_loc(0,t)=  En_loc(0,t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+                    En_loc(1,t) = En_loc(1,t) + arma::accu((Nu_loc + Nd_loc) % *tM);
                     if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
                     {
-                        EpotExt_loc(t) = EpotExt_loc(t) + arma::accu((Nu_loc + Nd_loc) % *extPot);
+                        En_loc(2,t) = En_loc(2,t) + arma::accu((Nu_loc + Nd_loc) % *extPot);
                     }
                 }
 
@@ -306,6 +309,10 @@ void FHfTWAMPISolver::runSimulation( )
                 rho2iiu += rho2iiu_loc;
                 rho2iid += rho2iid_loc;
             }
+            if (saveNiuNid)
+            {
+                rhoiurhoid += rhoiurhoid_loc;
+            }
             if (saveTBStates)
             {
                 mkku += mkku_loc;
@@ -318,9 +325,10 @@ void FHfTWAMPISolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                EU += EU_loc;
-                EtH += EtH_loc;
-                EpotExt += EpotExt_loc;
+                for (uint ie =0; ie < (nEnergies-1); ie ++)
+                {
+                    Enrgs.row(ie) +=En_loc.row(ie);
+                }
             }
         }
 
@@ -343,6 +351,7 @@ void FHfTWAMPISolver::runSimulation( )
     // Making array buffers in node 0
     std::complex<double> *nnt_received_buffer;
     std::complex<double> *nt_received_buffer;
+    std::complex<double> *et_received_buffer;
     std::complex<double> *t_received_buffer;
     if (world_rank == 0)
     {   
@@ -351,6 +360,7 @@ void FHfTWAMPISolver::runSimulation( )
             nnt_received_buffer = new std::complex<double>[nSites * nSites * nTimePoints];
         }
         nt_received_buffer = new std::complex<double>[nSites * nTimePoints];
+        et_received_buffer = new std::complex<double>[nEnergies * nTimePoints];
         t_received_buffer = new std::complex<double>[nTimePoints];
     }
 
@@ -451,6 +461,22 @@ void FHfTWAMPISolver::runSimulation( )
             }
         }
 
+        if (saveNiuNid)
+        {
+            if (world_rank == procIndex)         //<- Sending rhoirhoid_d
+            {
+                //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
+                MPI_Send(rhoiurhoid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+            }
+            if (world_rank == 0)        //<- Receiving rhoii_d
+            {   
+                //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat rhoiurhoid_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
+                rhoiurhoid += rhoiurhoid_received_arma;          
+            }
+        }
+
         if (saveTBStates)
         {
      
@@ -516,41 +542,16 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending EU
             {
                 //std::cout << "     - Node " << procIndex << " sending EU to node 0." << std::endl;
-                MPI_Send(EU.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(Enrgs.memptr(), nEnergies*nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving EU
             {   
                 //std::cout << "     - Node 0 receiving EU from node " << procIndex << "." << std::endl;
-                MPI_Recv(t_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                arma::cx_dmat E_received_arma = arma::cx_drowvec(t_received_buffer, nTimePoints); 
-                EU += E_received_arma;
+                MPI_Recv(et_received_buffer, nEnergies*nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                arma::cx_dmat E_received_arma = arma::cx_dmat(et_received_buffer, nEnergies, nTimePoints); 
+                Enrgs += E_received_arma;
             }
-
-            if (world_rank == procIndex)         //<- Sending EtH
-            {
-                //std::cout << "     - Node " << procIndex << " sending EtH to node 0." << std::endl;
-                MPI_Send(EtH.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-            }
-            if (world_rank == 0)        //<- Receiving EtH
-            {   
-                //std::cout << "     - Node 0 receiving EtH from node " << procIndex << "." << std::endl;
-                MPI_Recv(t_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                arma::cx_dmat E_received_arma = arma::cx_drowvec(t_received_buffer, nTimePoints); 
-                EtH += E_received_arma;
-            }
-
-            if (world_rank == procIndex)         //<- Sending Epe
-            {
-                //std::cout << "     - Node " << procIndex << " sending EtH to node 0." << std::endl;
-                MPI_Send(EpotExt.memptr(), nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
-            }
-            if (world_rank == 0)        //<- Receiving Epe
-            {   
-                //std::cout << "     - Node 0 receiving EtH from node " << procIndex << "." << std::endl;
-                MPI_Recv(t_received_buffer, nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                arma::cx_dmat E_received_arma = arma::cx_drowvec(t_received_buffer, nTimePoints); 
-                EpotExt += E_received_arma;
-            }
+       
         }
 
 
@@ -559,6 +560,7 @@ void FHfTWAMPISolver::runSimulation( )
     if (world_rank == 0)
     {   
         if (saveWholeDMatrix) {delete [] nnt_received_buffer;}
+        delete [] et_received_buffer;
         delete [] nt_received_buffer;
         delete [] t_received_buffer;
     }
@@ -575,14 +577,13 @@ void FHfTWAMPISolver::runSimulation( )
         // Computation of different observables :
 
         arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
-        arma::cx_dcube Nu;      
-        arma::cx_dcube Nd   ;   
-        arma::cx_dmat Niiu  ;   
-        arma::cx_dmat Niid  ;   
-        arma::cx_dmat N2iiu  ;  
-        arma::cx_dmat N2iid ;   
-        arma::cx_dmat Mkku, Mkkd, Mukku, Mukkd;   
-        arma::cx_drowvec E;
+        arma::cx_dcube  Nu, Nd   ;
+        arma::cx_dmat   Niiu, Niid ;   
+        arma::cx_dmat   N2iiu, N2iid;   
+        arma::cx_dmat   Mkku ,  Mkkd ;
+        arma::cx_dmat   Mukku,  Mukkd;
+        arma::cx_dmat   NiuNid;
+        arma::cx_dmat   Energies;
 
 
         if (saveWholeDMatrix)
@@ -617,6 +618,15 @@ void FHfTWAMPISolver::runSimulation( )
                 N2iid.col(t) = rho2iid.col(t) / nTraj_arma + (rhoiid.col(t) + arma::conj(rhoiid.col(t)))/ arma::cx_double(2*nTraj,0) + col1Quarter;
             }
         }
+        if (saveNiuNid)
+        {
+            NiuNid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+            arma::cx_dcolvec vec_4 = arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
+            for (unsigned int t = 0; t < nTimePoints; t++)
+            {
+                NiuNid.col(t) = rhoiurhoid.col(t) / nTraj_arma + (rhoiiu.col(t) + rhoiid.col(t))/ arma::cx_double(2*nTraj,0) + vec_4;
+            }
+        }
         if (saveTBStates)
         {
 
@@ -643,20 +653,16 @@ void FHfTWAMPISolver::runSimulation( )
         }
         if (saveEnergies)
         {
-            EU = EU/nTraj_arma;
-            EtH = EtH/nTraj_arma;
-            EpotExt = EpotExt/nTraj_arma;
-            E = EtH + EU + EpotExt;
+            Energies = arma::cx_dmat(nEnergies + 1, nTimePoints, arma::fill::zeros);
+            for (uint ie = 0 ; ie < nEnergies; ie++)
+            {
+                Energies.row(ie) = Enrgs.row(ie) / nTraj;
+            }
+            Energies.row(nEnergies-1) = arma::sum(Energies, 0);
         }
 
-        //std::cout << "Wrintin results" << std::endl;
-        arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints);
-        Energies.row(0) = EU;
-        Energies.row(1) = EtH;
-        Energies.row(2) = EpotExt;
-        Energies.row(3) = E;
 
-       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, Energies, timeLine);
+       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
     }
 
 

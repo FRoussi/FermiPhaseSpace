@@ -729,7 +729,7 @@ void FHEDSolver::runSimulation()
         {
             for (uint iSite = 0; iSite < nSites; iSite++)
             {
-                NiuNid.col(t) = arma::cdot(psi, NijuSet[iSite][iSite] * (NijdSet[iSite][iSite] * psi));
+                NiuNid(iSite,t)= arma::cdot(psi, NijuSet[iSite][iSite] * (NijdSet[iSite][iSite] * psi));
             }
         }
         if (saveTBStates)
@@ -744,7 +744,7 @@ void FHEDSolver::runSimulation()
            arma::cx_dmat nt = computeOneParticleDensityMatrixSpinUp(psi);
            Mukku.col(t) = arma::diagvec( (*fhSystem->get_mfgs_Vu_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vu_Pointer()));
            nt = computeOneParticleDensityMatrixSpinDown(psi);
-           Mukku.col(t) = arma::diagvec( (*fhSystem->get_mfgs_Vd_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vd_Pointer()));
+           Mukkd.col(t) = arma::diagvec( (*fhSystem->get_mfgs_Vd_Pointer()).t() * nt * (*fhSystem->get_mfgs_Vd_Pointer()));
         }     
 
         step(this->dt);

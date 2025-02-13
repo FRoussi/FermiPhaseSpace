@@ -471,7 +471,7 @@ void FHfTWASolver::runSimulation( )
         }
         if (saveNiuNid)
         {
-            rhoiurhoid = rhoiurhoid_loc;
+            rhoiurhoid += rhoiurhoid_loc;
         }
         if (saveTBStates)
         {
@@ -500,24 +500,19 @@ void FHfTWASolver::runSimulation( )
 // Computation of different observables :
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
-    arma::cx_dcube Nu   ;
-    arma::cx_dcube Nd   ;
-    arma::cx_dmat  Niiu ;
-    arma::cx_dmat  Niid ;   
-    arma::cx_dmat  N2iiu;
-    arma::cx_dmat  N2iid;   
-    arma::cx_dmat  Mkku ;
-    arma::cx_dmat  Mkkd ;
-    arma::cx_dmat  Mukku;
-    arma::cx_dmat  Mukkd;
-
+    arma::cx_dcube  Nu, Nd   ;
+    arma::cx_dmat   Niiu, Niid ;   
+    arma::cx_dmat   N2iiu, N2iid;   
+    arma::cx_dmat   Mkku ,  Mkkd ;
+    arma::cx_dmat   Mukku,  Mukkd;
     arma::cx_dmat   NiuNid;
-    arma::cx_drowvec E;
 
 
     if (saveWholeDMatrix)
     {
         //std::cout << "Computation of N" << std::endl;
+        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
             Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + halfDiag;
@@ -534,6 +529,8 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveDiag2DMatrix)
     {
+        N2iiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        N2iid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         arma::cx_dcolvec vec_4 = arma::cx_dcolvec(nSites, arma::fill::ones) / arma::cx_double(4,0);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
@@ -563,10 +560,8 @@ void FHfTWASolver::runSimulation( )
     if (saveEnergies)
     {
         Energies = Energies/nTraj_arma;
-        Energies.row(3) = Energies.row(0) + Energies.row(1) + Energies.row(2);
+        Energies.row(3) = arma::sum(Energies,0);
     }
-
-
 
     writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
 
