@@ -16,14 +16,18 @@
 
 using std::vector;
 
-vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
-arma::dmat findBCGridBox(unsigned int nx, unsigned int ny, unsigned int nz, double a);
-vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
-vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a);
-vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a);
-arma::dmat findHoneyCombGridBox(unsigned int nCombs, double a);
+vector<vector<double>> makeBCGrid(uint nx, uint ny, uint nz, double a);
+arma::dmat findBCGridBox(uint nx, uint ny, uint nz, double a);
+vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a);
+vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a);
+vector<vector<double>> makeHoneyCombs(uint nCombs, double a);
+arma::dmat findHoneyCombGridBox(uint nCombs, double a);
+vector<vector<double>> makeGraphene(uint nx, uint ny, double a);
+arma::dmat findGrapheneGridBox(uint nx, uint ny, double a);
+vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a);
+arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a);
 
-void getNextIndex(unsigned int& i, unsigned int& j);
+void getNextIndex(uint& i, uint& j);
 
 arma::dmat armaMatfromVectorsVector(vector<vector<double>>& vecVec);
 
@@ -60,8 +64,8 @@ public:
 
     // GETTERS
     // site positions
-    const unsigned int                          getnSites();
-    const unsigned int                          getnDimension();
+    const uint                          getnSites();
+    const uint                          getnDimension();
     const arma::drowvec                         getSitePosition(uint iSite);
     const arma::dmat*                           getSitePositions();
     const double                                getCoordinate(uint dim, uint pos);

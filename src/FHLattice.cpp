@@ -43,15 +43,15 @@ FHLattice::FHLattice(int x, bool talk)
     }
 
     int nPart = std::floor(x/2);
-    vector<unsigned int> initCond_up =  vector<unsigned int>(nPart,0);
-    vector<unsigned int> initCond_down =  vector<unsigned int>(nPart,0);
+    vector<uint> initCond_up =  vector<uint>(nPart,0);
+    vector<uint> initCond_down =  vector<uint>(nPart,0);
     for(int itPart = 0; itPart <nPart; itPart++)
     {
         initCond_up[itPart] = itPart * 2;
         initCond_down[itPart] = itPart * 2 + 1;
     }
 
-    vector<vector<unsigned int>> initCond = vector<vector<unsigned int>>(2);
+    vector<vector<uint>> initCond = vector<vector<uint>>(2);
     initCond[0] = initCond_up;
     initCond[1] = initCond_down;
 
@@ -165,12 +165,15 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
         }
     }
 
+
     if (isPeriodic())
     {
         computeMatrices();
     }
 
 
+
+distanceMatrix.print();
 
 }
 
@@ -337,14 +340,14 @@ FHLattice::FHLattice(FHLattice* lat)
 
 /// @brief getter - number of sites
 /// @return number of sites
-const unsigned int                                FHLattice::getnSites()
+const uint                                FHLattice::getnSites()
 {
     return sitePositions.n_rows;
 }
 
 /// @brief getter - number of dimension (we always work in dim 3 though)
 /// @return number of dimensions (if not 3, weird)
-const unsigned int                                FHLattice::getnDimension()
+const uint                                FHLattice::getnDimension()
 {
     return sitePositions.n_cols;
 }
@@ -713,7 +716,7 @@ void                    FHLattice::computeMatrices()
 
 //std::cout << "compute matrices, smpD =" << samePointDistance << ", nD =" << neighbourDistance << std::endl;
 
-    unsigned int nSites = sitePositions.n_rows;
+    uint nSites = sitePositions.n_rows;
 
     distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
     neighbourMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
@@ -755,7 +758,7 @@ void                    FHLattice::computeMatrices()
 
 
 
-    //std::cout << distanceMatrix << std::endl;
+   // distanceMatrix.print();
 }
 
 
@@ -806,19 +809,19 @@ FHLattice::~FHLattice()
 /// @param nz number of sites in the Z dimension
 /// @param a distance between nearest neighbours
 /// @return a vector of site positions
-vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+vector<vector<double>> makeBCGrid(uint nx, uint ny, uint nz, double a)
 {
     
-    unsigned int nPoints = nx*ny*nz;
+    uint nPoints = nx*ny*nz;
     //std::cout <<"makegrid" << nx << " " << ny << " " << nz << " " << a << std::endl; 
     vector<vector<double>> pos = vector<vector<double>>(nPoints);
 
-    unsigned int counter = 0;
-    for (unsigned int z = 0; z < nz; z++)
+    uint counter = 0;
+    for (uint z = 0; z < nz; z++)
     {
-        for (unsigned int y = 0; y < ny; y++)
+        for (uint y = 0; y < ny; y++)
         {
-            for (unsigned int x = 0; x < nx; x++)
+            for (uint x = 0; x < nx; x++)
             {
                 //std::cout <<"makegrid in" << x << " " << y << " " << z << " " << std::endl; 
                 vector<double> newPos = {a*x, a*y, a*z};
@@ -831,7 +834,7 @@ vector<vector<double>> makeBCGrid(unsigned int nx, unsigned int ny, unsigned int
     return pos;
 }
 
-arma::dmat findBCGridBox(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+arma::dmat findBCGridBox(uint nx, uint ny, uint nz, double a)
 {
     arma::dvec diag = {nx * a, ny * a, nz * a};
     return arma::diagmat(diag);
@@ -843,19 +846,19 @@ arma::dmat findBCGridBox(unsigned int nx, unsigned int ny, unsigned int nz, doub
 /// @param nz number of cubes in the Z dimension
 /// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(3)
 /// @return a vector of site positions
-vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a)
 {
     
-    unsigned int nPoints = 2*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
+    uint nPoints = 2*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
     vector<vector<double>> pos = vector<vector<double>>(nPoints);
 
 
-    unsigned int counter = 0;
-    for (unsigned int z = 0; z <= nz; z++)
+    uint counter = 0;
+    for (uint z = 0; z <= nz; z++)
     {
-        for (unsigned int y = 0; y <= ny; y++)
+        for (uint y = 0; y <= ny; y++)
         {
-            for (unsigned int x = 0; x <= nx; x++)
+            for (uint x = 0; x <= nx; x++)
             {
                 vector<double> newPos = {a*x, a*y, a*z};
                 pos[counter] = newPos;
@@ -882,18 +885,18 @@ vector<vector<double>> makeBCCGrid(unsigned int nx, unsigned int ny, unsigned in
 /// @param nz number of cubes in the Z dimension
 /// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(2)
 /// @return a vector of site positions
-vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned int nz, double a)
+vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a)
 {
     
-    unsigned int nPoints = 4*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
+    uint nPoints = 4*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
     vector<vector<double>> pos = vector<vector<double>>(nPoints);
 
-    unsigned int counter = 0;
-    for (unsigned int z = 0; z <= nz; z++)
+    uint counter = 0;
+    for (uint z = 0; z <= nz; z++)
     {
-        for (unsigned int y = 0; y <= ny; y++)
+        for (uint y = 0; y <= ny; y++)
         {
-            for (unsigned int x = 0; x <= nx; x++)
+            for (uint x = 0; x <= nx; x++)
             {
                 vector<double> newPos = {a*x, a*y, a*z};
                 pos[counter] = newPos;
@@ -932,11 +935,11 @@ vector<vector<double>> makeFCCGrid(unsigned int nx, unsigned int ny, unsigned in
 /// @param nCombs number of combds in the graphene sheet
 /// @param a distance between nearest neighbours
 /// @return a vector of site positions
-vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
+vector<vector<double>> makeHoneyCombs(uint nCombs, double a)
 {
 
     double sqrt3 = std::sqrt(3);
-    unsigned int nOfPoints = 0;
+    uint nOfPoints = 0;
     vector<vector<double>> pos = vector<vector<double>>();
 
     vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a, 0},
@@ -951,12 +954,12 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
     double iVec[2] = {sqrt3 *a, 0 *a};
     double jVec[2] = {sqrt3/2 *a, 1.5 *a};
 
-    unsigned int basisIndex[2] = {0,0};
+    uint basisIndex[2] = {0,0};
 
 
-    for (unsigned int bv = 0; bv < nCombs; bv++)
+    for (uint bv = 0; bv < nCombs; bv++)
     {
-        for (unsigned int p = 0; p<6; p++)
+        for (uint p = 0; p<6; p++)
         {
             posNew[p][0] = pos0[p][0] + iVec[0] * basisIndex[0] + jVec[0] * basisIndex[1];
             posNew[p][1] = pos0[p][1] + iVec[1] * basisIndex[0] + jVec[1] * basisIndex[1];
@@ -972,15 +975,15 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
     double samePointThreshold = 0.001 * a;
 
 
-    for (unsigned int i1 = 0; i1< pos.size(); i1++)         //<- we look for all points equal to positions(i1)
+    for (uint i1 = 0; i1< pos.size(); i1++)         //<- we look for all points equal to positions(i1)
     {
-        unsigned int nDoublonsFound = 0;                    //<- There can't be more than three times the same point
+        uint nDoublonsFound = 0;                    //<- There can't be more than three times the same point
          
-        unsigned int i2 = i1+1;
+        uint i2 = i1+1;
         while ((i2<pos.size()) && (nDoublonsFound < 2))    //<- as long as there are points and more doublons to find
         {
             double d = 0;
-            for (unsigned int iDim = 0; iDim<pos[i1].size(); iDim++)
+            for (uint iDim = 0; iDim<pos[i1].size(); iDim++)
             {
                 d += std::abs(pos[i1][iDim] - pos[i2][iDim]);
             }
@@ -1002,7 +1005,7 @@ vector<vector<double>> makeHoneyCombs(unsigned int nCombs, double a)
     return pos;
 }
 
-arma::dmat findHoneyCombGridBox(unsigned int nCombs, double a)
+arma::dmat findHoneyCombGridBox(uint nCombs, double a)
 {
     double sqrt3 = std::sqrt(3);
     arma::dmat part2d = {{sqrt3 *a, sqrt3/2 *a}, {0, 1.5 * a}};
@@ -1026,6 +1029,85 @@ arma::dmat findHoneyCombGridBox(unsigned int nCombs, double a)
     return box;
 }
 
+
+vector<vector<double>> makeGraphene(uint nx, uint ny, double a)
+{
+    double sqrt3 = std::sqrt(3);
+    uint nOfPoints = nx * ny * 2;
+    vector<vector<double>> pos = vector<vector<double>>(nOfPoints);
+
+    vector<vector<double>> pos0 = { {0, -0.5 *a , 0},
+                                    {0, 0.5 *a  , 0}};
+
+
+    double iVec[2] = {sqrt3 *a, 0 *a};
+    double jVec[2] = {sqrt3/2 *a, 1.5 *a};
+
+
+    for (uint j = 0; j < ny; j++)
+    {
+        vector<vector<double>> posNewY = pos0;
+        posNewY[0][0] += jVec[0] * j;
+        posNewY[0][1] += jVec[1] * j;
+        posNewY[1][0] += jVec[0] * j;
+        posNewY[1][1] += jVec[1] * j;
+        for (uint i = 0; i<nx; i++)
+        {
+            vector<vector<double>> posNew = posNewY;
+            posNew[0][0] += iVec[0] * i;
+            posNew[0][1] += iVec[1] * i;
+            posNew[1][0] += iVec[0] * i;
+            posNew[1][1] += iVec[1] * i;
+            pos.insert(pos.end(), posNew.begin(), posNew.end());
+        }
+    }
+
+    pos.shrink_to_fit();
+    return pos;
+}
+
+arma::dmat findGrapheneGridBox(uint nx, uint ny, double a)
+{
+    double sqrt3 = std::sqrt(3);
+    arma::dmat mat3 = { {sqrt3 * a * nx,    sqrt3 / 2 * a * ny  , 0     },
+                        {0             ,    1.5 * a * ny        , 0     },
+                        {0             ,    0                   , 10*a  }};
+    
+    return mat3;
+}
+
+vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a)
+{
+    uint nOfPoints = 0;
+    double sqrt3 = std::sqrt(3);
+    vector<vector<double>> pos = vector<vector<double>>();
+    double iVec[3] = {a     , 0 , 0};
+    double jVec[3] = {1/2 *a, sqrt3 / 2 * a, 0};
+    double kVec[3] = {1/2 *a, sqrt3 / 4 * a, sqrt(2) * sqrt3 / 4 * a};
+
+    for (uint z = 0; z<nz; z++)
+    {
+        for (uint y = 0; y<ny; y++)
+        {
+            for (uint x = 0; x<nx; x++)
+            {
+                vector<double> 
+            } 
+        } 
+    } 
+    
+    return pos;
+}
+arma::dmat findTetragonesGridBox(uint nx, uint ny, double a)
+{
+    double sqrt3 = std::sqrt(3);
+    arma::dmat mat3 = { {sqrt3 * a * nx,    sqrt3 / 2 * a * ny  , 0     },
+                        {0             ,    1.5 * a * ny        , 0     },
+                        {0             ,    0                   , 10*a  }};
+    
+    return mat3;
+
+}
 
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
 /// @param vecVec A vector of vector of double 
@@ -1059,7 +1141,7 @@ template <typename T>       bool isIn(T w, vector<T>& v)
 {
 
         bool isInB = false;
-        unsigned int index = 0;
+        uint index = 0;
         while ( (!isInB) && (index < v.size()) )
         {
             if (v[index] == w)  isInB = true;
@@ -1077,7 +1159,7 @@ template <typename T>       bool isIn(T w, vector<T>& v)
 template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex)
 {
     bool isInB = false;
-    unsigned int index = 0;
+    uint index = 0;
     while ( (!isInB) && (index < v.size()) )
     {
         if (v[index] == w)  isInB = true;
@@ -1090,7 +1172,7 @@ template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex)
 /// @brief The suite of integer doubles S defined by  S(t+1) = getNextIndex(S(t))
 /// and starting by (0,0) paves the positive plan in an ordely fashion. The
 /// aim is for [S(0) .. S(t)] to stay "as square as possible" for every index t.  
-void getNextIndex(unsigned int& i, unsigned int& j)
+void getNextIndex(uint& i, uint& j)
 {
     if (i==j)
     {
