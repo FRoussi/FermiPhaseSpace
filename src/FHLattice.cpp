@@ -205,48 +205,62 @@ switch (latticeType)
         break;
     case cubic:
     {
-        nx = static_cast<int>(parameters[0]);
-        ny = static_cast<int>(parameters[1]);
-        nz = static_cast<int>(parameters[2]);
-        a = (parameters[3]);
-        pos = makeBCGrid(nx, ny, nz, a);
-        latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
+        a = parameters[3];
+        pos = makeBCGrid(n[0], n[1], n[2], a);
+        latticeMatrix = findBCGridBox(n[0], n[1], n[2], a);
         computeInverseLatticeMatrix();
         latticeName = "CubicGrid";
         break;
     }
     case bulkCenteredCubic:
     {
-        nx = static_cast<int>(parameters[0]);
-        ny = static_cast<int>(parameters[1]);
-        nz = static_cast<int>(parameters[2]);
-        a = (parameters[3]);
-        pos = makeBCCGrid(nx, ny, nz, a);
-        latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
+        a = parameters[3];
+        pos = makeBCCGrid(n[0], n[1], n[2], a);
+        latticeMatrix = findBCGridBox(n[0], n[1], n[2], a);
         computeInverseLatticeMatrix();
         latticeName = "BCCGrid";
         break;
     }
     case faceCenteredCubic:
     {
-        nx = static_cast<int>(parameters[0]);
-        ny = static_cast<int>(parameters[1]);
-        nz = static_cast<int>(parameters[2]);
-        a = (parameters[3]);
-        pos = makeFCCGrid(nx, ny, nz, a);
-        latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
+        a = parameters[3];
+        pos = makeFCCGrid(n[0], n[1], n[2], a);
+        latticeMatrix = findBCGridBox(n[0], n[1], n[2], a);
         computeInverseLatticeMatrix();
         latticeName = "FCCGrid";
         break;
     }
-    case graphene:
+    case honeyCombs:
     {
         nx = static_cast<int>(parameters[0]);
         a = (parameters[1]);
-        pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
+        pos = makeHoneyCombs(nx,a);
         latticeMatrix = findHoneyCombGridBox(nx, a);
         computeInverseLatticeMatrix();
-        latticeName = "Graphene";
+        latticeName = "HoneyCombs";
+        break;
+    }
+    case triangular:
+    {
+        int n[2] = {static_cast<int>(parameters[0]), static_cast<int>(parameters[1])};
+        a = (parameters[1]);
+        pos = makeGraphene(n[0], n[1], a);
+        latticeMatrix = findHoneyCombGridBox(n[0],  a);
+        computeInverseLatticeMatrix();
+        latticeName = "HoneyCombs";
+        break;
+    }
+    case graphene:
+    {
+        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
+        a = (parameters[1]);
+        pos = makeTetragones(n[0], n[1], n[2], a);
+        latticeMatrix = findTetragonesGridBox(n[0], n[1], n[2], a);
+        computeInverseLatticeMatrix();
+        latticeName = "HoneyCombs";
         break;
     }
     default:
@@ -771,6 +785,7 @@ void FHLattice::init_latticeNameMap()
     latticeTypeNames[FHLatticeType::bulkCenteredCubic] = "bcc";
     latticeTypeNames[FHLatticeType::faceCenteredCubic] = "fcc";
     latticeTypeNames[FHLatticeType::triangular] = "triangular";
+    latticeTypeNames[FHLatticeType::honeyCombs] = "honeyCombs";
     latticeTypeNames[FHLatticeType::graphene] = "graphene";
     latticeTypeNames[FHLatticeType::moire] = "moire";
     latticeTypeNames[FHLatticeType::kagome] = "kagome";
@@ -1085,20 +1100,24 @@ vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a)
     double jVec[3] = {1/2 *a, sqrt3 / 2 * a, 0};
     double kVec[3] = {1/2 *a, sqrt3 / 4 * a, sqrt(2) * sqrt3 / 4 * a};
 
-    for (uint z = 0; z<nz; z++)
+    for (uint k = 0; k<nz; k++)
     {
-        for (uint y = 0; y<ny; y++)
+        for (uint j = 0;j<ny; j++)
         {
-            for (uint x = 0; x<nx; x++)
+            for (uint i = 0; i<nx; i++)
             {
-                vector<double> 
+                vector<double> newVec = {   i * iVec[0] + j * jVec[0] + k * kVec[0],   
+                                            i * iVec[1] + j * jVec[1] + k * kVec[1],           
+                                            i * iVec[2] + j * jVec[2] + k * kVec[2]};
+                pos.push_back(newVec);
+                nOfPoints +=1;
             } 
         } 
-    } 
-    
+    }
     return pos;
 }
-arma::dmat findTetragonesGridBox(uint nx, uint ny, double a)
+
+arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a)
 {
     double sqrt3 = std::sqrt(3);
     arma::dmat mat3 = { {sqrt3 * a * nx,    sqrt3 / 2 * a * ny  , 0     },
@@ -1106,7 +1125,6 @@ arma::dmat findTetragonesGridBox(uint nx, uint ny, double a)
                         {0             ,    0                   , 10*a  }};
     
     return mat3;
-
 }
 
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).

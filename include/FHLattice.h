@@ -41,6 +41,7 @@ template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex);
         bulkCenteredCubic,
         faceCenteredCubic,
         triangular,
+        honeyCombs,
         graphene,
         moire,
         kagome
