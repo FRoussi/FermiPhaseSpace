@@ -1065,7 +1065,7 @@ arma::dmat findHoneyCombGridBox(uint nCombs, double a)
 vector<vector<double>> makeGraphene(uint nx, uint ny, double a)
 {
     double sqrt3 = std::sqrt(3);
-    uint nOfPoints = nx * ny * 2;
+    uint nOfPoints =0;
     vector<vector<double>> pos = vector<vector<double>>();
 
     vector<vector<double>> pos0 = { {0, -0.5 *a , 0},
@@ -1093,6 +1093,7 @@ vector<vector<double>> makeGraphene(uint nx, uint ny, double a)
             //std::cout << "graph vec " << i << " " << j << " v1(1)=" << posNew[0][1] << std::endl;
             pos.push_back(posNew[0]);
             pos.push_back(posNew[1]);
+            nOfPoints +=2;
         }
     }
 

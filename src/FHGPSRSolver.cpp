@@ -778,8 +778,8 @@ void FHGPSRSolver::runSimulation( )
     for (unsigned int i_traj=0; i_traj <nTraj; i_traj ++)
     {
         // Noiseless initial rho matrices :
-        arma::cx_dmat rhou = rhou0;
-        arma::cx_dmat rhod = rhod0;
+        rhou = rhou0;
+        rhod = rhod0;
 
       
         // We compute the trajectory dynamic and add up the diagnoal to the result
