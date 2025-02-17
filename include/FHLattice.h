@@ -65,8 +65,8 @@ public:
 
     // GETTERS
     // site positions
-    const uint                          getnSites();
-    const uint                          getnDimension();
+    const uint                                  getnSites();
+    const uint                                  getnDimension();
     const arma::drowvec                         getSitePosition(uint iSite);
     const arma::dmat*                           getSitePositions();
     const double                                getCoordinate(uint dim, uint pos);
@@ -132,38 +132,39 @@ public:
 private:
 
     // SITES
-    arma::dmat                      sitePositions;
-    arma::uvec                      siteTypes;
-    vector<std::string>             siteTypeNames;
-    vector<std::string>             siteNames;
+    arma::dmat                              sitePositions;
+    arma::uvec                              siteTypes;
+    vector<std::string>                     siteTypeNames;
+    vector<std::string>                     siteNames;
 
-// LATTICE
-    bool                            isPeriodicBool;
-    arma::dmat                      latticeMatrix;
-    arma::dmat                      inverseLatticeMatrix;
-    arma::drowvec                   latticeZeroVector;
+// LATTICE      
+    bool                                    isPeriodicBool;
+    arma::dmat                              latticeMatrix;
+    arma::dmat                              inverseLatticeMatrix;
+    arma::drowvec                           latticeZeroVector;
 
-    // TYPE
-    FHLatticeType                   latticeType;
-    vector<int>                     intParameters;
-    vector<double>                  floatParameters; 
+// TYPE     
+    FHLatticeType                           latticeType;
+    vector<int>                             intParameters;
+    vector<double>                          floatParameters; 
 
-// Connections
-    double                          neighbourDistance = 1;
-    double                          samePointDistance = 0.001;
-    arma::dmat                      distanceMatrix;
-    vector<vector<bool>>            neighbourMatrix;
-    vector<vector<bool>>            sameSiteMatrix;
+// Connections      
+    double                                  neighbourDistance = 1;
+    double                                  samePointDistance = 0.001;
+    arma::dmat                              distanceMatrix;
+    vector<vector<bool>>                    neighbourMatrix;
+    vector<vector<bool>>                    sameSiteMatrix;
 
 // Lattice type names
-    std::map<FHLatticeType, std::string> latticeTypeNames;
-    std::map<std::string, FHLatticeType> latticeTypeNamesReverse;
-    void init_latticeNameMap();
+    std::map<FHLatticeType, std::string>    latticeTypeNames;
+    std::map<std::string, FHLatticeType>    latticeTypeNamesReverse;
+
+// Names
+    std::string                             latticeName;
+    bool                                    talkative;
 
 
 
-    std::string                     latticeName;
-    bool                            talkative;
-
+    void                                    init_latticeNameMap();
 
 };
