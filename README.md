@@ -8,11 +8,11 @@ The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger e
 
 - $` \frac{\partial}{\partial t} \ket{\psi} = -\frac{i}{\hbar} \hat{H} \ket{\psi}`$. 
 
-With $`  H `$ the Fermi-Hubbard Hamilltonian, written with construction/annihilation operators :
+With $`  H `$ the Fermi-Hubbard Hamilltonian, written with number operators $` \hat{n}_{ij\sigma} = \hat{c}_{j\sigma}^{\dagger} \hat{c}_{i\sigma} `$ :
 
-- $`  \hat{H}(t) = \sum_{i,j,\sigma} t_{ij} \hat{c}_{j\sigma}^{\dagger} \hat{c}_{i\sigma} + \sum_i u_i \hat{c}_{i\sigma}^{\dagger} \hat{c}_{j\sigma}^{\dagger} \hat{c}_{j\sigma} \hat{c}_{i\sigma} + \sum_{i,j,\sigma} V_{ij}(t) \hat{c}_{j\sigma}^{\dagger} \hat{c}_{i\sigma}  `$. 
+- $`  \hat{H}(t) = \sum_{i,j,\sigma} t_{ij} \hat{n}_{ij\sigma} + \sum_i u_i \hat{n}_{ii\sigma} \hat{n}_{ii\overline{\sigma}} + \sum_{i,j,\sigma} V_{ij}(t) \hat{n}_{ij\sigma}  `$. 
 
-We have implemented four different methods to solve the dynamic :
+We have implemented four different methods to solve the fermions dynamic :
 
 #### Exact Diagonalisation (ED)
 
