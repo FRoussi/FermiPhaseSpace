@@ -17,7 +17,11 @@ A MPI version of the fTWA method is avalaible.
 
 ### Compilation of programs
 
+This code contains five programs whose main functions are in "fps.cpp", "fps_HF.cpp", "fps_fTWA_MPI.cpp", "makeSitesSystem,cpp" and "makeWannierFile.cpp".
+
 ### Makefile examples
+
+The Makefile used to compile the four main executables are in the /FolderMakefile. They were used on a Cray environment.
 
 ## Usage
 
@@ -39,13 +43,40 @@ Fermi-Hubbard simulations are entirely decribed by a .json file, this file is th
 
 ### makeSitesSystem
 
+The first program is "./makeSitesSystem". It takes as entry the name of the new system, the geometry of the sites lattice, and several parameters for this geometry. If the geometry is recognised, two files are created in a folder called "systemsFolder". The .json file of the simulation with generic parameters, and the .xyz file with the site positions. Both files bear the name given as parameter. The use should be :
+
+./makeSitesSystem -nameOfTheSystem- -geometryOfTheSites- -param1- -param2- ...
+
+For example, "./makeSitesSystem 6sites grid 3 2" writes two files called "6sites.json" and "6sites.xyz" describing a 3x2 cubic system.
+
+The possible lattice geometry are
+
+- grid nx ny nz a               cubic grid
+- bcc nx ny nz a                Bulk Centered Cubic
+- fcc nx ny nz a                Face Centered Cubic
+- triangular nx ny nz a         Tetragones
+- honeyCombs nc a               Graphene sheet build by Hexagones
+- graphene nx ny a              Graphene sheet build with the minimal cell of two sites
+- moire nx ny phi d a           2 graphene sheets with a phi angle
+- kagome nx ny a                Kagome lattice
+
+Missing parameters are replaced by "1".
+
 ### fps
+
+./fps -jsonFile-
 
 ### fps_HF
 
+./fps_HF -jsonFile-
+
 ### fps_fTWA_MPI
 
+mpirun -n ./fps_fTWA -jsonFile-
+
 ### makeWannierFile
+
+I don't remember.
 
 ### Example
 
