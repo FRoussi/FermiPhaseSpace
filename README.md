@@ -27,9 +27,9 @@ The Makefile used to compile the four main executables are in the /FolderMakefil
 
 The workflow is supposed to be :
 
-- Create a Fermi-Hubbard system, described by a .json and a .xyz files.
-- Modify the .json file at your will as it contains all the simulation parameters (method, energy constants, step times etc ...).
-- Solve the dynamic.
+1. Create a Fermi-Hubbard system, described by a .json and a .xyz files.
+2. Modify the .json file at your will as it contains all the simulation parameters (method, energy constants, step times etc ...).
+3. Solve the dynamic.
 
 ### The FPS Fermi-Hubbard system
 
@@ -45,7 +45,7 @@ Fermi-Hubbard simulations are entirely decribed by a .json file, this file is th
 
 The first program is "./makeSitesSystem". It takes as entry the name of the new system, the geometry of the sites lattice, and several parameters for this geometry. If the geometry is recognised, two files are created in a folder called "systemsFolder". The .json file of the simulation with generic parameters, and the .xyz file with the site positions. Both files bear the name given as parameter. The use should be :
 
-./makeSitesSystem -nameOfTheSystem- -geometryOfTheSites- -param1- -param2- ...
+    ./makeSitesSystem -nameOfTheSystem- -geometryOfTheSites- -param1- -param2- ...
 
 For example, "./makeSitesSystem 6sites grid 3 2" writes two files called "6sites.json" and "6sites.xyz" describing a 3x2 cubic system.
 
@@ -64,15 +64,15 @@ Missing parameters are replaced by "1".
 
 ### fps
 
-./fps -jsonFile-
+    ./fps -jsonFile-
 
 ### fps_HF
 
-./fps_HF -jsonFile-
+    ./fps_HF -jsonFile-
 
 ### fps_fTWA_MPI
 
-mpirun -n ./fps_fTWA -jsonFile-
+    mpirun -n ./fps_fTWA -jsonFile-
 
 ### makeWannierFile
 
