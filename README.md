@@ -11,6 +11,9 @@ I don't know, ask chatgpt :(
 - Armadillo
 - OPENBLAS
 - ARPACK
+- openMP
+
+A MPI version of the fTWA method is avalaible.
 
 ### Compilation of programs
 

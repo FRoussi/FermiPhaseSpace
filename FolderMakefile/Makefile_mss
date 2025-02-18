@@ -1,0 +1,44 @@
+
+# Compiler
+CXX = mpic++
+
+# Directories
+ARMADILLO_INCLUDE_DIR = /users/roussefr/opt/armadillo/include
+ARMADILLO_LIB_DIR = /users/roussefr/opt/armadillo/lib64
+OPENMP_INCLUDE_DIR = /users/roussefr/opt/openmp/include
+OPENMP_LIB_DIR = /users/roussefr/opt/openmp/lib
+
+# Compiler flags
+CXXFLAGS = -I$(ARMADILLO_INCLUDE_DIR)  -std=c++14 -Wshadow -Wall -pedantic -Og -fopenmp
+#CXXFLAGS = -I$(ARMADILLO_INCLUDE_DIR) -I$(OPENMP_INCLUDE_DIR) -std=c++14 -Wshadow -Wall -pedantic -Og -fopenmp
+LDFLAGS = -L$(ARMADILLO_LIB_DIR) -larmadillo   -homp
+#LDFLAGS = -L$(ARMADILLO_LIB_DIR) -larmadillo  -I$(OPENMP_LIB_DIR) -lomp
+
+
+# Source files
+SRCS = ./src/jsoncpp.cpp ./src/FHLattice.cpp ./src/FHSystem.cpp \
+       ./src/FHTunnelingInteraction.cpp ./src/FHCoulombInteraction.cpp \
+       ./src/FHExternalPotential.cpp ./src/FHExternalPotentialPulse.cpp \
+       ./src/FHExternalPotentialConstant.cpp ./src/FHExternalPotentialCoreHole.cpp \
+       makeSitesSystem.cpp
+
+# Object files
+OBJS = $(SRCS:.cpp=.o)
+
+# Executable
+EXEC = makeSitesSystem
+
+# Rules
+all: $(EXEC)
+
+$(EXEC): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(EXEC)
+
+.PHONY: all clean
+

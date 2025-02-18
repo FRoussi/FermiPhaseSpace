@@ -513,8 +513,8 @@ void FHHFSolver::runSimulation( )
         //std::cout << "Save En, t " << t << std::endl;
         if (saveEnergies)
         {
-            Energies(0,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-            Energies(1,t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            Energies(0,t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            Energies(1,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
             if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
             {
                 Energies(2,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
