@@ -6,7 +6,7 @@ The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger e
 
 I am not confident in this part. Please ask your favorite LLM.
 
-And do not forget Pascal's bet : it costs you nothing to be polite to the machine, but mightsh save you in the event of a robot uprising.
+And do not forget Pascal's bet : it costs you nothing to be polite to the machine, but might save you in the event of a robot uprising.
 
 ### Requirements
 
@@ -133,8 +133,6 @@ Is used to generate files for the Wannier tools suite.
 
 ## Fermions Phase-Space Representation methods
 
-### Methods
-
 The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger equation on a Fermi-Hubbard system.
 
 - $` \frac{\partial}{\partial t} \ket{\psi} = -\frac{i}{\hbar} \hat{H} \ket{\psi}`$.
@@ -145,7 +143,7 @@ With $`  H `$ the Fermi-Hubbard Hamilltonian, written with number operators $` \
 
 We have implemented four different methods to solve the fermions dynamic :
 
-#### Exact Diagonalisation (ED)
+### Exact Diagonalisation (ED)
 
 The whole Hilbert space at constant fermion number is modeled. The exact dynamic is then written as $` \ket{\psi (t)} =  e^{-\frac{i}{\hbar}Ht} \ket{\psi_0} `$.
 
@@ -155,13 +153,15 @@ $` \ket{\psi (t + \partial t)} =  e^{-\frac{i}{\hbar}H \partial t} \ket{\psi (t)
 
 Representing the whole Hilbert space is indeed costly. for half-hilled systems, the basis size scales exponentially with the number of sites : as $` O(4^n) `$. Depending on the computer's memory size and on the connectivity of the system, the method runs out of memory for systems of arounf 13-15 sites.
 
-#### Mean-field, Hartree-Fock (HF)
+### Mean-field, Hartree-Fock (HF)
 
-#### Fermionic Truncated Wigner Approximation (fTWA)
+The usual simplification is to consider the one-particle density matrix $` \rho_{ij\sigma} =  < \hat{n}_{ij\sigma}> `$ and compute the Coulomb interaction as the interaction between the particle and the electric potential it creates.
 
-#### Gaussian Phase-Space Representation (GPSR)
+### Fermionic Truncated Wigner Approximation (fTWA)
 
-### Acknowledgements
+### Gaussian Phase-Space Representation (GPSR)
+
+## Acknowledgements
 
 Thanks ME
 
