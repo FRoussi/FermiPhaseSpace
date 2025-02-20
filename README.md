@@ -4,7 +4,9 @@ The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger e
 
 ## Installation
 
-I don't know, ask chatgpt :(
+I am not confident in this part. Please ask your favorite LLM.
+
+And do not forget Pascal's bet : it costs you nothing to be polite to the machine, but mightsh save you in the event of a robot uprising.
 
 ### Requirements
 
@@ -41,6 +43,51 @@ Fermi-Hubbard simulations are entirely decribed by a .json file, this file is th
 - "parameters"
 - "results"
 
+#### Simulation name
+
+The "sim_name" json entry is the name of the simulation. It is used to write the result file, called *sim_name*_*method*_res.json.
+
+#### Simulation's methods
+
+The "method" can be one of the four dunamical method implemented :
+
+- "HF" : Hartree-Fock
+- "fTWA" : Fermionic Truncated Wigner Approximation
+- "GPSR" : Gaussian Phase-Space Representation
+- "ED" : Exact Diagonalisation
+
+#### Parameters
+
+They are the parameters of the dynamical simulation.
+
+- "dt" : time step between two snapshot of the simulation.
+- "t_max" : time extension of the simulation.
+- "stepsPerTimePoints" : number of simulation steps between two snapshots of the simulation, so dt/stepsPerTimePoints is the real simulation time step.
+- "int_order" : for HF and fTWA methods, order of the Runge-Kutta integrator. For GPSR, order of the Runge-Kutta integrator of the linear part of its time steps.
+- "n_traj" : for GPSR and fTWA, number of trajectory used to model the probability density.
+
+#### Results
+
+To increase efficiency, all possible observable are not computed. Hence we choose beforehand which variable we want to extract of the simulation. The "results" json entry is a list of boolean  telling if an observable should be computed and written in the result file.
+
+- "diagDMatrix"
+- "diag2Matrix"
+- "onSiteDoublons"
+- "wholeDMatrix"
+- "energies"
+- "mfStates"
+- "tbStates"
+
+#### System
+
+The "system" json entry describes the Fermi-Hubbard model : its geometry, its energy functions and the simulation's initial condition.
+
+- "lattice"
+- "coulombInteraction"
+- "tunnelingInteraction"
+- "externalPotential"
+- "IC"
+
 ### makeSitesSystem
 
 The first program is "./makeSitesSystem". It takes as entry the name of the new system, the geometry of the sites lattice, and several parameters for this geometry. If the geometry is recognised, two files are created in a folder called "systemsFolder". The .json file of the simulation with generic parameters, and the .xyz file with the site positions. Both files bear the name given as parameter. The use should be :
@@ -70,13 +117,17 @@ Missing parameters are replaced by "1".
 
     ./fps_HF -jsonFile-
 
+fps_HF will ignore the json entry "method" and run a Hartree-Fock simulation.
+
 ### fps_fTWA_MPI
 
-    mpirun -n ./fps_fTWA -jsonFile-
+    mpirun -n -nProc- ./fps_fTWA -jsonFile-
+
+fps_HF will ignore the json entry "method" and run a fTWA simulation on -nProc- processus using MPI.
 
 ### makeWannierFile
 
-I don't remember.
+Is used to generate files for the Wannier tools suite.
 
 ### Example
 
