@@ -959,7 +959,7 @@ arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
     double thresholdConverged = 0.0001 * nSites;
     bool isConverged = false;
     int maxIt = 100;
-    int it = 0;
+    iterationsForMFState = 0;
 
     arma::cx_dvec diagNu = arma::cx_dvec(nSites) * (double)upSpinParticleNumber / (double)nSites;
     arma::cx_dvec diagNd = arma::cx_dvec(nSites) * (double)downSpinParticleNumber / (double)nSites;
@@ -968,7 +968,7 @@ arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
     arma::cx_dmat mfuHuD = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 
-    while ((it < maxIt) && !isConverged)
+    while ((iterationsForMFState < maxIt) && !isConverged)
     {
 
         for (int i = 0; i < nSites; i++)
@@ -991,21 +991,29 @@ arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
         mfgs_Nu = mfgs_Vu * Mku * mfgs_Vu.t();
         mfgs_Nd = mfgs_Vd * Mkd * mfgs_Vd.t();
 
-        it+=1;
+        iterationsForMFState+=1;
+        residueForMFState = arma::norm(mfgs_Nu.diag() - diagNu) + arma::norm(mfgs_Nd.diag() - diagNd);
 
-        if ((arma::norm(mfgs_Nu.diag() - diagNu) < thresholdConverged) && (arma::norm(mfgs_Nd.diag() - diagNd) < thresholdConverged))
+        if (residueForMFState < thresholdConverged)
         {
             isConverged = true;
         }
         else
         {
+            //double r = (double)iterationsForMFState / (double)maxIt;
+            //diagNu = ((1-r)*diagNu + r*mfgs_Nu.diag())/2;
+            //diagNd = ((1-r)*diagNd + r*mfgs_Nd.diag())/2;
             diagNu = mfgs_Nu.diag();
             diagNd = mfgs_Nd.diag();
         }
 
     }
 
-    iterationsForMFState = it;
+    if (iterationsForMFState == maxIt)
+    {
+        std::cout << "!! Carefull : the MF ground state computation has not converged. Residue=" << residueForMFState << std::endl;
+    }
+
     MFGroundStateComputed = true;
 
 }
@@ -1217,6 +1225,7 @@ Json::Value                         FHSystem::writeMFGroundStateJson()
     mfgsJson["rotationMatrixDown"] = jsonMatEigD;
 
     mfgsJson["iterationsNeeded"] = iterationsForMFState;
+    mfgsJson["residueComputation"] = residueForMFState;
 
     return mfgsJson;
 }

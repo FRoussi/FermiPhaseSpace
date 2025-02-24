@@ -20,7 +20,7 @@
 
 #define FPS_VERSION_MAJOR 0
 #define FPS_VERSION_MINOR 4
-#define FPS_VERSION_PATCH 1
+#define FPS_VERSION_PATCH 2
 
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
@@ -244,6 +244,7 @@ private:
     arma::dvec              mfgs_Eu;
     arma::dvec              mfgs_Ed;
     uint                    iterationsForMFState;
+    double                  residueForMFState;
 
 // SYSTEM
     std::string                     systemName;
