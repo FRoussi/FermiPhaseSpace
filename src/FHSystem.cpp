@@ -991,19 +991,21 @@ arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
         mfgs_Nu = mfgs_Vu * Mku * mfgs_Vu.t();
         mfgs_Nd = mfgs_Vd * Mkd * mfgs_Vd.t();
 
+        it+=1;
+
         if ((arma::norm(mfgs_Nu.diag() - diagNu) < thresholdConverged) && (arma::norm(mfgs_Nd.diag() - diagNd) < thresholdConverged))
         {
             isConverged = true;
         }
         else
         {
-            it +=1;
             diagNu = mfgs_Nu.diag();
             diagNd = mfgs_Nd.diag();
         }
 
     }
 
+    iterationsForMFState = it;
     MFGroundStateComputed = true;
 
 }
@@ -1213,6 +1215,8 @@ Json::Value                         FHSystem::writeMFGroundStateJson()
         jsonMatEigD.append(jsonMatEigJ);
     }  
     mfgsJson["rotationMatrixDown"] = jsonMatEigD;
+
+    mfgsJson["iterationsNeeded"] = iterationsForMFState;
 
     return mfgsJson;
 }

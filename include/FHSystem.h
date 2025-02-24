@@ -243,6 +243,7 @@ private:
     arma::cx_dmat           mfgs_Vd;
     arma::dvec              mfgs_Eu;
     arma::dvec              mfgs_Ed;
+    uint                    iterationsForMFState;
 
 // SYSTEM
     std::string                     systemName;
