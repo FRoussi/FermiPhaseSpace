@@ -428,8 +428,8 @@ void FHHFSolver::runSimulation( )
         //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         Energies = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
-        Energies(0,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-        Energies(1,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        Energies(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+        Energies(0,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
         if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
         {
             Energies(2,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
