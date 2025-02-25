@@ -973,8 +973,8 @@ arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
 
         for (int i = 0; i < nSites; i++)
         {
-            mfuHuU(i,i) = arma::dot(UMatrix->row(i), diagNd);
-            mfuHuD(i,i) = arma::dot(UMatrix->row(i), diagNu);
+            mfuHuU.at(i,i) = arma::dot(UMatrix->row(i), diagNd);
+            mfuHuD.at(i,i) = arma::dot(UMatrix->row(i), diagNu);
         } 
 
         if (withExternalPotential)

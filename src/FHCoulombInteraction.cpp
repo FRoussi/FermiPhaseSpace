@@ -213,7 +213,7 @@ void                        FHCoulombInteraction::addCoulombinU(double distance,
         {
             if (std::norm(fhLattice->getDistance(iSite, jSite) - distance) < ths)
             {
-                U(iSite, jSite) += Interaction;
+                U.at(iSite, jSite) += Interaction;
             }
         }
     }
@@ -238,7 +238,7 @@ void                        FHCoulombInteraction::addCoulombinV(double distance,
             {
                 if (std::norm(fhLattice->getDistance(iSite, jSite) - distance) < ths)
                 {
-                    V(iSite, jSite) += Interaction;
+                    V.at(iSite, jSite) += Interaction;
                 }
             }
         }

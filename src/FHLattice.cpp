@@ -523,9 +523,9 @@ double                                      FHLattice::evaluateNearestNeighbor()
         {
             for (uint jSite = iSite+1; jSite < distanceMatrix.n_cols; jSite++)
             {
-                if (distanceMatrix(iSite, jSite) >  samePointDistance)
+                if (distanceMatrix.at(iSite, jSite) >  samePointDistance)
                 {
-                    minNeib = std::min(minNeib, distanceMatrix(iSite, jSite));
+                    minNeib = std::min(minNeib, distanceMatrix.at(iSite, jSite));
                 }
             }
         }
@@ -725,7 +725,7 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
             Json::Value vJson(Json::arrayValue);
             for (uint j = 0; j<3; j++)
             {
-                vJson.append(latticeMatrix(i,j));
+                vJson.append(latticeMatrix.at(i,j));
             }
             matJson.append(vJson);
         }  

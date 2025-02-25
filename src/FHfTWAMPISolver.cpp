@@ -264,11 +264,11 @@ void FHfTWAMPISolver::runSimulation( )
                 {
                     Nu_loc =  rhou + halfDiagMatrix;
                     Nd_loc =  rhod + halfDiagMatrix;
-                    En_loc(0,t)=  En_loc(0,t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                    En_loc(1,t) = En_loc(1,t) + arma::accu((Nu_loc + Nd_loc) % *tM);
+                    En_loc.at(0,t)=  En_loc.at(0,t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+                    En_loc.at(1,t) = En_loc.at(1,t) + arma::accu((Nu_loc + Nd_loc) % *tM);
                     if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
                     {
-                        En_loc(2,t) = En_loc(2,t) + arma::accu((Nu_loc + Nd_loc) % *extPot);
+                        En_loc.at(2,t) = En_loc.at(2,t) + arma::accu((Nu_loc + Nd_loc) % *extPot);
                     }
                 }
 

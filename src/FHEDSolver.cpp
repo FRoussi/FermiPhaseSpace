@@ -3,7 +3,6 @@
 FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
 {
 
-    arma::umat test = arma::umat(2,800000);
 
     currentSimulationTime = 0;
     storeNiju = storeOperators::SOnone;
@@ -353,8 +352,8 @@ arma::sp_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec diag)
     arma::umat locations = arma::umat(2, (uint)diag.size(), arma::fill::zeros);
     for (uint i = 0; i<(uint)diag.size(); i++)
     {
-        locations(0,i) = i;
-        locations(1,i) = i;
+        locations[0,i] = i;
+        locations[1,i] = i;
     }
 
     return arma::sp_dmat(locations, diag, bbSize, bbSize, true, true);
@@ -377,7 +376,7 @@ arma::dvec FHEDSolver::numberVectorOperatorSpinUp(uint iSite)
             {
                 for (uint ld = 0; ld < basisSizeSpinDown; ld++)
                 {
-                    values(ld + basisSizeSpinDown * lu) = 1;
+                    values[ld + basisSizeSpinDown * lu] = 1;
                 }
             }
         }
@@ -400,7 +399,7 @@ arma::dvec FHEDSolver::numberVectorOperatorSpinDown(uint iSite)
             {
                 for (uint lu = 0; lu < basisSizeSpinUp; lu++)
                 {
-                    values(ld + basisSizeSpinDown * lu) = 1;
+                    values[ld + basisSizeSpinDown * lu] = 1;
                 }
             }
         }
@@ -425,9 +424,9 @@ arma::sp_dmat FHEDSolver::numberOperatorSpinUp(uint iSite)
             {
                 for (uint ld = 0; ld < basisSizeSpinDown; ld++)
                 {
-                    locations(0, index) = ld + basisSizeSpinDown * lu;
-                    locations(1, index) = ld + basisSizeSpinDown * lu;
-                    values(index) = 1;
+                    locations[0, index] = ld + basisSizeSpinDown * lu;
+                    locations[1, index] = ld + basisSizeSpinDown * lu;
+                    values[index] = 1;
                     index++;
                 }
             }
@@ -454,9 +453,9 @@ arma::sp_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
             {
                 for (uint lu = 0; lu < basisSizeSpinUp; lu++)
                 {
-                    locations(0, index) = ld + basisSizeSpinDown * lu;
-                    locations(1, index) = ld + basisSizeSpinDown * lu;
-                    values(index) = 1;
+                    locations[0, index] = ld + basisSizeSpinDown * lu;
+                    locations[1, index] = ld + basisSizeSpinDown * lu;
+                    values[index] = 1;
                     index++;
                 }
             }
@@ -523,8 +522,8 @@ arma::sp_dmat FHEDSolver::tunnelingOperatorSpinUp(uint iSite, uint jSite)
 arma::dvec val = arma::dvec(values);
 for (int i = 0; i<index; i++)
 {
-    loc(0,i) = locations1[i];
-    loc(1,i) = locations2[i];
+    loc.at(0,i) = locations1[i];
+    loc.at(1,i) = locations2[i];
 }
 
     return arma::sp_dmat(loc, val, basisSize, basisSize);
@@ -579,8 +578,8 @@ arma::sp_dmat FHEDSolver::tunnelingOperatorSpinDown(uint iSite, uint jSite)
 arma::dvec val = arma::dvec(values);
 for (int i = 0; i<index; i++)
 {
-    loc(0,i) = locations1[i];
-    loc(1,i) = locations2[i];
+    loc.at(0,i) = locations1[i];
+    loc.at(1,i) = locations2[i];
 }
 
     return arma::sp_dmat(loc, val, basisSize, basisSize);
@@ -714,22 +713,22 @@ void FHEDSolver::runSimulation()
         timeLine[t] = t * dt;
         for (uint iSite = 0; iSite < nSites; iSite++)
         {
-            niiu(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
-            niid(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
+            niiu.at(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
+            niid.at(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
         }
 
         if (saveEnergies)
         {
-            Energies(0,t) = arma::cdot(psi, H_U * psi);
-            Energies(1,t) = arma::cdot(psi, H_t * psi);
-            Energies(2,t) = arma::cdot(psi, H_externalPotential * psi);
-            Energies(3,t) = Energies(0,t) + Energies(1,t) + Energies(2,t);
+            Energies.at(0,t) = arma::cdot(psi, H_U * psi);
+            Energies.at(1,t) = arma::cdot(psi, H_t * psi);
+            Energies.at(2,t) = arma::cdot(psi, H_externalPotential * psi);
+            Energies.at(3,t) = Energies.at(0,t) + Energies.at(1,t) + Energies.at(2,t);
         }
         if(saveNiuNid)
         {
             for (uint iSite = 0; iSite < nSites; iSite++)
             {
-                NiuNid(iSite,t)= arma::cdot(psi, NijuSet[iSite][iSite] * (NijdSet[iSite][iSite] * psi));
+                NiuNid.at(iSite,t)= arma::cdot(psi, NijuSet[iSite][iSite] * (NijdSet[iSite][iSite] * psi));
             }
         }
         if (saveTBStates)
@@ -773,11 +772,11 @@ arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinUp(arma::cx
     arma::cx_dmat nu = arma::cx_dmat(nSites, nSites, arma::fill::zeros); 
     for (uint iSite = 0; iSite < nSites; iSite++)
     {
-        nu(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijuSet[iSite][iSite] * psi_t)));
+        nu.at(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijuSet[iSite][iSite] * psi_t)));
         for (uint jSite = iSite + 1; jSite < nSites; jSite++)
         {
-            nu(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijuSet[iSite][jSite] * psi_t)));
-            nu(jSite, iSite) = std::conj( nu(iSite, jSite));
+            nu.at(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijuSet[iSite][jSite] * psi_t)));
+            nu.at(jSite, iSite) = std::conj( nu.at(iSite, jSite));
         }  
     }
     return nu; 
@@ -791,11 +790,11 @@ arma::cx_dmat         FHEDSolver::computeOneParticleDensityMatrixSpinDown(arma::
     arma::cx_dmat nd = arma::cx_dmat(nSites, nSites, arma::fill::zeros); 
     for (uint iSite = 0; iSite < nSites; iSite++)
     {
-        nd(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijdSet[iSite][iSite] * psi_t)));
+        nd.at(iSite, iSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijdSet[iSite][iSite] * psi_t)));
         for (uint jSite = iSite + 1; jSite < nSites; jSite++)
         {
-            nd(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijdSet[iSite][jSite] * psi_t)));
-            nd(jSite, iSite) = std::conj( nd(iSite, jSite));
+            nd.at(iSite, jSite) = static_cast<double>(std::real(arma::cdot(psi_t, NijdSet[iSite][jSite] * psi_t)));
+            nd.at(jSite, iSite) = std::conj( nd.at(iSite, jSite));
         }  
     }
     return nd; 

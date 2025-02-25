@@ -87,8 +87,8 @@ void FHGPSRSolver::initiateSolver()
     rhod0 = arma::cx_dmat(fhSystem->getnSites(), fhSystem->getnSites(), arma::fill::zeros);
     for (unsigned int it= 0; it < fhSystem->getnSites(); it ++)
     {
-           rhou0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0);
-           rhod0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0);
+           rhou0.at(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0);
+           rhod0.at(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0);
     }
 
 
@@ -324,11 +324,11 @@ arma::cx_dmat FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, const arm
             unsigned int lineIndex = l * nSites + k;
             for (unsigned int p = 0 ; p < nSites ; p++)
             {
-                B1u(lineIndex, p) =  rhou(p,l)* rhou_H(k,p)  ;
-                B2u(lineIndex, p) = jj * rhou_H(p,l)*rhou(k,p) ;
+                B1u.at(lineIndex, p) =  rhou.at(p,l)* rhou_H.at(k,p)  ;
+                B2u.at(lineIndex, p) = jj * rhou_H.at(p,l)*rhou.at(k,p) ;
                       
-                B1d(lineIndex, p) =  rhod(p,l)*rhod_H(k,p)  ;
-                B2d(lineIndex, p) = jj * rhod_H(p,l)*rhod(k,p) ;
+                B1d.at(lineIndex, p) =  rhod.at(p,l)*rhod_H.at(k,p)  ;
+                B2d.at(lineIndex, p) = jj * rhod_H.at(p,l)*rhod.at(k,p) ;
             }
         }
     }
@@ -376,11 +376,11 @@ arma::cx_dmat       FHGPSRSolver::quarterDiffusionMatrix(const arma::cx_dmat& rh
             unsigned int lineIndex = l * nSites + k;
             for (unsigned int p = 0 ; p < nSites ; p++)
             {
-                B1u(lineIndex, p) =  rhou(p,l)* rhou_H(k,p)  ;
-                B2u(lineIndex, p) = jj * rhou_H(p,l)*rhou(k,p) ;
+                B1u.at(lineIndex, p) =  rhou.at(p,l)* rhou_H.at(k,p)  ;
+                B2u.at(lineIndex, p) = jj * rhou_H(p,l)*rhou.at(k,p) ;
                       
-                B1d(lineIndex, p) =  rhod(p,l)*rhod_H(k,p)  ;
-                B2d(lineIndex, p) = jj * rhod_H(p,l)*rhod(k,p) ;
+                B1d.at(lineIndex, p) =  rhod.at(p,l)*rhod_H.at(k,p)  ;
+                B2d.at(lineIndex, p) = jj * rhod_H.at(p,l)*rhod.at(k,p) ;
             }
         }
     }
@@ -431,11 +431,11 @@ arma::cx_dmat       FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, con
             unsigned int lineIndex = l * nSites + k;
             for (unsigned int p = 0 ; p < nSites ; p++)
             {
-                B1u(lineIndex, p) =  rhou(p,l)* rhou_H(k,p)  ;
-                B2u(lineIndex, p) = jj * rhou_H(p,l)*rhou(k,p) ;
+                B1u.at(lineIndex, p) =  rhou.at(p,l)* rhou_H.at(k,p)  ;
+                B2u.at(lineIndex, p) = jj * rhou_H.at(p,l)*rhou.at(k,p) ;
                       
-                B1d(lineIndex, p) =  rhod(p,l)*rhod_H(k,p)  ;
-                B2d(lineIndex, p) = jj * rhod_H(p,l)*rhod(k,p) ;
+                B1d.at(lineIndex, p) =  rhod.at(p,l)*rhod_H.at(k,p)  ;
+                B2d.at(lineIndex, p) = jj * rhod_H.at(p,l)*rhod.at(k,p) ;
             }
         }
     }
@@ -490,11 +490,11 @@ arma::cx_dmat       FHGPSRSolver::diffusionMatrix(const arma::cx_dmat& rhou, con
             unsigned int lineIndex = l * nSites + k;
             for (unsigned int p = 0 ; p < nSites ; p++)
             {
-                B1u(lineIndex, p) =  rhou(p,l)* rhou_H(k,p)  ;
-                B2u(lineIndex, p) = jj * rhou_H(p,l)*rhou(k,p) ;
+                B1u.at(lineIndex, p) =  rhou.at(p,l)* rhou_H.at(k,p)  ;
+                B2u.at(lineIndex, p) = jj * rhou_H.at(p,l)*rhou.at(k,p) ;
                       
-                B1d(lineIndex, p) =  rhod(p,l)*rhod_H(k,p)  ;
-                B2d(lineIndex, p) = jj * rhod_H(p,l)*rhod(k,p) ;
+                B1d.at(lineIndex, p) =  rhod.at(p,l)*rhod_H.at(k,p)  ;
+                B2d.at(lineIndex, p) = jj * rhod_H.at(p,l)*rhod.at(k,p) ;
             }
         }
     }
@@ -817,11 +817,11 @@ void FHGPSRSolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                En_loc(0,t)=  En_loc(0,t) + (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);
-                En_loc(1,t) = En_loc(1,t) + arma::accu((rhou + rhod) % (*tM));
+                En_loc.at(0,t)=  En_loc.at(0,t) + (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);
+                En_loc.at(1,t) = En_loc.at(1,t) + arma::accu((rhou + rhod) % (*tM));
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc(2,t) = En_loc(2,t) + arma::accu((rhou + rhod) % (*extPot));
+                    En_loc.at(2,t) = En_loc.at(2,t) + arma::accu((rhou + rhod) % (*extPot));
                 }
             }
 

@@ -99,11 +99,11 @@ void FHfTWASolver::initiateSolver()
 
         for (unsigned int it= 0; it < nSites; it ++)
         {
-            diagNu0(it) = 1 * fhSystem->getInitialCondition_upSpin()[it];
-            diagNd0(it) = 1 * fhSystem->getInitialCondition_downSpin()[it];
+            diagNu0.at(it) = 1 * fhSystem->getInitialCondition_upSpin()[it];
+            diagNd0.at(it) = 1 * fhSystem->getInitialCondition_downSpin()[it];
 
-            rhou0_mean(it, it) = arma::cx_double(diagNu0(it) - 0.5, 0);
-            rhod0_mean(it, it) = arma::cx_double(diagNd0(it) - 0.5, 0);          
+            rhou0_mean.at(it, it) = arma::cx_double(diagNu0(it) - 0.5, 0);
+            rhod0_mean.at(it, it) = arma::cx_double(diagNd0(it) - 0.5, 0);          
         }
 
         nPartU = static_cast<unsigned int>(std::floor(arma::accu(diagNu0)));
@@ -115,10 +115,10 @@ void FHfTWASolver::initiateSolver()
         {
             for (unsigned int j = i+1; j < nSites; j++)
             {
-                sqrtNoiseVarianceMatrixU(i,j) = std::sqrt((diagNu0(i) + diagNu0(j) - 2 * diagNu0(i) * diagNu0(j))/2);
-                sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
-                sqrtNoiseVarianceMatrixD(i,j) = std::sqrt((diagNd0(i) + diagNd0(j) - 2 * diagNd0(i) * diagNd0(j))/2);
-                sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
+                sqrtNoiseVarianceMatrixU.at(i,j) = std::sqrt((diagNu0[i] + diagNu0[j] - 2 * diagNu0[i] * diagNu0[j])/2);
+                sqrtNoiseVarianceMatrixU.at(j,i) = sqrtNoiseVarianceMatrixU.at(i,j);
+                sqrtNoiseVarianceMatrixD.at(i,j) = std::sqrt((diagNd0[i] + diagNd0[j] - 2 * diagNd0[i] * diagNd0[j])/2);
+                sqrtNoiseVarianceMatrixD.at(j,i) = sqrtNoiseVarianceMatrixD.at(i,j);
             }
         }
     }
@@ -146,10 +146,10 @@ void FHfTWASolver::initiateSolver()
         {
             for (unsigned int j = i+1; j < nSites; j++)
             {
-                sqrtNoiseVarianceMatrixU(i,j) = std::sqrt((diagMu0(i) + diagMu0(j) - 2 * diagMu0(i) * diagMu0(j))/2);
-                sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
-                sqrtNoiseVarianceMatrixD(i,j) = std::sqrt((diagMd0(i) + diagMd0(j) - 2 * diagMd0(i) * diagMd0(j))/2);
-                sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
+                sqrtNoiseVarianceMatrixU.at(i,j) = std::sqrt((diagMu0[i] + diagMu0[j] - 2 * diagMu0[i] * diagMu0[j])/2);
+                sqrtNoiseVarianceMatrixU.at(j,i) = sqrtNoiseVarianceMatrixU.at(i,j);
+                sqrtNoiseVarianceMatrixD.at(i,j) = std::sqrt((diagMd0[i] + diagMd0[j] - 2 * diagMd0[i] * diagMd0[j])/2);
+                sqrtNoiseVarianceMatrixD.at(j,i) = sqrtNoiseVarianceMatrixD.at(i,j);
             }
         }
     }
@@ -177,10 +177,10 @@ void FHfTWASolver::initiateSolver()
         {
             for (unsigned int j = i+1; j < nSites; j++)
             {
-                sqrtNoiseVarianceMatrixU(i,j) = std::sqrt((diagMu0(i) + diagMu0(j) - 2 * diagMu0(i) * diagMu0(j))/2);
-                sqrtNoiseVarianceMatrixU(j,i) = sqrtNoiseVarianceMatrixU(i,j);
-                sqrtNoiseVarianceMatrixD(i,j) =  std::sqrt((diagMd0(i) + diagMd0(j) - 2 * diagMd0(i) * diagMd0(j))/2);
-                sqrtNoiseVarianceMatrixD(j,i) = sqrtNoiseVarianceMatrixD(i,j);
+                sqrtNoiseVarianceMatrixU.at(i,j) = std::sqrt((diagMu0[i] + diagMu0[j] - 2 * diagMu0[i] * diagMu0[j])/2);
+                sqrtNoiseVarianceMatrixU.at(j,i) = sqrtNoiseVarianceMatrixU.at(i,j);
+                sqrtNoiseVarianceMatrixD.at(i,j) =  std::sqrt((diagMd0[i] + diagMd0[j] - 2 * diagMd0[i] * diagMd0[j])/2);
+                sqrtNoiseVarianceMatrixD.at(j,i) = sqrtNoiseVarianceMatrixD.at(i,j);
             }
         }
     }
@@ -424,11 +424,11 @@ void FHfTWASolver::runSimulation( )
             {
                 Nu_loc =  rhou + halfDiag;
                 Nd_loc =  rhod + halfDiag;
-                En_loc(0,t)=  En_loc(0,t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                En_loc(1,t) = En_loc(1,t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
+                En_loc.at(0,t)=  En_loc.at(0,t) + (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
+                En_loc.at(1,t) = En_loc.at(1,t) + arma::accu((Nu_loc + Nd_loc) % (*tM));
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc(2,t) = En_loc(2,t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
+                    En_loc.at(2,t) = En_loc.at(2,t) + arma::accu((Nu_loc + Nd_loc) % (*extPot));
                 }
             }
 

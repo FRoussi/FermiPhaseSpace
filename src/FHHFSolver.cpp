@@ -96,8 +96,8 @@ void FHHFSolver::initiateSolver()
         Nd0 = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
         for (unsigned int it= 0; it < nSites; it ++)
         {
-            Nu0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0) ;
-            Nd0(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0) ;
+            Nu0.at(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_upSpin()[it],   0) ;
+            Nd0.at(it, it) = arma::cx_double(1 * fhSystem->getInitialCondition_downSpin()[it], 0) ;
         }
 
         nPartU = std::floor(std::real(arma::accu(Nu0)));
@@ -428,11 +428,11 @@ void FHHFSolver::runSimulation( )
         //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         Energies = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
-        Energies(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-        Energies(0,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        Energies.at(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+        Energies.at(0,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
         if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
         {
-            Energies(2,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+            Energies.at(2,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
         }
     }
 
@@ -513,11 +513,11 @@ void FHHFSolver::runSimulation( )
         //std::cout << "Save En, t " << t << std::endl;
         if (saveEnergies)
         {
-            Energies(0,t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
-            Energies(1,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+            Energies.at(0,t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            Energies.at(1,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
             if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
             {
-                Energies(2,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+                Energies.at(2,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
             }
 
         }
