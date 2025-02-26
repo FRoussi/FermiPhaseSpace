@@ -372,12 +372,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho_u
             {           
                 //std::cout << "     - Node " << procIndex << " sending rho_u to node 0." << std::endl;
-                MPI_Send(rhou_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rhou_t.memptr(), nSites * nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)                //<- Receiving rho_u
             {   
                 //std::cout << "     - Node 0 receiving rho_u from node " << procIndex << "." << std::endl;
-                MPI_Recv(nnt_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nnt_received_buffer, nSites * nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dcube rho_received_arma = arma::cx_dcube(nnt_received_buffer, nSites, nSites, nTimePoints); 
                 rhou_t +=  rho_received_arma;
             }
@@ -386,12 +386,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho_d
             {
                 //std::cout << "     - Node " << procIndex << " sending rho_d to node 0." << std::endl;
-                MPI_Send(rhod_t.memptr(), nSites * nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rhod_t.memptr(), nSites * nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)                //<- Receiving rho_d
             {   
                 //std::cout << "     - Node 0 receiving rho_d from node " << procIndex << "." << std::endl;
-                MPI_Recv(nnt_received_buffer, nSites * nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nnt_received_buffer, nSites * nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dcube rho_received_arma = arma::cx_dcube(nnt_received_buffer, nSites, nSites, nTimePoints); 
                 rhod_t +=  rho_received_arma;
             }
@@ -406,13 +406,13 @@ void FHfTWAMPISolver::runSimulation( )
             {
                 std::cout << "     - Node " << procIndex << " sending data to node 0." << std::endl;
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
-                MPI_Send(rhoiiu.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rhoiiu.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rhoii_u
             {   
                 std::cout << "     - Node 0 receiving data from node " << procIndex << "." << std::endl;
                 //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat rhoii_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 rhoiiu += rhoii_received_arma;
             }
@@ -420,12 +420,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rhoii_d
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
-                MPI_Send(rhoiid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rhoiid.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rhoii_d
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat rhoii_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 rhoiid += rhoii_received_arma;          
             }
@@ -437,12 +437,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho2ii_u
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
-                MPI_Send(rho2iiu.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rho2iiu.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rho2ii_u
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat rhoii_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 rho2iiu += rhoii_received_arma;
             }
@@ -450,12 +450,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho2ii_d
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
-                MPI_Send(rho2iid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rho2iid.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rho2ii_d
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat rhoii_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 rho2iid += rhoii_received_arma;          
             }
@@ -466,12 +466,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rhoirhoid_d
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
-                MPI_Send(rhoiurhoid.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(rhoiurhoid.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rhoii_d
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat rhoiurhoid_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 rhoiurhoid += rhoiurhoid_received_arma;          
             }
@@ -483,12 +483,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho2ii_u
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
-                MPI_Send(mkku.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(mkku.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rho2ii_u
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat mkku_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 mkku += mkku_received_arma;
             }
@@ -496,12 +496,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho2ii_d
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
-                MPI_Send(mkkd.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(mkkd.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rho2ii_d
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat mkkd_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 mkkd += mkkd_received_arma;          
             }
@@ -513,12 +513,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho2ii_u
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_u to node 0." << std::endl;
-                MPI_Send(mukku.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(mukku.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rho2ii_u
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_u from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat mukku_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 mukku += mukku_received_arma;
             }
@@ -526,12 +526,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending rho2ii_d
             {
                 //std::cout << "     - Node " << procIndex << " sending rho2ii_d to node 0." << std::endl;
-                MPI_Send(mukkd.memptr(), nSites * nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(mukkd.memptr(), nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving rho2ii_d
             {   
                 //std::cout << "     - Node 0 receiving rho2ii_d from node " << procIndex << "." << std::endl;
-                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(nt_received_buffer, nSites * nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat mukkd_received_arma = arma::cx_dmat(nt_received_buffer, nSites, nTimePoints); 
                 mukkd += mukkd_received_arma;          
             }
@@ -542,12 +542,12 @@ void FHfTWAMPISolver::runSimulation( )
             if (world_rank == procIndex)         //<- Sending EU
             {
                 //std::cout << "     - Node " << procIndex << " sending EU to node 0." << std::endl;
-                MPI_Send(Enrgs.memptr(), nEnergies*nTimePoints, MPI_C_COMPLEX, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(Enrgs.memptr(), nEnergies*nTimePoints, MPI_C_DOUBLE_COMPLEX, 0, 1, MPI_COMM_WORLD);
             }
             if (world_rank == 0)        //<- Receiving EU
             {   
                 //std::cout << "     - Node 0 receiving EU from node " << procIndex << "." << std::endl;
-                MPI_Recv(et_received_buffer, nEnergies*nTimePoints, MPI_C_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(et_received_buffer, nEnergies*nTimePoints, MPI_C_DOUBLE_COMPLEX, procIndex, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 arma::cx_dmat E_received_arma = arma::cx_dmat(et_received_buffer, nEnergies, nTimePoints); 
                 Enrgs += E_received_arma;
             }

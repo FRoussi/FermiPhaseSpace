@@ -65,7 +65,6 @@
                 "${fileDirname}/fps_fTWA_MPI",    
                 "-larmadillo",
                 "-fopenmp",
-                "-lhdf5",
             ],
             "options": {
                 "cwd": "${fileDirname}"

@@ -352,8 +352,8 @@ arma::sp_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec diag)
     arma::umat locations = arma::umat(2, (uint)diag.size(), arma::fill::zeros);
     for (uint i = 0; i<(uint)diag.size(); i++)
     {
-        locations[0,i] = i;
-        locations[1,i] = i;
+        locations.at(0,i) = i;
+        locations.at(1,i) = i;
     }
 
     return arma::sp_dmat(locations, diag, bbSize, bbSize, true, true);
@@ -424,8 +424,8 @@ arma::sp_dmat FHEDSolver::numberOperatorSpinUp(uint iSite)
             {
                 for (uint ld = 0; ld < basisSizeSpinDown; ld++)
                 {
-                    locations[0, index] = ld + basisSizeSpinDown * lu;
-                    locations[1, index] = ld + basisSizeSpinDown * lu;
+                    locations.at(0, index) = ld + basisSizeSpinDown * lu;
+                    locations.at(1, index) = ld + basisSizeSpinDown * lu;
                     values[index] = 1;
                     index++;
                 }
@@ -453,8 +453,8 @@ arma::sp_dmat FHEDSolver::numberOperatorSpinDown(uint iSite)
             {
                 for (uint lu = 0; lu < basisSizeSpinUp; lu++)
                 {
-                    locations[0, index] = ld + basisSizeSpinDown * lu;
-                    locations[1, index] = ld + basisSizeSpinDown * lu;
+                    locations.at(0, index) = ld + basisSizeSpinDown * lu;
+                    locations.at(1, index) = ld + basisSizeSpinDown * lu;
                     values[index] = 1;
                     index++;
                 }
