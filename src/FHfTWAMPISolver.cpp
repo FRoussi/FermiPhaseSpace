@@ -37,7 +37,7 @@ void FHfTWAMPISolver::runSimulation( )
 
 
     uint nSites = fhSystem->getnSites();
-    uint nEnergies = 3;     
+  
     
     std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
     //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
@@ -658,7 +658,7 @@ void FHfTWAMPISolver::runSimulation( )
             {
                 Energies.row(ie) = Enrgs.row(ie) / nTraj;
             }
-            Energies.row(nEnergies-1) = arma::sum(Energies, 0);
+            Energies.row(nEnergies) = arma::sum(Energies, 0);
         }
 
 

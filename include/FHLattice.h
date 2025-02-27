@@ -24,6 +24,8 @@ vector<vector<double>> makeHoneyCombs(uint nCombs, double a);
 arma::dmat findHoneyCombGridBox(uint nCombs, double a);
 vector<vector<double>> makeGraphene(uint nx, uint ny, double a);
 arma::dmat findGrapheneGridBox(uint nx, uint ny, double a);
+vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta);
+void getNextIndexMoireHoneyCombs(int &n, int &m, int &l);
 vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a);
 arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a);
 

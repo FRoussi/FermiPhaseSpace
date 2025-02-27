@@ -1147,6 +1147,55 @@ arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a)
     return mat3;
 }
 
+vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta)
+{
+    double sqrt3 = std::sqrt(3);
+    uint nOfPoints = 0;
+    vector<vector<double>> pos = vector<vector<double>>();
+
+    arma::dmat pos0 =  { {-sqrt3/2   , -sqrt3/2  , 0, 0  , sqrt3/2   , sqrt3/2   },
+                         {-0.5       , 0.5       , 1, -1 , -0.5      , 0.5       },
+                         {0          , 0         , 0, 0  , 0         , 0         }};
+    pos0 = a * pos0;
+
+
+    arma::dmat graphVec = { { sqrt3 * a , sqrt3 * a / 2.},
+                            {0          , 1.5},
+                            {0          , 0}};
+                                        
+    double   thetaDeg = theta * arma::datum::pi/180;
+    
+    for (uint iLayer = 0; iLayer < 1; iLayer++)
+    {
+        double cosT = std::cos(iLayer * thetaDeg);
+        double sinT = std::sin(iLayer * thetaDeg);
+        arma::dmat rotationLayer = {    {cosT   , -sinT , 0},
+                                        {sinT   , cosT  , 0},
+                                        {0      ,   0   , 1}};
+
+        arma::dvec shiftLayer = {0,0,iLayer *b};
+
+        arma::dmat graphVecLayer = rotationLayer * graphVec;
+        arma::dmat pos0Layer = rotationLayer * pos0;
+
+        int n = 0;
+        int m = 0;
+        int l = 0;
+        int basisIndex[2] = {m-l, l};
+        
+        uint iComb = 1;
+
+        while (iComb < nCombs)
+        {
+            
+        }
+    }
+
+
+
+
+}
+
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
 /// @param vecVec A vector of vector of double 
 /// @return The arma::dmat version of the vector
@@ -1233,3 +1282,33 @@ void getNextIndex(uint& i, uint& j)
 
 }
 
+void getNextIndexMoireHoneyCombs(int &n, int &m, int &l)
+{
+
+    if (l == std::min(n, m+n))
+    {
+        if (m==(-n))
+        {
+            n = n+1;
+            m = n;
+            l = 0;
+        }
+        else
+        {
+            m = m-1;
+            l = std::max(-n, m-n); 
+        }
+    }
+    else
+    {
+        if (std::abs(m) == n)
+        {
+            l = l+1;
+        }
+        else
+        {
+            l = std::min(n, m+n);
+        }
+    }
+
+}

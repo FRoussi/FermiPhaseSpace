@@ -427,9 +427,9 @@ void FHHFSolver::runSimulation( )
         //EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        Energies = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
-        Energies.at(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+        Energies = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
         Energies.at(0,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        Energies.at(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
         if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
         {
             Energies.at(2,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
@@ -529,7 +529,7 @@ void FHHFSolver::runSimulation( )
 //std::cout << "Save En tot" << std::endl;
     if (saveEnergies)
     {
-        Energies.row(3) = Energies.row(0) + Energies.row(1) + Energies.row(2); 
+        Energies.row(nEnergies) = arma::sum(Energies, 0);
     }
     if (saveDiag2DMatrix)
     {
@@ -547,7 +547,7 @@ void FHHFSolver::runSimulation( )
         printf("--- Mean field dynamic, n1u : \n");
         (arma::real(Niiu.row(0))).print();
         printf("--- Mean field dynamic, E : \n");
-        (arma::real(Energies.row(3))).print();
+        (arma::real(Energies.row(nEnergies))).print();
     }
 
        // Writing the results :

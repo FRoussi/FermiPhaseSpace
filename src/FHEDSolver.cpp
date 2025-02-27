@@ -675,7 +675,7 @@ void FHEDSolver::runSimulation()
     std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
     arma::cx_dmat niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-    arma::cx_dmat Energies = arma::cx_dmat(4, nTimePoints, arma::fill::zeros);
+    arma::cx_dmat Energies = arma::cx_dmat(nEnergies + 1, nTimePoints, arma::fill::zeros);
     //arma::drowvec EU = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec EtH = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
@@ -722,7 +722,7 @@ void FHEDSolver::runSimulation()
             Energies.at(0,t) = arma::cdot(psi, H_U * psi);
             Energies.at(1,t) = arma::cdot(psi, H_t * psi);
             Energies.at(2,t) = arma::cdot(psi, H_externalPotential * psi);
-            Energies.at(3,t) = Energies.at(0,t) + Energies.at(1,t) + Energies.at(2,t);
+            Energies.at(3,t) = arma::sum(Energies.col(t)); 
         }
         if(saveNiuNid)
         {

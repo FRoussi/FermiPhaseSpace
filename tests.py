@@ -1,9 +1,12 @@
 import subprocess
 import json
+import os
 
 systFolder = 'systemsFolder'
 exName = 'hc2'
 filePath = systFolder + '/' + exName + '.json'
+
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 print('### FilePath : ' + filePath + ' ###')
 

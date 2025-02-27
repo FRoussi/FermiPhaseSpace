@@ -260,7 +260,7 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        Energies    = arma::cx_dmat(4,nTimePoints, arma::fill::zeros);
+        Energies    = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
     }
     if (saveTBStates)
     {
@@ -327,7 +327,7 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        En_loc          = arma::cx_dmat(3,nTimePoints, arma::fill::zeros);
+        En_loc          = arma::cx_dmat(nEnergies,nTimePoints, arma::fill::zeros);
     }
 
     arma::cx_dmat Nu_loc    = arma::cx_dmat(nSites, nSites);
@@ -485,7 +485,7 @@ void FHfTWASolver::runSimulation( )
         }
         if (saveEnergies)
         {
-            for (uint ie =0; ie < 3; ie ++)
+            for (uint ie =0; ie < nEnergies; ie ++)
             {
                 Energies.row(ie) +=En_loc.row(ie);
             }
@@ -560,7 +560,7 @@ void FHfTWASolver::runSimulation( )
     if (saveEnergies)
     {
         Energies = Energies/nTraj_arma;
-        Energies.row(3) = arma::sum(Energies,0);
+        Energies.row(nEnergies) = arma::sum(Energies,0);
     }
 
     writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);

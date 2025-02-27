@@ -22,6 +22,8 @@ FHSolver::FHSolver(FHSystem *fhS)
     saveMFStates = false;
     saveEnergies = true;
 
+    nEnergies = 3;
+
 }
 
 void FHSolver::setResultFile(std::string wN, std::string fN)

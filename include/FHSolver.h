@@ -70,6 +70,8 @@ protected:
     bool                    saveMFStates;
     bool                    saveEnergies;
 
+    uint                    nEnergies;   
+
     std::string             workName;                     //<- A name for the work, for the results file
     std::string             folderName;                   //<- A name for the work folder, for the results file
 
@@ -96,6 +98,9 @@ protected:
         arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
         arma::cx_dmat &NiuNid, 
         arma::cx_dmat &E,std::vector<double> &timeLine);
+
+
+    
 
 
 };
