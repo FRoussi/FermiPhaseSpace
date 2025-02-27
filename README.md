@@ -17,6 +17,8 @@ And do not forget Pascal's bet : it costs you nothing to be polite to the machin
 
 A MPI version of the fTWA method is avalaible.
 
+We are using the [Armadillo library](https://arma.sourceforge.net/) for the linear algebra calculations. Its installation requires OPENBLAS and ARPACK, we have used and tested Armadillo without LAPACK.
+
 ### Compilation of programs
 
 This code contains five programs whose main functions are in "fps.cpp", "fps_HF.cpp", "fps_fTWA_MPI.cpp", "makeSitesSystem,cpp" and "makeWannierFile.cpp".
@@ -24,6 +26,14 @@ This code contains five programs whose main functions are in "fps.cpp", "fps_HF.
 ### Makefile examples
 
 The Makefile used to compile the four main executables are in the /FolderMakefile. They were used on a Cray environment.
+
+#### Options used
+
+The options we used are not the consequences of a deep knowledge of computer sciences, but they worked well :
+
+- Armadillo installation: '-DOPENBLAS_PROVIDES_LAPACK=true'
+- FPS compilation : -larmadillo -fopenmp
+- Environment variables : 'OPENBLAS_NUM_THREADS=1'
 
 ## Usage
 
@@ -165,4 +175,4 @@ The usual simplification is to consider the one-particle density matrix $` \rho_
 
 Thanks ME
 
----- Capitaine Docteur Frousse
+---- ***Capitaine Docteur Frousse***
