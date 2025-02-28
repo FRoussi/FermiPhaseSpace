@@ -1254,6 +1254,44 @@ vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, doub
     return pos;
 }
 
+
+vector<vector<double>> makeMoireGraphene(uint nx, uint ny, double a, double b, double theta)
+{
+    vector<vector<double>> pos = vector<vector<double>>();
+    uint nLayers = 2;
+    double   thetaDeg = theta * arma::datum::pi/180;
+
+    for (uint iLayer = 0; iLayer < nLayers; iLayer++)
+    {
+
+        double cosT = std::cos(iLayer * thetaDeg);
+        double sinT = std::sin(iLayer * thetaDeg);
+        arma::dmat rotationLayer = {    {cosT   , -sinT , 0},
+                                        {sinT   , cosT  , 0},
+                                        {0      ,   0   , 1}};
+
+        vector<vector<double>> posLayer = makeGraphene(nx, ny, a);
+
+        arma::dmat graphBox = findGrapheneGridBox(nx, ny, a);
+        arma::dcolvec midBox = (graphBox.col(0) + graphBox.col(1))/2.;
+        
+        for ( vector<vector<double>>::iterator itPos = posLayer.begin(); itPos != posLayer.end(); itPos++)
+        {
+            arma::dcolvec aPos = arma::dcolvec(*itPos);     //      { (*itPos)[0],  (*itPos)[1],  (*itPos)[2]} ;
+            aPos -= midBox;
+            aPos = rotationLayer * aPos;
+            aPos(2) = iLayer * b;
+            (*itPos) = arma::conv_to<vector<double>>::from(aPos); // {aPos(0), aPos(1), aPos(2)};
+        }
+
+
+        pos.insert(pos.end(), posLayer.begin(), posLayer.end());
+    }
+
+
+    return pos;
+}
+
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
 /// @param vecVec A vector of vector of double 
 /// @return The arma::dmat version of the vector
