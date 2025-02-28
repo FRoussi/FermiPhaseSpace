@@ -280,6 +280,20 @@ switch (latticeType)
         latticeName = "Graphene";
         break;
     }
+    case moire:
+    {
+        int nCombs = static_cast<int>(parameters[0]);
+        double a = parameters[1];
+        double b = parameters[2];
+        double theta = parameters[3];
+        pos = makeMoireHoneyCombs(nCombs,  a, b, theta);
+        latticeMatrix = findHoneyCombGridBox(nCombs, a);
+        intParameters = {nCombs};
+        floatParameters = {a, b, theta};
+        computeInverseLatticeMatrix();
+        latticeName = "Moire";
+        break;
+    }
     default:
         break;
     }
@@ -1149,8 +1163,10 @@ arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a)
 
 vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta)
 {
+    double samePointThreshold = 0.001 * a;
     double sqrt3 = std::sqrt(3);
     uint nOfPoints = 0;
+    uint nLayers = 2;
     vector<vector<double>> pos = vector<vector<double>>();
 
     arma::dmat pos0 =  { {-sqrt3/2   , -sqrt3/2  , 0, 0  , sqrt3/2   , sqrt3/2   },
@@ -1162,38 +1178,80 @@ vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, doub
     arma::dmat graphVec = { { sqrt3 * a , sqrt3 * a / 2.},
                             {0          , 1.5},
                             {0          , 0}};
+
+    
                                         
     double   thetaDeg = theta * arma::datum::pi/180;
     
-    for (uint iLayer = 0; iLayer < 1; iLayer++)
+
+    for (uint iLayer = 0; iLayer < nLayers; iLayer++)       //<- For each layer
     {
+
+        uint nOfPointsLayer = 0;
+        arma::dmat positionsLayer = arma::dmat(3,6*nCombs); 
+
         double cosT = std::cos(iLayer * thetaDeg);
         double sinT = std::sin(iLayer * thetaDeg);
         arma::dmat rotationLayer = {    {cosT   , -sinT , 0},
                                         {sinT   , cosT  , 0},
                                         {0      ,   0   , 1}};
 
-        arma::dvec shiftLayer = {0,0,iLayer *b};
+        arma::dcolvec shiftLayer = {0,0,iLayer *b};
 
         arma::dmat graphVecLayer = rotationLayer * graphVec;
         arma::dmat pos0Layer = rotationLayer * pos0;
 
+ 
+
         int n = 0;
         int m = 0;
         int l = 0;
-        int basisIndex[2] = {m-l, l};
+        arma::dcolvec basisIndex = {(double)(m-l), (double)l};
         
-        uint iComb = 1;
 
-        while (iComb < nCombs)
+        for (uint iComb = 0; iComb < nCombs; iComb ++)                  //<- we build the combs
         {
-            
+            arma::dcolvec vectorComb = graphVecLayer * basisIndex + shiftLayer;
+            arma::dmat posNew = pos0Layer.each_col() + vectorComb;
+            positionsLayer.cols(nOfPointsLayer, nOfPointsLayer + 5) = posNew;
+            nOfPointsLayer += 6;
+
+            getNextIndexMoireHoneyCombs(n, m, l);
+            basisIndex = {(double)(m-l), (double)l};
+        }
+    
+
+        uint i1 = 1;
+        while (i1 < positionsLayer.n_cols)          //<- We remove the doublons
+        {
+            uint nDoublonFound = 0;
+            uint i2 = i1+1;
+            while ((i2<positionsLayer.n_cols) && (nDoublonFound < 2))
+            {
+                if (arma::norm(positionsLayer.col(i1) - positionsLayer.col(i2), 1) < samePointThreshold)    //<- if 2 poits are the same
+                {
+                    positionsLayer.shed_col(i2);                                                            //<- we remove the second one
+                    nDoublonFound += 1;                                                                     //<- we cannot have more than a 3-times doublons
+                }
+                else
+                {
+                    i2 += 1;
+                }
+
+            }
+
+            i1 += 1;
+        }
+        nOfPoints += positionsLayer.n_cols;
+        
+        for (uint iPos = 0; iPos < positionsLayer.n_cols ; iPos++)
+        {
+            vector<double> iVec = {positionsLayer(0,iPos), positionsLayer(1,iPos), positionsLayer(2,iPos)};
+            pos.push_back(iVec);
         }
     }
 
-
-
-
+    return pos;
 }
 
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
