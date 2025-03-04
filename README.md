@@ -141,6 +141,17 @@ Is used to generate files for the Wannier tools suite.
 
 ### Example
 
+We first make a system of 6 sites organised as a 3x2 grid :
+
+    ./makeSitesSystem 6sites grid 3 2
+
+We have now in the folder *systemsFolder* a two files called *6sites.json* and *6sites.xyz* that describes respectively the dynamical simulation and the sites positions. To launch the simulation :
+
+    ./fps systemsFolder/6sites.json
+
+This will compute a Hartree-Fock dynamic (default settings) and write a result file called *6sites_HF_res.json* in the same folder than *6sites.json*. 
+To m
+
 ## Fermions Phase-Space Representation methods
 
 The FermiPhaseSpace code computes solutions of the time-dependent Schrödinger equation on a Fermi-Hubbard system.
