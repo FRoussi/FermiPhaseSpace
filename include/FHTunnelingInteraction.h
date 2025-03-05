@@ -14,7 +14,9 @@
 enum FHTunnelingInteractionType{
     TEnull,
     TEnearestNeigbors,
-    TEdistanceInteraction,
+    TEdistanceInteraction0,
+    TEdistanceInteraction1,
+    TEdistanceInteraction2,
     TEgiven
 };
 

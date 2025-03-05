@@ -1,6 +1,5 @@
 #pragma once
 
-#pragma once
 
 #include <vector>
 //#define ARMA_DONT_USE_OPENMP
@@ -11,7 +10,7 @@
 #include <fstream>
 
 
-
+#include "MapDoubleEntry.h"
 #include "json/json.h"
 
 using std::vector;
@@ -160,6 +159,7 @@ private:
     vector<vector<bool>>                    sameSiteMatrix;
 
 // Lattice type names
+    MapDoubleEntry<FHLatticeType> latticeMap;
     std::map<FHLatticeType, std::string>    latticeTypeNames;
     std::map<std::string, FHLatticeType>    latticeTypeNamesReverse;
 

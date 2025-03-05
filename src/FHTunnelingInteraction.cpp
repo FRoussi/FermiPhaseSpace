@@ -65,7 +65,7 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, double neighbourD
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, std::vector<double> tunnelingDs, std::vector<double> tunnelingEs)
 {
-    tunnelingInteractionType = FHTunnelingInteractionType::TEdistanceInteraction;
+    tunnelingInteractionType = FHTunnelingInteractionType::TEdistanceInteraction0;
     fhLattice = lat;
 
     parameterSet1 = std::vector<double>(tunnelingEs);
@@ -145,7 +145,7 @@ Json::Value         FHTunnelingInteraction::writeTunnelingInteractionJson()
             jpot["neighborInteraction"] = parameterSet1[0];
             break;
         }
-        case(FHTunnelingInteractionType::TEdistanceInteraction):
+        case(FHTunnelingInteractionType::TEdistanceInteraction0):
         {
             jpot["type"] = "distanceInteraction";
 
