@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
     vector<double> geomParam = vector<double>();    //<- list of geometry parameters stored in double
     double argDouble = 0;                           //<- the current entry in double
     bool isANumber = true;                          //<- is the current entry a number
+    uint maxNumOfParameters = 5;
 
     if (argc < 2)
     {
@@ -124,7 +125,7 @@ int main(int argc, char* argv[])
 
 
 // Computation of the geometry
-        for(unsigned int iGeom = geomParam.size(); iGeom<4; iGeom++)
+        for(unsigned int iGeom = geomParam.size(); iGeom < maxNumOfParameters; iGeom++)
         {
             geomParam.push_back(1.);
         }

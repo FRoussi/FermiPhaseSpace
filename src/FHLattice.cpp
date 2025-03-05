@@ -280,7 +280,7 @@ switch (latticeType)
         latticeName = "Graphene";
         break;
     }
-    case moire:
+    case moireHC:
     {
         int nCombs = static_cast<int>(parameters[0]);
         double a = parameters[1];
@@ -289,6 +289,20 @@ switch (latticeType)
         pos = makeMoireHoneyCombs(nCombs,  a, b, theta);
         latticeMatrix = findHoneyCombGridBox(nCombs, a);
         intParameters = {nCombs};
+        floatParameters = {a, b, theta};
+        computeInverseLatticeMatrix();
+        latticeName = "MoireHC";
+        break;
+    }
+    case moire:
+    {
+        int n[2] = {static_cast<int>(parameters[0]), static_cast<int>(parameters[1])};
+        double a = parameters[2];
+        double b = parameters[3];
+        double theta = parameters[4];
+        pos = makeMoireGraphene(n[0], n[1],  a, b, theta);
+        latticeMatrix = findGrapheneGridBox(n[0], n[1], a);
+        intParameters = {n[0], n[1]};
         floatParameters = {a, b, theta};
         computeInverseLatticeMatrix();
         latticeName = "Moire";
@@ -818,6 +832,7 @@ void FHLattice::init_latticeNameMap()
     latticeTypeNames[FHLatticeType::triangular] = "triangular";
     latticeTypeNames[FHLatticeType::honeyCombs] = "honeyCombs";
     latticeTypeNames[FHLatticeType::graphene] = "graphene";
+    latticeTypeNames[FHLatticeType::moireHC] = "moireHC";
     latticeTypeNames[FHLatticeType::moire] = "moire";
     latticeTypeNames[FHLatticeType::kagome] = "kagome";
 
@@ -1076,7 +1091,7 @@ arma::dmat findHoneyCombGridBox(uint nCombs, double a)
 }
 
 
-vector<vector<double>> makeGraphene(uint nx, uint ny, double a)
+vector<vector<double>> makeGraphene(int nx, int ny, double a)
 {
     double sqrt3 = std::sqrt(3);
     uint nOfPoints =0;
@@ -1090,14 +1105,14 @@ vector<vector<double>> makeGraphene(uint nx, uint ny, double a)
     double jVec[2] = {sqrt3/2 *a, 1.5 *a};
 
 
-    for (uint j = 0; j < ny; j++)
+    for (int j = 0; j < ny; j++)
     {
         vector<vector<double>> posNewY = pos0;
         posNewY[0][0] += jVec[0] * j;
         posNewY[0][1] += jVec[1] * j;
         posNewY[1][0] += jVec[0] * j;
         posNewY[1][1] += jVec[1] * j;
-        for (uint i = 0; i<nx; i++)
+        for (int i = 0; i<nx; i++)
         {
             vector<vector<double>> posNew = posNewY;
             posNew[0][0] += iVec[0] * i;
@@ -1115,7 +1130,7 @@ vector<vector<double>> makeGraphene(uint nx, uint ny, double a)
     return pos;
 }
 
-arma::dmat findGrapheneGridBox(uint nx, uint ny, double a)
+arma::dmat findGrapheneGridBox(int nx, int ny, double a)
 {
     double sqrt3 = std::sqrt(3);
     arma::dmat mat3 = { {sqrt3 * a * nx,    sqrt3 / 2 * a * ny  , 0     },
@@ -1125,7 +1140,7 @@ arma::dmat findGrapheneGridBox(uint nx, uint ny, double a)
     return mat3;
 }
 
-vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a)
+vector<vector<double>> makeTetragones(int nx, int ny, int nz, double a)
 {
     uint nOfPoints = 0;
     double sqrt3 = std::sqrt(3);
@@ -1134,11 +1149,11 @@ vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a)
     double jVec[3] = {1./2. *a, sqrt3 / 2. * a     , 0};
     double kVec[3] = {1./2. *a, 1. / (2*sqrt3) * a , sqrt(2) / sqrt3 * a};
 
-    for (uint k = 0; k<nz; k++)
+    for (int k = 0; k<nz; k++)
     {
-        for (uint j = 0;j<ny; j++)
+        for (int j = 0;j<ny; j++)
         {
-            for (uint i = 0; i<nx; i++)
+            for (int i = 0; i<nx; i++)
             {
                 vector<double> newVec = {   i * iVec[0] + j * jVec[0] + k * kVec[0],   
                                             i * iVec[1] + j * jVec[1] + k * kVec[1],           
@@ -1151,7 +1166,7 @@ vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a)
     return pos;
 }
 
-arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a)
+arma::dmat findTetragonesGridBox(int nx,int ny, int nz, double a)
 {
     double sqrt3 = std::sqrt(3);
     arma::dmat mat3 = { {a * nx, a / 2 * ny         , a / 2 * nz },
@@ -1255,7 +1270,7 @@ vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, doub
 }
 
 
-vector<vector<double>> makeMoireGraphene(uint nx, uint ny, double a, double b, double theta)
+vector<vector<double>> makeMoireGraphene(int nx, int ny, double a, double b, double theta)
 {
     vector<vector<double>> pos = vector<vector<double>>();
     uint nLayers = 2;

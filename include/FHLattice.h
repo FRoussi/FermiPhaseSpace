@@ -22,13 +22,13 @@ vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a);
 vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a);
 vector<vector<double>> makeHoneyCombs(uint nCombs, double a);
 arma::dmat findHoneyCombGridBox(uint nCombs, double a);
-vector<vector<double>> makeGraphene(uint nx, uint ny, double a);
-arma::dmat findGrapheneGridBox(uint nx, uint ny, double a);
+vector<vector<double>> makeGraphene(int nx, int ny, double a);
+arma::dmat findGrapheneGridBox(int nx, int ny, double a);
 vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta);
 void getNextIndexMoireHoneyCombs(int &n, int &m, int &l);
-vector<vector<double>> makeMoireGraphene(uint nx, uint ny, double a, double b, double theta);
-vector<vector<double>> makeTetragones(uint nx, uint ny, uint nz, double a);
-arma::dmat findTetragonesGridBox(uint nx, uint ny, uint nz, double a);
+vector<vector<double>> makeMoireGraphene(int nx, int ny, double a, double b, double theta);
+vector<vector<double>> makeTetragones(int nx, int ny, int nz, double a);
+arma::dmat findTetragonesGridBox(int nx, int ny, int nz, double a);
 
 void getNextIndex(uint& i, uint& j);
 
@@ -46,6 +46,7 @@ template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex);
         triangular,
         honeyCombs,
         graphene,
+        moireHC,
         moire,
         kagome
     };
