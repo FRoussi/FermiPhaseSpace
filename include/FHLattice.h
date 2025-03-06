@@ -10,7 +10,6 @@
 #include <fstream>
 
 
-#include "MapDoubleEntry.h"
 #include "json/json.h"
 
 using std::vector;
@@ -153,13 +152,14 @@ private:
 
 // Connections      
     double                                  neighbourDistance = 1;
-    double                                  samePointDistance = 0.001;
+    double                                  samePointDistance = 0.0001;
     arma::dmat                              distanceMatrix;
     vector<vector<bool>>                    neighbourMatrix;
     vector<vector<bool>>                    sameSiteMatrix;
 
 // Lattice type names
-    MapDoubleEntry<FHLatticeType> latticeMap;
+//MapDoubleEntry<int>           latticeNamesMap;
+    //MapDoubleEntry<FHLatticeType>           latticeNamesMap;
     std::map<FHLatticeType, std::string>    latticeTypeNames;
     std::map<std::string, FHLatticeType>    latticeTypeNamesReverse;
 

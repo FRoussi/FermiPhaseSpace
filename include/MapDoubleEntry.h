@@ -1,29 +1,25 @@
-#pragma once
 
-#include <vector>
-#include <armadillo>
-#include <cmath>
+#include <string>
 #include <map>
-#include <iostream>
-#include <fstream>
 
 
 
-template <typename T> class MapDoubleEntry
+template <typename T> 
+class MapDoubleEntry
 {
 
 public :
     MapDoubleEntry();
 
-    void append(std::string key, T value);
+    //void append(std::string key, T value);
 
-    std::string get(T value);
-    T get(std::string key);
+    //std::string get(T value);
+    //T get(std::string key);
 
-    ~MapDoubleEntry<T>();
+    ~MapDoubleEntry();
 
 private :
-    std::map<T, std::string>    map;
-    std::map<std::string, T>    mapReverse;
+    //std::map<T, std::string>    map;
+    //std::map<std::string, T>    mapReverse;
 
 };

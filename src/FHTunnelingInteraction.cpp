@@ -4,39 +4,126 @@
 FHTunnelingInteraction::FHTunnelingInteraction()
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
+    init_tunnelingNameMap();
 }
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat)
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
     fhLattice = lat;
+    init_tunnelingNameMap();
 }
 
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJson)
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
+    init_tunnelingNameMap();
     fhLattice = lat;
-    std::string tunnType = tunnJson.get("type", "null").asString();
-    if (tunnType == "nearestNeighbors")
-    {
 
-        tunnelingInteractionType = FHTunnelingInteractionType::TEnearestNeigbors;
-        double tunnDist = tunnJson.get("neighborDistance", 1.).asDouble();
-        double tunnE = tunnJson.get("neighborInteraction", -1.).asDouble();
+    // get the tunneling type :
+    std::string tunnType = tunnJson.get("type", "null").asString();
+    std::map< std::string, FHTunnelingInteractionType>::iterator lti = tunnelingInteractionTypeNamesReverse.find(tunnType);
+    if (lti != tunnelingInteractionTypeNamesReverse.end())
+    {
+        tunnelingInteractionType = lti->second;
+    }
 
     parameterSet1 = std::vector<double>();
     parameterSet2 = std::vector<double>();
+    uint nSites = fhLattice->getnSites();
+    tunnelingInteraction = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
-    parameterSet1.push_back(tunnE);
-    parameterSet2.push_back(tunnDist);
-
-        uint nSites = fhLattice->getnSites();
-        tunnelingInteraction = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-
+    switch (tunnelingInteractionType)
+    {
+        case FHTunnelingInteractionType::TEnull:
+        {
+            break;
+        }
+        case FHTunnelingInteractionType::TEnearestNeigbors:
+        {
+            double tunnDist = tunnJson.get("neighborDistance", 1.).asDouble();
+            double tunnE = tunnJson.get("neighborInteraction", -1.).asDouble();
             addTunneling(tunnDist, tunnE);
+            parameterSet1.push_back(tunnE);
+            parameterSet2.push_back(tunnDist);
+            break;
+        }
+        case FHTunnelingInteractionType::TEdistanceInteraction0:
+        {
+            Json::Value distancesJson = tunnJson["distances"];
+            Json::Value energiesJson = tunnJson["energies"];
+            if (distancesJson != Json::Value::null)
+            {
+                if (distancesJson.size() == energiesJson.size())
+                {
+                    for ( int id = 0; id < distancesJson.size(); id++ )
+                    {
+                        double tunnDist = distancesJson[id].asDouble();
+                        double tunnE = energiesJson[id].asDouble();
+                        parameterSet1.push_back(tunnE);
+                        parameterSet2.push_back(tunnDist);
+                        addTunneling(tunnDist, tunnE);
+                    }
+                }
+                else
+                {
+                    std::cout << "Problem in the tunneling energy parameters." << std::endl;
+                }
 
+            }
+            break;
+        }
+        case FHTunnelingInteractionType::TEdistanceInteraction1:
+        {
+            Json::Value distancesJson = tunnJson["distances"];
+            Json::Value energiesJson = tunnJson["energies"];
+            if (distancesJson != Json::Value::null)
+            {
+                if (distancesJson.size() == energiesJson.size())
+                {
+                    for ( int id = 0; id < distancesJson.size(); id++ )
+                    {
+                        double tunnDist = distancesJson[id].asDouble();
+                        double tunnE = energiesJson[id].asDouble();
+                        parameterSet1.push_back(tunnE);
+                        parameterSet2.push_back(tunnDist);
+                    }
+                }
+                else
+                {
+                    std::cout << "Problem in the tunneling energy parameters." << std::endl;
+                }
+            }
+            break;
+        }
+        case FHTunnelingInteractionType::TEdistanceInteraction2:
+        {
+            Json::Value distancesJson = tunnJson["distances"];
+            Json::Value energiesJson = tunnJson["energies"];
+            if (distancesJson != Json::Value::null)
+            {
+                if (distancesJson.size() == energiesJson.size())
+                {
+                    for ( int id = 0; id < distancesJson.size(); id++ )
+                    {
+                        double tunnDist = distancesJson[id].asDouble();
+                        double tunnE = energiesJson[id].asDouble();
+                        parameterSet1.push_back(tunnE);
+                        parameterSet2.push_back(tunnDist);
+                    }
+                }
+                else
+                {
+                    std::cout << "Problem in the tunneling energy parameters." << std::endl;
+                }
+            }
+            break;
+        }
+        default:
+            break;
     }
+
 
 }
 
@@ -198,6 +285,78 @@ void                        FHTunnelingInteraction::addTunneling(double distance
 
 }
 
+
+void                        FHTunnelingInteraction::addTunnelingOrder1()
+{
+
+}
+
+double                      FHTunnelingInteraction::getTunnelingEnergyOrder1(double distance)
+{
+    double samePD = fhLattice->getSamePointDistance();
+
+    if (distance < (parameterSet2.front() - samePD))
+    {
+        return 0;
+    }
+    else if (distance > (parameterSet2.back() + samePD))
+    {
+        return 0;
+    }
+    else
+    {
+        if (distance <= parameterSet2.front() )
+        {
+            return parameterSet1.front();
+        }
+        else if (distance >= parameterSet2.back() )
+        {
+            return parameterSet1.back();
+        }
+        else
+        {        
+            uint itd = 0;
+            while (parameterSet2[itd] < distance)
+            {
+                itd++;
+            }
+            itd--;
+            double r = (distance - parameterSet2[itd])/(parameterSet2[itd+1] - parameterSet2[itd]);
+            return ((1-r)*parameterSet1[itd] + r*parameterSet1[itd+1]);
+        }
+
+
+    }
+}
+
+void                        FHTunnelingInteraction::addTunnelingOrder2()
+{
+
+}
+
+double                      FHTunnelingInteraction::getTunnelingEnergyOrder1(double distance)
+{
+    
+}
+
+void                                    FHTunnelingInteraction::init_tunnelingNameMap()
+{
+    tunnelingInteractionTypeNames = std::map<FHTunnelingInteractionType, std::string>();
+    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnull] = "null";
+    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEgiven] = "given";
+    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnearestNeigbors] = "nearestNeighbors";
+    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction0] = "distanceInteraction";
+    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction1] = "distanceInteraction1";
+    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction2] = "distanceInteraction2";
+
+
+    tunnelingInteractionTypeNamesReverse = std::map<std::string, FHTunnelingInteractionType>();
+
+    for (std::map<FHTunnelingInteractionType, std::string>::iterator it = tunnelingInteractionTypeNames.begin(); it != tunnelingInteractionTypeNames.end(); it ++)
+    {
+        tunnelingInteractionTypeNamesReverse.emplace(it->second, it->first);
+    }
+}
 
 FHTunnelingInteraction::~FHTunnelingInteraction()
 {

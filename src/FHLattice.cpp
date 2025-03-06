@@ -1,6 +1,7 @@
 #include "../include/FHLattice.h"
 
 
+
 FHLattice::FHLattice(bool talk)
 {
 
@@ -218,6 +219,8 @@ switch (latticeType)
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "CubicGrid";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a;
         break;
     }
     case bulkCenteredCubic:
@@ -230,6 +233,8 @@ switch (latticeType)
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "BCCGrid";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a/std::sqrt(3);
         break;
     }
     case faceCenteredCubic:
@@ -242,6 +247,8 @@ switch (latticeType)
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "FCCGrid";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a/std::sqrt(2);
         break;
     }
     case honeyCombs:
@@ -254,6 +261,8 @@ switch (latticeType)
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "HoneyCombs";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a;
         break;
     }
     case triangular:
@@ -266,6 +275,8 @@ switch (latticeType)
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "Tetragones";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a;
         break;
     }
     case graphene:
@@ -278,6 +289,8 @@ switch (latticeType)
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "Graphene";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a;
         break;
     }
     case moireHC:
@@ -292,6 +305,8 @@ switch (latticeType)
         floatParameters = {a, b, theta};
         computeInverseLatticeMatrix();
         latticeName = "MoireHC";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a;
         break;
     }
     case moire:
@@ -306,6 +321,8 @@ switch (latticeType)
         floatParameters = {a, b, theta};
         computeInverseLatticeMatrix();
         latticeName = "Moire";
+        samePointDistance = 1.0E-6 * a;
+        neighbourDistance = a;
         break;
     }
     default:
@@ -843,6 +860,22 @@ void FHLattice::init_latticeNameMap()
         latticeTypeNamesReverse.emplace(it->second, it->first);
     }
 
+
+
+    /*
+    latticeNamesMap = MapDoubleEntry<FHLatticeType>();
+    latticeNamesMap.append("none", FHLatticeType::none);
+    latticeNamesMap.append("grid", FHLatticeType::cubic);
+    latticeNamesMap.append("bcc", FHLatticeType::bulkCenteredCubic);
+    latticeNamesMap.append("fcc", FHLatticeType::faceCenteredCubic);
+    latticeNamesMap.append("triangular", FHLatticeType::triangular);
+    latticeNamesMap.append("honeyCombs", FHLatticeType::honeyCombs);
+    latticeNamesMap.append("graphene", FHLatticeType::graphene);
+    latticeNamesMap.append("moireHC", FHLatticeType::moireHC);
+    latticeNamesMap.append("moire", FHLatticeType::moire);
+    latticeNamesMap.append("kagome", FHLatticeType::kagome);
+    */
+
  }
  
 
@@ -1033,7 +1066,7 @@ vector<vector<double>> makeHoneyCombs(uint nCombs, double a)
     }
 
     // We remove the doublons :
-    double samePointThreshold = 0.001 * a;
+    double samePointThreshold = 0.0001 * a;
 
 
     for (uint i1 = 0; i1< pos.size(); i1++)         //<- we look for all points equal to positions(i1)

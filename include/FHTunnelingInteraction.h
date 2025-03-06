@@ -49,12 +49,22 @@ private:
     arma::cx_dmat               tunnelingInteraction;
 
     FHTunnelingInteractionType       tunnelingInteractionType;    
-    
+
+
 
     std::vector<double>         parameterSet1;      //<- Energies
     std::vector<double>         parameterSet2;      //<- Distances
 
 
     void                        addTunneling(double distance, double energy);
+    void                        addTunnelingOrder1();
+    double                      getTunnelingEnergyOrder1(double distance);
+    void                        addTunnelingOrder2();
+    double                      getTunnelingEnergyOrder2(double distance);
+
+
+    std::map<FHTunnelingInteractionType, std::string>    tunnelingInteractionTypeNames;
+    std::map<std::string, FHTunnelingInteractionType>    tunnelingInteractionTypeNamesReverse;
+    void                                    init_tunnelingNameMap();
 
 };
