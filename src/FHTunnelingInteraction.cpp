@@ -288,7 +288,17 @@ void                        FHTunnelingInteraction::addTunneling(double distance
 
 void                        FHTunnelingInteraction::addTunnelingOrder1()
 {
+    uint nSites = fhLattice->getnSites();
 
+    for (uint iSite=0; iSite<nSites; iSite++)
+    {
+        for (uint jSite = iSite+1; jSite<nSites; jSite++)
+        {
+            double e = getTunnelingEnergyOrder1(fhLattice->getDistance(iSite, jSite));
+            tunnelingInteraction(iSite, jSite) += e;
+            tunnelingInteraction(jSite, iSite) += e;
+        }
+    }
 }
 
 double                      FHTunnelingInteraction::getTunnelingEnergyOrder1(double distance)
@@ -331,12 +341,68 @@ double                      FHTunnelingInteraction::getTunnelingEnergyOrder1(dou
 
 void                        FHTunnelingInteraction::addTunnelingOrder2()
 {
+    uint nSites = fhLattice->getnSites();
 
+    for (uint iSite=0; iSite<nSites; iSite++)
+    {
+        for (uint jSite = iSite+1; jSite<nSites; jSite++)
+        {
+            double e = getTunnelingEnergyOrder2(fhLattice->getDistance(iSite, jSite));
+            tunnelingInteraction(iSite, jSite) += e;
+            tunnelingInteraction(jSite, iSite) += e;
+        }
+    }
 }
 
-double                      FHTunnelingInteraction::getTunnelingEnergyOrder1(double distance)
+double                      FHTunnelingInteraction::getTunnelingEnergyOrder2(double distance)
 {
-    
+    double samePD = fhLattice->getSamePointDistance();
+
+    if (distance < (parameterSet2.front() - samePD))
+    {
+        return 0;
+    }
+    else if (distance > (parameterSet2.back() + samePD))
+    {
+        return 0;
+    }
+    else
+    {
+        if (distance <= parameterSet2.front() )
+        {
+            return parameterSet1.front();
+        }
+        else if (distance >= parameterSet2.back() )
+        {
+            return parameterSet1.back();
+        }
+        else
+        {        
+            uint itd = 0;
+            while (parameterSet2[itd] < distance)
+            {
+                itd++;
+            }
+            itd--;
+            if (itd == 0) 
+            {
+                double r = (distance - parameterSet2[itd])/(parameterSet2[itd+1] - parameterSet2[itd]);
+                return ((1-r)*parameterSet1[itd] + r*parameterSet1[itd+1]);
+            }
+            else if (itd == (parameterSet1.size()-1)) 
+            {
+                double r = (distance - parameterSet2[itd])/(parameterSet2[itd+1] - parameterSet2[itd]);
+                return ((1-r)*parameterSet1[itd] + r*parameterSet1[itd+1]);
+            }
+            else
+            {
+                double r = (distance - parameterSet2[itd])/(parameterSet2[itd+1] - parameterSet2[itd]);
+                return ((1-r)*parameterSet1[itd] + r*parameterSet1[itd+1]);
+            }
+        }
+
+
+    }
 }
 
 void                                    FHTunnelingInteraction::init_tunnelingNameMap()
