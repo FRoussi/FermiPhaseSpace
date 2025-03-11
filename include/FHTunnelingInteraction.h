@@ -17,8 +17,17 @@ enum FHTunnelingInteractionType{
     TEdistanceInteraction0,
     TEdistanceInteraction1,
     TEdistanceInteraction2,
-    TEgiven
+    TEgiven,
+    TEsum
 };
+
+enum FHTunnelingInteractionRelation{
+    TERall,
+    TERsameSpecies,
+    TERAB,
+};
+
+
 
 class FHTunnelingInteraction
 {
@@ -52,8 +61,14 @@ private:
 
 
 
+
+
     std::vector<double>         parameterSet1;      //<- Energies
     std::vector<double>         parameterSet2;      //<- Distances
+
+    FHTunnelingInteractionRelation  tunnelingInteractionRelation;
+    std::string speciesA;
+    std::string speciesB;
 
 
     void                        addTunneling(double distance, double energy);
@@ -63,8 +78,12 @@ private:
     double                      getTunnelingEnergyOrder2(double distance);
 
 
-    std::map<FHTunnelingInteractionType, std::string>    tunnelingInteractionTypeNames;
-    std::map<std::string, FHTunnelingInteractionType>    tunnelingInteractionTypeNamesReverse;
-    void                                    init_tunnelingNameMap();
+    std::map<FHTunnelingInteractionType, std::string>           tunnelingInteractionTypeNames;
+    std::map<std::string, FHTunnelingInteractionType>           tunnelingInteractionTypeNamesReverse;
+    std::map<FHTunnelingInteractionRelation, std::string>       tunnelingInteractionRelationNames;
+    std::map<std::string, FHTunnelingInteractionRelation>       tunnelingInteractionRelationNamesReverse;
+
+
+    void                                    init_tunnelingMaps();
 
 };

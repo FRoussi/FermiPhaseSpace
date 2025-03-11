@@ -4,21 +4,24 @@
 FHTunnelingInteraction::FHTunnelingInteraction()
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    init_tunnelingNameMap();
+    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
+    init_tunnelingMaps();
 }
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat)
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
+    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
     fhLattice = lat;
-    init_tunnelingNameMap();
+    init_tunnelingMaps();
 }
 
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJson)
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    init_tunnelingNameMap();
+    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
+    init_tunnelingMaps();
     fhLattice = lat;
 
     // get the tunneling type :
@@ -405,7 +408,7 @@ double                      FHTunnelingInteraction::getTunnelingEnergyOrder2(dou
     }
 }
 
-void                                    FHTunnelingInteraction::init_tunnelingNameMap()
+void                                    FHTunnelingInteraction::init_tunnelingMaps()
 {
     tunnelingInteractionTypeNames = std::map<FHTunnelingInteractionType, std::string>();
     tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnull] = "null";
@@ -422,6 +425,24 @@ void                                    FHTunnelingInteraction::init_tunnelingNa
     {
         tunnelingInteractionTypeNamesReverse.emplace(it->second, it->first);
     }
+
+
+
+    tunnelingInteractionRelationNames = std::map<FHTunnelingInteractionRelation, std::string>();
+    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERall] = "all";
+    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERsameSpecies] = "sameSpecies";
+    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERAB] = "AB";
+ 
+
+
+    tunnelingInteractionRelationNamesReverse = std::map<std::string, FHTunnelingInteractionRelation>();
+
+    for (std::map<FHTunnelingInteractionRelation, std::string>::iterator it = tunnelingInteractionRelationNames.begin(); it != tunnelingInteractionRelationNames.end(); it ++)
+    {
+        tunnelingInteractionRelationNamesReverse.emplace(it->second, it->first);
+    }
+
+
 }
 
 FHTunnelingInteraction::~FHTunnelingInteraction()

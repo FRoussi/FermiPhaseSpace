@@ -149,8 +149,8 @@ We have now in the folder *systemsFolder* a two files called *6sites.json* and *
 
     ./fps systemsFolder/6sites.json
 
-This will compute a Hartree-Fock dynamic (default settings) and write a result file called *6sites_HF_res.json* in the same folder than *6sites.json*. 
-To m
+This will compute a Hartree-Fock dynamic (default settings) and write a result file called *6sites_HF_res.json* in the same folder than *6sites.json*.
+To modify the simulation settings, open *6sites.json*, 
 
 ## Fermions Phase-Space Representation methods
 
