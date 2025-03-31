@@ -20,7 +20,7 @@
 
 #define FPS_VERSION_MAJOR 0
 #define FPS_VERSION_MINOR 4
-#define FPS_VERSION_PATCH 5
+#define FPS_VERSION_PATCH 6
 
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
@@ -214,7 +214,7 @@ private:
 
 
     FHCoulombInteraction            coulombInteraction;
-    FHTunnelingInteraction            tunnelingInteraction;
+    FHTunnelingInteraction          tunnelingInteraction;
 
     //arma::cx_dmat                   UMatrix;
    // arma::cx_dmat                   VMatrix;

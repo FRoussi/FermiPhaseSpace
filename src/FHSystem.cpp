@@ -183,6 +183,10 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     if (jsonIC != Json::Value::null)
     {
         std::string typeIC = jsonIC.get("type", "givenDiagonal").asString();
+        std::vector<uint> nPart = std::vector<uint>(2);
+        nPart[0] = jsonIC.get("nPartUp",  std::ceil((double)lattice.getnSites() / 2.)).asUInt();
+        nPart[1] = jsonIC.get("nPartDown",  std::floor((double)lattice.getnSites() / 2.)).asUInt(); 
+
         if (typeIC == "givenDiagonal")
         {
             initialCondition = FHInitialConditionType::givenDiagonal;
@@ -192,11 +196,11 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
             if (subtypeIC == "spinWave")
             {
-               setInitialConditions(FHInitialConditionType::spinWave);
+               setInitialConditions(FHInitialConditionType::spinWave, nPart);
             }  
             else if (subtypeIC == "chargeWave")
             {
-                setInitialConditions(FHInitialConditionType::chargeWave);
+                setInitialConditions(FHInitialConditionType::chargeWave, nPart);
             }     
             else if (subtypeIC == "spinWave3")
             {
@@ -267,11 +271,11 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         else if (typeIC == "tbGroundState")
         {
             //std::cout << "  -- Initial Condition : TB ground State." << std::endl;
-            setInitialConditions(FHInitialConditionType::tbGroundState);
+            setInitialConditions(FHInitialConditionType::tbGroundState, nPart);
         }
         else if (typeIC == "mfGroundState")
         {
-            setInitialConditions(FHInitialConditionType::mfGroundState);
+            setInitialConditions(FHInitialConditionType::mfGroundState, nPart);
         }
         else if (typeIC == "groundState")
         {
@@ -574,6 +578,19 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
             for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
             {
                     initConditions_upSpin[iSite] = true;
+            }
+            for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_downSpin[iSite] = true;
+            }
+            break;
+        }
+        case FHInitialConditionType::chargeWave:
+        {
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_upSpin[iSite] = true;
+
             }
             for (uint iSite = 0; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
             {
@@ -923,11 +940,11 @@ arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
 
 //std::cout << "     --- Comp TB 1, npu=" << upSpinParticleNumber << std::endl;
     arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMku.subvec(0,upSpinParticleNumber-1).ones();
+    if (upSpinParticleNumber>0)     diagMku.subvec(0,upSpinParticleNumber-1).ones();
     arma::cx_dmat Mku = arma::diagmat(diagMku);
 
     arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMkd.subvec(0,downSpinParticleNumber-1).ones();
+    if (downSpinParticleNumber>0)   diagMkd.subvec(0,downSpinParticleNumber-1).ones();
     arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
 //std::cout << "     --- Comp TB 2" << std::endl;
@@ -949,11 +966,11 @@ arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
     uint nSites = lattice.getnSites();
 
     arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMku.subvec(0,upSpinParticleNumber-1).ones();
+    if (upSpinParticleNumber > 0) diagMku.subvec(0,upSpinParticleNumber-1).ones();
     arma::cx_dmat Mku = arma::diagmat(diagMku);
 
     arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMkd.subvec(0,downSpinParticleNumber-1).ones();
+    if (downSpinParticleNumber > 0) diagMkd.subvec(0,downSpinParticleNumber-1).ones();
     arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
     double thresholdConverged = 0.0001 * nSites;
