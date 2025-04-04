@@ -279,6 +279,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
         else if (typeIC == "groundState")
         {
+            std::cout << "GS" << std::endl;
             setInitialConditions(FHInitialConditionType::groundState);
         }
         else if (typeIC == "givenInFile")

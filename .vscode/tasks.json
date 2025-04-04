@@ -23,6 +23,7 @@
                 "${workspaceFolder}/src/ResultWriterJson.cpp",
                 "${workspaceFolder}/src/FHEDSolver.cpp",
                 "${workspaceFolder}/src/FHfTWASolver.cpp",
+                "${workspaceFolder}/src/FHfTWAStateSearch.cpp",
                 "${workspaceFolder}/src/FHGPSRSolver.cpp",
                 "${workspaceFolder}/src/FHHFSolver.cpp",
                 "${workspaceFolder}/fps.cpp",

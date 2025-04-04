@@ -751,8 +751,8 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
     }
 }
 
-    Json::Value         FHLattice::writeFHLatticeJson()
-    {
+Json::Value         FHLattice::writeFHLatticeJson()
+{
         Json::Value rootLattice;
 
         rootLattice["latticeType"] = latticeTypeNames[latticeType];
@@ -780,7 +780,7 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
 
         return rootLattice;
 
-    }
+}
 
 
 

@@ -13,6 +13,7 @@
 #include "include/FHEDSolver.h"
 #include "include/FHHFSolver.h"
 #include "include/FHfTWASolver.h"
+#include "include/FHfTWAStateSearch.h"
 #include "include/FHGPSRSolver.h"
 #include "include/json/json.h"
 
@@ -102,6 +103,7 @@ int main(int argc, char* argv[])
       {
          HF,
          fTWA,
+         fTWA_GSSearch,
          GPSR,
          ED
       };
@@ -152,6 +154,7 @@ int main(int argc, char* argv[])
       if (stringMethod == "fTWA")         chosenMethod = dynamicMethod::fTWA; 
       else if (stringMethod == "GPSR")    chosenMethod = dynamicMethod::GPSR;
       else if (stringMethod == "ED")      chosenMethod = dynamicMethod::ED;
+      else if (stringMethod == "fTWA_GS")      chosenMethod = dynamicMethod::fTWA_GSSearch;
 
 
       Json::Value systemJSON = rootSim.get("system", "");
@@ -230,6 +233,22 @@ int main(int argc, char* argv[])
 
             EDSolver.initiateSolver();
             EDSolver.runSimulation();
+
+            break;
+      }
+      case dynamicMethod::fTWA_GSSearch:
+      {
+            double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
+            double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
+            int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
+
+            std::cout <<  "== Search of fTWA Ground State "<< std::endl;
+            FHfTWAStateSearch fTWAGSSearch = FHfTWAStateSearch(&fhSystem);
+
+            std::cout <<  "== Init Search "<< std::endl;
+            fTWAGSSearch.initiateStateSearch();
+            std::cout <<  "== Run Search "<< std::endl;
+            fTWAGSSearch.findDensity();
 
             break;
       }
