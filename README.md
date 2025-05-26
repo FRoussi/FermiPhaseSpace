@@ -34,7 +34,9 @@ The others are:
 
 ### Makefile examples
 
-The Makefile used to compile the four main executables are in the /FolderMakefile. They were used on a Cray environment.
+The Makefile used to compile the four main executables are in the /FolderMakefile. They were used on a Cray environment. To compile the fps code, copy Makefile_fps into Makefile, modify the core directories, and run
+
+    make
 
 #### Options used
 
@@ -46,7 +48,7 @@ The options we used are not the consequences of a deep knowledge of computer sci
 
 ### Test
 
-Once "makeSiteSytem.cpp"  and "fps.cpp" have been compiledm "tests.py"
+Once "makeSiteSytem.cpp"  and "fps.cpp" have been compiled, "tests.py" will generate a little Fermi-Hubbard system and try the four different methods on it.
 
 ## Usage
 
