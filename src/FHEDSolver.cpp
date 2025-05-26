@@ -1155,7 +1155,7 @@ std::bitset<MAX_BITS> expandBitSetUnderConstraint(std::bitset<MAX_BITS> reducedB
 
 
 
-/// @brief Copy of the EXPOKIT expmv function
+/// @brief EXPOKIT expmv function
 /// @param t double
 /// @param A sparse matrix
 /// @param v vector

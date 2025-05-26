@@ -952,7 +952,7 @@ void FHGPSRSolver::runSimulation( )
 
 
 
-/// @brief Copy of the MATLAB rsvd function.  random SVD
+/// @brief random SVD
 /// Extremely fast computation of the truncated Singular Value Decomposition, using
 /// randomized algorithms as described in Halko et al. 'finding structure with randomness'.
 /// Antoine Liutkus  (c) Inria 2014

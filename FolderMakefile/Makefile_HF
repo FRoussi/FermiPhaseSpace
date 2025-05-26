@@ -2,12 +2,16 @@
 # Compiler
 CXX = CC
 
+# Installation directory
+WORK_DIR = /users/roussefr/
+LIB_DIR = $(WORK_DIR)opt/
+
 # Directories
-ARMADILLO_INCLUDE_DIR = /users/roussefr/opt/armadillo/include
-ARMADILLO_LIB_DIR = /users/roussefr/opt/armadillo/lib64
-#OPENMP_INCLUDE_DIR = /users/roussefr/opt/openmp/include
-#OPENMP_LIB_DIR = /users/roussefr/opt/openmp/lib
-#FPS_DIR = /users/roussefr/FermiPhaseSpace 
+ARMADILLO_INCLUDE_DIR = $(LIB_DIR)armadillo/include
+ARMADILLO_LIB_DIR = $(LIB_DIR)armadillo/lib64
+#OPENMP_INCLUDE_DIR = $(LIB_DIR)openmp/include
+#OPENMP_LIB_DIR =$(LIB_DIR)openmp/lib
+#FPS_DIR = $(WORK_DIR)FermiPhaseSpace 
 
 # Compiler flags
 CXXFLAGS = -I$(ARMADILLO_INCLUDE_DIR)  -std=c++14 -Wshadow -Wall -pedantic -Og -fopenmp
