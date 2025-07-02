@@ -22,7 +22,7 @@ FHSolver::FHSolver(FHSystem *fhS)
     saveMFStates = false;
     saveEnergies = true;
 
-    nEnergies = 3;
+    nEnergies = 4;
 
 }
 

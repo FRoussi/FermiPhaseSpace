@@ -184,6 +184,237 @@ void FHHFSolver::initiateSolver()
 
 
 
+/// @brief Launch simulation and write the results
+void FHHFSolver::runSimulation( )
+{
+
+    std::cout << "   -- Start simulation." << std::endl;
+
+    unsigned int nSites = fhSystem->getnSites();
+    std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
+
+    Nut = Nu0;
+    Ndt = Nd0;
+
+
+    arma::cx_dcube Nu;
+    arma::cx_dcube Nd;
+    arma::cx_dmat Niiu;
+    arma::cx_dmat Niid;
+    arma::cx_dmat Mkku;
+    arma::cx_dmat Mkkd;
+    arma::cx_dmat Mukku;
+    arma::cx_dmat Mukkd;
+    arma::cx_dmat Energies;
+    arma::cx_dmat N2iiu, N2iid;
+    arma::cx_dmat NiuNid;   
+    //arma::cx_drowvec EU;
+    //arma::cx_drowvec EtH;
+    //arma::cx_drowvec EpotExt;
+    //arma::cx_drowvec E;
+    arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
+    arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
+    nPartU_t(0) = std::real(arma::trace(Nut));
+    nPartD_t(0) = std::real(arma::trace(Ndt));
+
+    if (saveWholeDMatrix)
+    {
+        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
+        Nu.slice(0) = Nut;
+        Nd.slice(0) = Ndt;
+    }
+    if (saveDiagDMatrix)
+    {
+        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niiu.col(0) = Nut.diag();
+        Niid.col(0) = Ndt.diag();
+    }
+    if (saveTBStates)
+    {
+        Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        if (!fhSystem->isTBGroundStateComputed())
+        {
+            fhSystem->computeTBGroundState();
+        }
+        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+        arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+        Mkku.col(0) = M.diag();
+        M = V_1p.t() * Ndt * V_1p;
+        Mkkd.col(0) = M.diag();
+    }
+    if (saveMFStates)
+    {
+        Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        if (!fhSystem->isMFGroundStateComputed())
+        {
+            fhSystem->computeMFGroundState();
+        }
+        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
+        arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+        Mukku.col(0) = M.diag();
+        V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
+        M = V_1p.t() * Ndt * V_1p;
+        Mukkd.col(0) = M.diag();
+        
+    }
+    if (saveEnergies)
+    {
+        //EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+        Energies = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
+        Energies.at(0,0) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
+        {
+            Energies.at(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+            if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
+            {
+                Energies.at(2,0) = (arma::dot(Nut.diag(), *V * Nut.diag()) + arma::dot(Ndt.diag(),  *V * Ndt.diag()) 
+                             - arma::accu(*V % Nut % Nut.st()) - arma::accu(*V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);
+            }
+        }
+        if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
+        {
+            Energies.at(3,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+        }
+    }
+
+
+    arma::cx_dmat dNu_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    arma::cx_dmat dNd_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+
+// Simulation :
+    for (unsigned int t = 1;  t< nTimePoints; t++)
+    {
+        
+        for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
+        {
+            switch (integrator)
+            {
+            case HFIntegrator::RungeKutta1 :
+                step_RK1(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta1_Mem :
+                step_RK1_Mem(dt/nStepsPerTimePoint, dNu_dt, dNd_dt);
+                break;
+            case HFIntegrator::RungeKutta2 :
+                step_RK2(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta4 :
+                step_RK4(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta4_38 :
+                step_RK4_38(dt/nStepsPerTimePoint);
+                break;
+            case HFIntegrator::RungeKutta45 :
+                step_RK45(dt/nStepsPerTimePoint);
+                break;  
+            default:
+                break;
+            }
+
+            currentSimulationTime += dt/nStepsPerTimePoint;
+        }
+
+        // Save Values :
+        timeLine[t] = t*dt;
+        nPartU_t(t) = std::real(arma::trace(Nut));
+        nPartD_t(t) = std::real(arma::trace(Ndt));
+        //std::cout << "Save Matrix" << std::endl;
+        if (saveWholeDMatrix)
+        {
+            Nu.slice(t) = Nut;
+            Nd.slice(t) = Ndt;
+        }
+        //std::cout << "Save Diag" << std::endl;
+        if (saveDiagDMatrix)
+        {
+            Niiu.col(t) = Nut.diag();
+            Niid.col(t) = Ndt.diag();
+        }
+        if (saveTBStates)
+        {
+            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+
+            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+            Mkku.col(t) = M.diag();
+
+            M = V_1p.t() * Ndt * V_1p;
+            Mkkd.col(t) = M.diag();
+        }
+        if (saveMFStates)
+        {
+            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
+            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
+            Mukku.col(t) = M.diag();
+            
+            V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
+            M = V_1p.t() * Ndt * V_1p;
+            Mukkd.col(t) = M.diag();
+        }
+        //std::cout << "Save En, t " << t << std::endl;
+        if (saveEnergies)
+        {
+            Energies.at(0,t) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
+            {
+                Energies.at(1,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+                if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
+                {
+                    Energies.at(2,t) = (arma::dot(Nut.diag(), *V * Nut.diag()) + arma::dot(Ndt.diag(),  *V * Ndt.diag()) 
+                                 - arma::accu(*V % Nut % Nut.st()) - arma::accu(*V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);
+                }
+            }
+            if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
+            {
+                Energies.at(3,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+            }
+
+        }
+        
+    }
+
+
+// Computing other values :
+//std::cout << "Save En tot" << std::endl;
+    if (saveEnergies)
+    {
+        Energies.row(nEnergies) = arma::sum(Energies, 0);
+    }
+    if (saveDiag2DMatrix)
+    {
+        N2iiu = Niiu % Niiu;
+        N2iid = Niid % Niid;
+    }
+
+    if (saveNiuNid)
+    {
+        NiuNid = Niiu % Niid;
+    }
+
+    if (talkative)
+    {
+        printf("--- Mean field dynamic, n1u : \n");
+        (arma::real(Niiu.row(0))).print();
+        printf("--- Mean field dynamic, E : \n");
+        (arma::real(Energies.row(nEnergies))).print();
+    }
+
+       // Writing the results :
+    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+
+
+
+}
+
+
+
+
 
 /// @brief Time step of a trajectory, computed with the 1st order Runge-Kutta method (Explicit Euler).
 /// @param d_t the time step
@@ -323,9 +554,20 @@ void FHHFSolver::step_RK45(double d_t)
 void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt)
 {
 
-    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * ndt.diag())  + arma::diagmat(*V * nut.diag());
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * nut.diag())  + arma::diagmat(*V * ndt.diag());
+    arma::cx_dmat DeltaUp = *tM;   
+    arma::cx_dmat DeltaDo = *tM; 
 
+    if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
+    {
+        DeltaUp += arma::diagmat(*U * ndt.diag());
+        DeltaDo += arma::diagmat(*U * nut.diag());
+
+        if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
+        {
+            DeltaUp += arma::diagmat(*V * nut.diag()) - nut % *V;
+            DeltaDo += arma::diagmat(*V * ndt.diag()) - ndt % *V;
+        }
+    }
 
     if (!fhSystem->isExternalPotentialNull())
     {
@@ -345,217 +587,6 @@ void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const 
 }
 
 
-/// @brief Launch simulation and write the results
-void FHHFSolver::runSimulation( )
-{
-
-    std::cout << "   -- Start simulation." << std::endl;
-
-    unsigned int nSites = fhSystem->getnSites();
-    std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
-
-    Nut = Nu0;
-    Ndt = Nd0;
-
-
-    arma::cx_dcube Nu;
-    arma::cx_dcube Nd;
-    arma::cx_dmat Niiu;
-    arma::cx_dmat Niid;
-    arma::cx_dmat Mkku;
-    arma::cx_dmat Mkkd;
-    arma::cx_dmat Mukku;
-    arma::cx_dmat Mukkd;
-    arma::cx_dmat Energies;
-    arma::cx_dmat N2iiu, N2iid;
-    arma::cx_dmat NiuNid;   
-    //arma::cx_drowvec EU;
-    //arma::cx_drowvec EtH;
-    //arma::cx_drowvec EpotExt;
-    //arma::cx_drowvec E;
-    arma::drowvec nPartU_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
-    arma::drowvec nPartD_t =  arma::drowvec(nTimePoints, arma::fill::zeros);
-    nPartU_t(0) = std::real(arma::trace(Nut));
-    nPartD_t(0) = std::real(arma::trace(Ndt));
-
-    if (saveWholeDMatrix)
-    {
-        Nu = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
-        Nu.slice(0) = Nut;
-        Nd.slice(0) = Ndt;
-    }
-    if (saveDiagDMatrix)
-    {
-        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Niiu.col(0) = Nut.diag();
-        Niid.col(0) = Ndt.diag();
-    }
-    if (saveTBStates)
-    {
-        Mkku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Mkkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        if (!fhSystem->isTBGroundStateComputed())
-        {
-            fhSystem->computeTBGroundState();
-        }
-        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
-        arma::cx_dmat M = V_1p.t() * Nut * V_1p;
-        Mkku.col(0) = M.diag();
-        M = V_1p.t() * Ndt * V_1p;
-        Mkkd.col(0) = M.diag();
-    }
-    if (saveMFStates)
-    {
-        Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
-        if (!fhSystem->isMFGroundStateComputed())
-        {
-            fhSystem->computeMFGroundState();
-        }
-        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
-        arma::cx_dmat M = V_1p.t() * Nut * V_1p;
-        Mukku.col(0) = M.diag();
-        V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
-        M = V_1p.t() * Ndt * V_1p;
-        Mukkd.col(0) = M.diag();
-        
-    }
-    if (saveEnergies)
-    {
-        //EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        Energies = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
-        Energies.at(0,0) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
-        Energies.at(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-        if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
-        {
-            Energies.at(2,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
-        }
-    }
-
-
-    arma::cx_dmat dNu_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    arma::cx_dmat dNd_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-
-
-// Simulation :
-    for (unsigned int t = 1;  t< nTimePoints; t++)
-    {
-        
-        for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
-        {
-            switch (integrator)
-            {
-            case HFIntegrator::RungeKutta1 :
-                step_RK1(dt/nStepsPerTimePoint);
-                break;
-            case HFIntegrator::RungeKutta1_Mem :
-                step_RK1_Mem(dt/nStepsPerTimePoint, dNu_dt, dNd_dt);
-                break;
-            case HFIntegrator::RungeKutta2 :
-                step_RK2(dt/nStepsPerTimePoint);
-                break;
-            case HFIntegrator::RungeKutta4 :
-                step_RK4(dt/nStepsPerTimePoint);
-                break;
-            case HFIntegrator::RungeKutta4_38 :
-                step_RK4_38(dt/nStepsPerTimePoint);
-                break;
-            case HFIntegrator::RungeKutta45 :
-                step_RK45(dt/nStepsPerTimePoint);
-                break;  
-            default:
-                break;
-            }
-
-            currentSimulationTime += dt/nStepsPerTimePoint;
-        }
-
-        // Save Values :
-        timeLine[t] = t*dt;
-        nPartU_t(t) = std::real(arma::trace(Nut));
-        nPartD_t(t) = std::real(arma::trace(Ndt));
-        //std::cout << "Save Matrix" << std::endl;
-        if (saveWholeDMatrix)
-        {
-            Nu.slice(t) = Nut;
-            Nd.slice(t) = Ndt;
-        }
-        //std::cout << "Save Diag" << std::endl;
-        if (saveDiagDMatrix)
-        {
-            Niiu.col(t) = Nut.diag();
-            Niid.col(t) = Ndt.diag();
-        }
-        if (saveTBStates)
-        {
-            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
-
-            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
-            Mkku.col(t) = M.diag();
-
-            M = V_1p.t() * Ndt * V_1p;
-            Mkkd.col(t) = M.diag();
-        }
-        if (saveMFStates)
-        {
-            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vu_Pointer());
-            arma::cx_dmat M = V_1p.t() * Nut * V_1p;
-            Mukku.col(t) = M.diag();
-            
-            V_1p = arma::cx_dmat(*fhSystem->get_mfgs_Vd_Pointer());
-            M = V_1p.t() * Ndt * V_1p;
-            Mukkd.col(t) = M.diag();
-        }
-        //std::cout << "Save En, t " << t << std::endl;
-        if (saveEnergies)
-        {
-            Energies.at(0,t) = (arma::cdot(Nut.diag(), *U * Ndt.diag()) + arma::cdot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
-            Energies.at(1,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
-            if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
-            {
-                Energies.at(2,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
-            }
-
-        }
-        
-    }
-
-
-// Computing other values :
-//std::cout << "Save En tot" << std::endl;
-    if (saveEnergies)
-    {
-        Energies.row(nEnergies) = arma::sum(Energies, 0);
-    }
-    if (saveDiag2DMatrix)
-    {
-        N2iiu = Niiu % Niiu;
-        N2iid = Niid % Niid;
-    }
-
-    if (saveNiuNid)
-    {
-        NiuNid = Niiu % Niid;
-    }
-
-    if (talkative)
-    {
-        printf("--- Mean field dynamic, n1u : \n");
-        (arma::real(Niiu.row(0))).print();
-        printf("--- Mean field dynamic, E : \n");
-        (arma::real(Energies.row(nEnergies))).print();
-    }
-
-       // Writing the results :
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
-
-
-
-}
 
 
 

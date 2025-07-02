@@ -20,7 +20,7 @@
 
 #define FPS_VERSION_MAJOR 0
 #define FPS_VERSION_MINOR 4
-#define FPS_VERSION_PATCH 7
+#define FPS_VERSION_PATCH 8
 
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
@@ -87,7 +87,7 @@ FHLattice                               getLattice();
     FHCoulombInteractionType            getCoulombInteractionType();
     FHTunnelingInteractionType          getTunnelingInteractionType();
     FHExternalPotentialType             getExternalPotentialType();
-   // FHSameSpinInteractionType           getSameSpinInteractionType();
+    //FHCoulombInteractionType            getSameSpinInteractionType();
    // tJExchangeCouplingType              getExchangeCouplingEnergyType();
 
     std::complex<double>                getCoulombInteraction(int iSite, int jSite);
