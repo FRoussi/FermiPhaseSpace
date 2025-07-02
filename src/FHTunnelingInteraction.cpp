@@ -264,6 +264,32 @@ Json::Value         FHTunnelingInteraction::writeTunnelingInteractionJson()
     return jpot;
 }
 
+void                         FHTunnelingInteraction::addSite(arma::cx_dvec siteInteractions)
+{    
+        uint nSites = tunnelingInteraction.n_cols;
+
+    arma::cx_dmat newTun = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+
+
+    newTun.submat(0, 0, nSites-1, nSites - 1) = tunnelingInteraction;
+
+
+    arma::cx_dvec interactions = arma::cx_dvec(nSites);
+    if (siteInteractions.size() < nSites)
+    {
+        interactions.subvec(0, siteInteractions.size()-1) = siteInteractions; 
+    }
+    else if (siteInteractions.size() > nSites)
+    {
+        interactions = siteInteractions.subvec(0, nSites-1);
+    }
+
+    newTun.submat(0, nSites, nSites-1, nSites) = interactions;
+    newTun.submat(nSites, 0, nSites, nSites-1) = interactions.st();
+
+
+    tunnelingInteraction = newTun;
+}
 
 
 

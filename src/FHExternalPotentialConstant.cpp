@@ -6,7 +6,6 @@ FHExternalPotentialConstant::FHExternalPotentialConstant(FHLattice* lat, arma::d
     uint nSites = lat->getnSites();
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     externalPotential.diag() = arma::cx_dmat(Pot, arma::dvec(Pot.size(), arma::fill::zeros));
-    nullPotential = false;
     potentialType = FHExternalPotentialType::EPconstant;
 }
 
@@ -39,6 +38,18 @@ Json::Value        FHExternalPotentialConstant::writePotentialJson()
    jpot["sitePotentials"] = jsonPotVec;
     
     return jpot;
+}
+
+void    FHExternalPotentialConstant::addSite(double pot)
+{
+    uint nSites = externalPotential.n_cols;
+
+    arma::cx_dmat newPot = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+
+
+    newPot.submat(0, 0, nSites-1, nSites - 1) = externalPotential;
+    newPot.at(nSites, nSites) = pot;
+
 }
 
 FHExternalPotentialConstant::~FHExternalPotentialConstant()

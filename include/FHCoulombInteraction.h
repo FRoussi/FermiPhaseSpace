@@ -38,6 +38,7 @@ public:
     virtual                     std::vector<double>         getParameters(uint set);
     virtual Json::Value         writeCoulombInteractionJson();                 
 
+    void                        addSite(arma::cx_dvec interactions);
 
     ~FHCoulombInteraction();
 

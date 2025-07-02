@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "FHLattice.h"
+#include "FHCoreHole.h"
 #include "FHTunnelingInteraction.h"
 #include "FHCoulombInteraction.h"
 #include "FHExternalPotential.h"
@@ -15,6 +16,7 @@
 #include "FHExternalPotentialConstant.h"
 #include "FHExternalPotentialCoreHole.h"
 #include "json/json.h"
+
 
 
 
@@ -42,6 +44,10 @@ public:
     };
 
 
+    enum FHSystemType {
+        SysVanilla,
+        SysCoreHole
+    };
 
 // CONSTRUCTORS
 
@@ -197,6 +203,8 @@ FHLattice                               getLattice();
 private:
     
 
+    FHSystemType                    systemType;
+
     FHLattice                       lattice;
 
 
@@ -251,6 +259,10 @@ private:
     std::string                     systemFolder;
     Json::Value                     originalJsonSystem;
 
+
+
+// coreHole
+    FHCoreHole* coreHole;
 
 
     bool talkative;

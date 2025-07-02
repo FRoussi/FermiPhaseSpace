@@ -130,6 +130,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 {
 
     talkative = talk;
+    systemType = FHSystemType::SysVanilla;
 
     Json::Value rootLattice = rootSystem.get("lattice","" );
 
@@ -292,14 +293,29 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
 
         std::cout << "   -- Initial condtion :            " << typeIC << std::endl;  
-        std::cout << "   -- Particle number :             " << upSpinParticleNumber + downSpinParticleNumber << std::endl;  
+        std::cout << "   -- Particle number :             " << upSpinParticleNumber + downSpinParticleNumber << std::endl; 
+        
+
     }
     else
     {
         std::cout << "No Initial condition in the json file.  " << std::endl;  
     }
 
+    // coreHole
 
+    if (rootSystem.isMember("coreHole"))
+    {
+        Json::Value jsonCoreHole = rootSystem["coreHole"];
+
+        if (jsonCoreHole.get("presence", false).asBool())
+        {
+            systemType = FHSystemType::SysCoreHole;
+            coreHole = new FHCoreHole(jsonCoreHole);
+
+            
+        }
+    }
 
 }
 
@@ -1528,6 +1544,10 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
 
 FHSystem::~FHSystem()
 {
+    if (systemType == FHSystemType::SysCoreHole)
+    {
+        delete coreHole;
+    }
 
 }
 

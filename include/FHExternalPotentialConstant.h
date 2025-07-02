@@ -11,7 +11,10 @@ public:
     FHExternalPotentialConstant(FHLattice* lat, arma::dvec Pot);
 
     std::vector<double>         getParameters();
-    Json::Value         writePotentialJson();   
+    void                        addSite(double pot);
+
+    Json::Value                 writePotentialJson();   
+
 
 
     ~FHExternalPotentialConstant();

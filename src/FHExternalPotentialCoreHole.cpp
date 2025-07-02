@@ -9,7 +9,6 @@ FHExternalPotentialCoreHole::FHExternalPotentialCoreHole(FHLattice* lat, uint iS
     uint nSites = lat->getnSites();
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
     externalPotential(iSite, iSite) = std::complex<double>(pot);
-    nullPotential = false;
     potentialType = FHExternalPotentialType::EPcoreHole;
 }
 
@@ -17,7 +16,6 @@ FHExternalPotentialCoreHole::FHExternalPotentialCoreHole(FHLattice* lat, uint iS
 std::vector<double>         FHExternalPotentialCoreHole::getParameters()
 {
     std::vector<double> v = {(double)iSite, holePotential};
-
     
     return v;
 }

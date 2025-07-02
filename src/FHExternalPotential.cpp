@@ -3,7 +3,6 @@
 
 FHExternalPotential::FHExternalPotential()
 {
-    nullPotential = true;
     timeDependantPotential = false;
     currentPotentialTime = 0;
     potentialType = FHExternalPotentialType::EPnull;
@@ -19,7 +18,6 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat)
 
     fhLattice = lat;
 
-    nullPotential = true;
     timeDependantPotential = false;
     currentPotentialTime = 0;
     potentialType = FHExternalPotentialType::EPnull;
@@ -27,7 +25,7 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat)
 
 bool                    FHExternalPotential::isThePotentialNull()
 {
-    return nullPotential;
+    return (potentialType == FHExternalPotentialType::EPnull);
 }
 
 bool                    FHExternalPotential::isThePotentialTimeDependant()
@@ -37,7 +35,7 @@ bool                    FHExternalPotential::isThePotentialTimeDependant()
 
 bool                    FHExternalPotential::getExternalPotential(double t, arma::cx_dmat& potential)
 {
-    if (!nullPotential)
+    if (potentialType != FHExternalPotentialType::EPnull)
     {
         if (currentPotentialTime != t)
         {
@@ -112,4 +110,20 @@ Json::Value         FHExternalPotential::writePotentialJson()
     Json::Value jpot;
     jpot["type"] = "null";
     return jpot;
+}
+
+
+void    FHExternalPotential::addSite(double pot)
+{
+
+    if ((potentialType == FHExternalPotentialType::EPnull ) || (pot == 0))
+    {
+
+    }
+    else
+    {
+        std::cout << "maybe use a constant potential" << std::endl;
+
+    }
+
 }

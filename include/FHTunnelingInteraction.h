@@ -47,6 +47,8 @@ public:
     virtual                     std::vector<double>         getParameters(uint set);
     virtual Json::Value         writeTunnelingInteractionJson();        
 
+    void                        addSite(arma::cx_dvec interactions);
+
 
     ~FHTunnelingInteraction();
 

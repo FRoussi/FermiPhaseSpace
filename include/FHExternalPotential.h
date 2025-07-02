@@ -8,6 +8,7 @@
 
 #include "json/json.h"
 #include "FHLattice.h"
+#include "FHCoreHole.h"
 //#include "FHSystem.h"
 
 
@@ -41,9 +42,9 @@ public:
     bool                        isThePotentialNull();
     bool                        isThePotentialTimeDependant();
 
-protected:  
+    void                        addSite(double pot);
 
-    bool                        nullPotential;
+protected:  
 
     bool                        timeDependantPotential;
 
