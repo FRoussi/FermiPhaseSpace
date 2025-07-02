@@ -11,6 +11,7 @@
                 "${workspaceFolder}/src/jsoncpp.cpp",
                 "${workspaceFolder}/src/MapDoubleEntry.cpp",
                 "${workspaceFolder}/src/FHLattice.cpp",
+                "${workspaceFolder}/src/FHCoreHole.cpp",
                 "${workspaceFolder}/src/FHSystem.cpp",
                 "${workspaceFolder}/src/FHTunnelingInteraction.cpp",
                 "${workspaceFolder}/src/FHCoulombInteraction.cpp",
