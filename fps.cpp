@@ -151,10 +151,10 @@ int main(int argc, char* argv[])
       std::string stringMethod = rootSim.get("method", "HF").asString();
 
       dynamicMethod chosenMethod = dynamicMethod::HF;
-      if (stringMethod == "fTWA")         chosenMethod = dynamicMethod::fTWA; 
-      else if (stringMethod == "GPSR")    chosenMethod = dynamicMethod::GPSR;
-      else if (stringMethod == "ED")      chosenMethod = dynamicMethod::ED;
-      else if (stringMethod == "fTWA_GS")      chosenMethod = dynamicMethod::fTWA_GSSearch;
+      if (stringMethod == "fTWA")            chosenMethod = dynamicMethod::fTWA; 
+      else if (stringMethod == "GPSR")       chosenMethod = dynamicMethod::GPSR;
+      else if (stringMethod == "ED")         chosenMethod = dynamicMethod::ED;
+      else if (stringMethod == "fTWA_GS")    chosenMethod = dynamicMethod::fTWA_GSSearch;
 
 
       Json::Value systemJSON = rootSim.get("system", "");
@@ -168,8 +168,8 @@ int main(int argc, char* argv[])
 
       switch (chosenMethod)
       {
-      case dynamicMethod::HF:
-      {
+         case dynamicMethod::HF:
+         {
 
             std::cout << "== Computation of HF dynamic " << std::endl;
             FHHFSolver hfSolver = FHHFSolver(&fhSystem);
@@ -183,9 +183,9 @@ int main(int argc, char* argv[])
             hfSolver.runSimulation();
 
             break;
-      }   
-      case dynamicMethod::fTWA:
-      {
+         }   
+         case dynamicMethod::fTWA:
+         {
 
             std::cout << "== Computation of fTWA dynamic "<< std::endl;
             FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
@@ -199,9 +199,9 @@ int main(int argc, char* argv[])
             fTWASolver.runSimulation();
 
             break;
-      }
-      case dynamicMethod::GPSR:
-      {
+         }
+         case dynamicMethod::GPSR:
+         {
 
 
             std::cout <<  "== Computation of GPSR dynamic "<< std::endl;

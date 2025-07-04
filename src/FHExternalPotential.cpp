@@ -115,14 +115,32 @@ Json::Value         FHExternalPotential::writePotentialJson()
 
 void    FHExternalPotential::addSite(double pot)
 {
-
-    if ((potentialType == FHExternalPotentialType::EPnull ) || (pot == 0))
+std::cout << "fhEst" << pot << std::endl;
+    if ((potentialType == FHExternalPotentialType::EPnull ) && (pot == 0))
     {
 
     }
     else
     {
-        std::cout << "maybe use a constant potential" << std::endl;
+        std::cout << "fhEst 1"  << std::endl;
+        if (potentialType == FHExternalPotentialType::EPnull)
+        {
+
+            uint nSites = fhLattice->getnSites();
+                        std::cout << "fhEst 2"  << nSites << std::endl;
+            externalPotential = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+            externalPotential.at(nSites, nSites) = pot;
+            potentialType = FHExternalPotentialType::EPconstant;
+        }   
+        else
+        {
+            uint nSites = fhLattice->getnSites();
+            std::cout << "fhEst 3"  << nSites << std::endl;
+            arma::cx_dmat newPot = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+            newPot.submat(0, 0, arma::size(externalPotential)) = externalPotential;
+            externalPotential = newPot;
+            externalPotential.at(nSites, nSites) = pot;
+        }
 
     }
 

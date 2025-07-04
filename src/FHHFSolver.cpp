@@ -86,7 +86,7 @@ void FHHFSolver::initiateSolver()
 
     currentSimulationTime = 0;
 
-    unsigned int nSites = fhSystem->getnSites();
+    unsigned int nSites = fhSystem->getLattice()->getnSites();
 
 
     if ((initCondition == FHSystem::FHInitialConditionType::givenDiagonal) || (initCondition == FHSystem::FHInitialConditionType::spinWave) || (initCondition == FHSystem::FHInitialConditionType::chargeWave))
@@ -177,6 +177,22 @@ void FHHFSolver::initiateSolver()
         }
     }
 
+    if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+    {
+
+        arma::cx_dmat newNu0 = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);      //<- Initial density matrices 
+        arma::cx_dmat newNd0 = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+
+        newNu0.submat(0,0,nSites-1, nSites-1) = Nu0;
+        newNd0.submat(0,0,nSites-1, nSites-1) = Nd0;
+
+        Nu0 = newNu0;
+        Nd0 = newNd0;
+
+        Nu0(nSites,nSites) = arma::cx_double(fhSystem->getCoreHole()->getUpSpinOccupation(), 0);
+        Nd0(nSites,nSites) = arma::cx_double(fhSystem->getCoreHole()->getDownSpinOccupation(), 0);
+        
+    }
 
 }
 
@@ -196,6 +212,16 @@ void FHHFSolver::runSimulation( )
     Nut = Nu0;
     Ndt = Nd0;
 
+std::cout << "system n site = " << nSites << std::endl;
+
+
+Nu0.print();
+
+tM->print();
+U->print();
+V->print();
+extPot->print();
+
 
     arma::cx_dcube Nu;
     arma::cx_dcube Nd;
@@ -208,6 +234,7 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat Energies;
     arma::cx_dmat N2iiu, N2iid;
     arma::cx_dmat NiuNid;   
+    arma::cx_dmat V_1p;
     //arma::cx_drowvec EU;
     //arma::cx_drowvec EtH;
     //arma::cx_drowvec EpotExt;
@@ -239,7 +266,15 @@ void FHHFSolver::runSimulation( )
         {
             fhSystem->computeTBGroundState();
         }
-        arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+        V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+        {
+            uint nLatticeSize = fhSystem->getLattice()->getnSites();
+            V_1p = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+            V_1p.submat(0, nLatticeSize, 0, nLatticeSize) = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+            V_1p.at(nSites, nSites) = arma::cx_double(1,0);
+        }
+
         arma::cx_dmat M = V_1p.t() * Nut * V_1p;
         Mkku.col(0) = M.diag();
         M = V_1p.t() * Ndt * V_1p;
@@ -267,10 +302,11 @@ void FHHFSolver::runSimulation( )
         //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
         Energies = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
-        Energies.at(0,0) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+        Energies.at(0,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+
         if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
         {
-            Energies.at(1,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+            Energies.at(1,0) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
             if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
             {
                 Energies.at(2,0) = (arma::dot(Nut.diag(), *V * Nut.diag()) + arma::dot(Ndt.diag(),  *V * Ndt.diag()) 
@@ -339,8 +375,6 @@ void FHHFSolver::runSimulation( )
         }
         if (saveTBStates)
         {
-            arma::cx_dmat V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
-
             arma::cx_dmat M = V_1p.t() * Nut * V_1p;
             Mkku.col(t) = M.diag();
 
@@ -360,19 +394,19 @@ void FHHFSolver::runSimulation( )
         //std::cout << "Save En, t " << t << std::endl;
         if (saveEnergies)
         {
-            Energies.at(0,t) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            Energies.at(0,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);                                                                  //<- Tunneling energy
             if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
             {
-                Energies.at(1,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+                Energies.at(1,t) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);   //<- Opposite Spin Interaction Energy
                 if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
                 {
                     Energies.at(2,t) = (arma::dot(Nut.diag(), *V * Nut.diag()) + arma::dot(Ndt.diag(),  *V * Ndt.diag()) 
-                                 - arma::accu(*V % Nut % Nut.st()) - arma::accu(*V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);
+                                 - arma::accu(*V % Nut % Nut.st()) - arma::accu(*V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);                 //<- Same Spin Interaction Energy
                 }
             }
             if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
             {
-                Energies.at(3,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+                Energies.at(3,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);                                                      //<- Potential energy
             }
 
         }

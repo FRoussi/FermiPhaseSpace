@@ -729,10 +729,11 @@ void FHEDSolver::runSimulation()
 
         if (saveEnergies)
         {
-            Energies.at(0,t) = arma::cdot(psi, H_U * psi);
-            Energies.at(1,t) = arma::cdot(psi, H_t * psi);
-            Energies.at(2,t) = arma::cdot(psi, H_externalPotential * psi);
-            Energies.at(3,t) = arma::sum(Energies.col(t)); 
+            Energies.at(0,t) = arma::cdot(psi, H_t * psi);
+            Energies.at(1,t) = arma::cdot(psi, H_U * psi);
+
+            Energies.at(3,t) = arma::cdot(psi, H_externalPotential * psi);
+            Energies.at(nEnergies,t) = arma::sum(Energies.col(t)); 
         }
         if(saveNiuNid)
         {

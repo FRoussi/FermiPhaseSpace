@@ -195,53 +195,51 @@ Json::Value         FHCoulombInteraction::writeCoulombInteractionJson()
 
 void                         FHCoulombInteraction::addSite(arma::cx_dvec siteInteractions)
 {
-
-    if (CoulombInteractionType == FHCoulombInteractionType::CEnull)
+    uint nSites = fhLattice->getnSites() + 1;
+    if (siteInteractions.size() != nSites)
     {
-        uint nSites = fhLattice->getnSites();
-        U = arma::cx_dmat(nSites+1, nSites+1);
-        V = arma::cx_dmat(nSites+1, nSites+1);
-    }
-    else if (CoulombInteractionType == FHCoulombInteractionType::CEonSite)
-    {
-        uint nSites = U.n_cols;
-        V = arma::cx_dmat(nSites+1, nSites+1);
-        arma::cx_dmat newU = arma::cx_dmat(nSites+1, nSites+1);
-        newU.submat(0, 0, nSites-1, nSites-1) = U;
-        U = newU;
+        std::cout << "!!error : FHCoulombInteraction - addSite - Wrong vector size" << std::endl;
     }
     else
     {
-        uint nSites = U.n_cols;
+       
+        if (CoulombInteractionType == FHCoulombInteractionType::CEnull)
+        {
 
-        arma::cx_dmat newU = arma::cx_dmat(nSites+1, nSites+1);
-        newU.submat(0, 0, nSites-1, nSites-1) = U;
-        U = newU;
+            U = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+            V = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+        }
+        else if (CoulombInteractionType == FHCoulombInteractionType::CEonSite)
+        {
 
-        arma::cx_dmat newV = arma::cx_dmat(nSites+1, nSites+1);
-        newU.submat(0, 0, nSites-1, nSites-1) = V;
-        V = newV;
+            V = arma::cx_dmat(nSites, nSites);
+            arma::cx_dmat newU = arma::cx_dmat(nSites, nSites);
+            newU.submat(0, 0, arma::size(U)) = U;
+            U = newU;
+        }
+        else
+        {
+
+            arma::cx_dmat newU = arma::cx_dmat(nSites+1, nSites+1);
+            newU.submat(0, 0, arma::size(U)) = U;
+            U = newU;
+
+            arma::cx_dmat newV = arma::cx_dmat(nSites+1, nSites+1);
+            newV.submat(0, 0, arma::size(V)) = V;
+            V = newV;
+        }
+
+
+        U.submat(0, nSites-1, nSites-1, nSites-1) += siteInteractions/arma::cx_double(2,0);
+        U.submat(nSites-1, 0, nSites-1, nSites-1) += siteInteractions.st()/arma::cx_double(2,0);
+
+
+        V.submat(0, nSites-1, nSites-1, nSites-1) += siteInteractions/arma::cx_double(2,0);
+        V.submat(nSites-1, 0, nSites-1, nSites-1) += siteInteractions.st()/arma::cx_double(2,0);
+
+
+        CoulombInteractionType == FHCoulombInteractionType::CEgiven;
     }
-
-
-    uint nSites = U.n_cols;
-    arma::cx_dvec interactions = arma::cx_dvec(nSites);
-    if (siteInteractions.size() < nSites)
-    {
-        interactions.subvec(0, siteInteractions.size()-1) = siteInteractions; 
-    }
-    else if (siteInteractions.size() > nSites)
-    {
-        interactions = siteInteractions.subvec(0, nSites-1);
-    }
-
-    U.submat(0, nSites-1, nSites-1, nSites-1) = interactions;
-    U.submat(nSites-1, 0, nSites-1, nSites-1) = interactions.st();
-    U.at(nSites-1, nSites-1) =  U.at(nSites-1, nSites-1)/arma::cx_double(2,0);
-
-    V.submat(0, nSites-1, nSites-1, nSites-1) = interactions;
-    V.submat(nSites-1, 0, nSites-1, nSites-1) = interactions.st();
-    V.at(nSites-1, nSites-1) =  V.at(nSites-1, nSites-1)/arma::cx_double(2,0);
 }
 
 void                        FHCoulombInteraction::addCoulomb(double distance, double Interaction)

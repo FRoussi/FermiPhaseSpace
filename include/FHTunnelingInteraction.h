@@ -8,6 +8,7 @@
 
 #include "json/json.h"
 #include "FHLattice.h"
+#include "FHCoreHole.h"
 //#include "FHSystem.h"
 
 
@@ -37,6 +38,7 @@ public:
     FHTunnelingInteraction();
     FHTunnelingInteraction(FHLattice* lat);
     FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJson);
+    FHTunnelingInteraction(FHLattice* lat, FHCoreHole* coreHole, Json::Value tunnJson);
     FHTunnelingInteraction(FHLattice* lat, double neighbourDistance, double tunnelingEnergy);
     FHTunnelingInteraction(FHLattice* lat, std::vector<double> tunnelingDistances, std::vector<double> tunnelingEnergies);
 

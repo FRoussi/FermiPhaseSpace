@@ -130,6 +130,14 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJ
 
 }
 
+FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, FHCoreHole* coreHole, Json::Value tunnJson):FHTunnelingInteraction(lat, tunnJson)
+{
+    arma::cx_dvec interactions = arma::cx_dvec(fhLattice->getnSites(), arma::fill::zeros); 
+    interactions.at(coreHole->getSiteNumber()) = arma::cx_double(coreHole->getHoleTunneling(),0);
+    addSite(interactions);
+
+}
+
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, double neighbourD, double tunnelingE)
 {
 
@@ -266,29 +274,24 @@ Json::Value         FHTunnelingInteraction::writeTunnelingInteractionJson()
 
 void                         FHTunnelingInteraction::addSite(arma::cx_dvec siteInteractions)
 {    
-        uint nSites = tunnelingInteraction.n_cols;
+    uint nSites = tunnelingInteraction.n_cols;
 
-    arma::cx_dmat newTun = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
-
-
-    newTun.submat(0, 0, nSites-1, nSites - 1) = tunnelingInteraction;
-
-
-    arma::cx_dvec interactions = arma::cx_dvec(nSites);
-    if (siteInteractions.size() < nSites)
+    if (siteInteractions.size() != nSites)
     {
-        interactions.subvec(0, siteInteractions.size()-1) = siteInteractions; 
-    }
-    else if (siteInteractions.size() > nSites)
+        std::cout << "!!error : FHTunnelingInteraction - addSite - Wrong vector size" << std::endl;
+    } 
+    else
     {
-        interactions = siteInteractions.subvec(0, nSites-1);
+        arma::cx_dmat newTun = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+
+        newTun.submat(0, 0, arma::size(tunnelingInteraction)) = tunnelingInteraction;
+
+        newTun.submat(0, nSites, nSites-1, nSites) = siteInteractions;
+        newTun.submat(nSites, 0, nSites, nSites-1) = siteInteractions.st();
+
+        tunnelingInteraction = newTun;
     }
 
-    newTun.submat(0, nSites, nSites-1, nSites) = interactions;
-    newTun.submat(nSites, 0, nSites, nSites-1) = interactions.st();
-
-
-    tunnelingInteraction = newTun;
 }
 
 

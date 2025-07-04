@@ -7,7 +7,7 @@ FHSystem::FHSystem(bool talk)
     talkative = talk;
     lattice = FHLattice(talk);
 
-    uint nSites = lattice.getnSites();
+    nSites = lattice.getnSites();
 
     std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(nSites);
     std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(nSites);
@@ -33,8 +33,8 @@ FHSystem::FHSystem(int x, bool talk)
 {
     talkative = talk;
 
-lattice = FHLattice(x, talk);
-
+    lattice = FHLattice(x, talk);
+    nSites = lattice.getnSites();
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
     {
@@ -78,6 +78,7 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
     talkative = talk;
 
     lattice = FHLattice(x,y,z,talk);
+    nSites = lattice.getnSites();
 
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
@@ -135,7 +136,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     Json::Value rootLattice = rootSystem.get("lattice","" );
 
     lattice = FHLattice(rootLattice, folderName, talk);
-    
+    nSites = lattice.getnSites();
 
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
@@ -303,17 +304,33 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     }
 
     // coreHole
-
+std::cout << "coreHole" << std::endl;
     if (rootSystem.isMember("coreHole"))
     {
+        
+        std::cout << "coreHole1" << std::endl;
         Json::Value jsonCoreHole = rootSystem["coreHole"];
 
         if (jsonCoreHole.get("presence", false).asBool())
         {
-            systemType = FHSystemType::SysCoreHole;
-            coreHole = new FHCoreHole(jsonCoreHole);
-
             
+            std::cout << "coreHole2" << std::endl;
+            systemType = FHSystemType::SysCoreHole;
+            coreHole = FHCoreHole(jsonCoreHole);
+
+            arma::cx_dvec tunInt = arma::cx_dvec(nSites, arma::fill::zeros);
+            tunInt.at(coreHole.getSiteNumber()) = arma::cx_double(coreHole.getHoleTunneling(), 0);
+            tunnelingInteraction.addSite(tunInt);
+
+            externalPotential = FHExternalPotentialConstant(&lattice);
+            externalPotential.addSite(coreHole.getHolePotential());
+
+            arma::cx_dvec couInt = arma::cx_dvec(nSites+1, arma::fill::zeros);
+            couInt.at(0) = arma::cx_double(coreHole.getHoleInteraction(), 0);
+            coulombInteraction.addSite(couInt);
+
+            nSites +=1;
+
         }
     }
 
@@ -325,6 +342,7 @@ FHSystem::FHSystem(FHLattice lat)
     talkative = true;
 
     lattice = lat;
+    nSites = getnSites();
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
     
@@ -332,9 +350,10 @@ FHSystem::FHSystem(FHLattice lat)
 }
 
 
-
-FHLattice                                   FHSystem::getLattice()                                  {    return lattice;}
-unsigned int                                FHSystem::getnSites()                                   {    return lattice.getnSites();}
+FHSystemType                                FHSystem::getSystemType()                               {    return systemType;}
+FHLattice*                                  FHSystem::getLattice()                                  {    return &lattice;}
+FHCoreHole*                                 FHSystem::getCoreHole()                                 {    return &coreHole;}
+unsigned int                                FHSystem::getnSites()                                   {    return nSites;}
 unsigned int                                FHSystem::getnDimension()                               {    return lattice.getnDimension();}
 arma::drowvec                               FHSystem::getSitePosition(uint iSite)                   {    return lattice.getSitePosition(iSite);}
 double                                      FHSystem::getCoordinate(uint dim, uint iSite)           {    return lattice.getCoordinate(dim, iSite);}
@@ -1544,10 +1563,6 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
 
 FHSystem::~FHSystem()
 {
-    if (systemType == FHSystemType::SysCoreHole)
-    {
-        delete coreHole;
-    }
 
 }
 

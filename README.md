@@ -191,7 +191,7 @@ Representing the whole Hilbert space is indeed costly. for half-hilled systems, 
 
 ### Mean-field, Hartree-Fock (HF)
 
-The usual simplification is to consider the one-particle density matrix $` \rho_{ij\sigma} =  < \hat{n}_{ij\sigma}> `$ and compute the Coulomb interaction as the interaction between the particle and the electric potential it creates. The Hamiltonian in its one-particle form is
+The usual simplification is to consider the one-particle density matrix $` \rho_{ij\sigma} =  \braket{ \hat{n}_{ij\sigma}} `$ and compute the Coulomb interaction as the interaction between the particle and the electric potential it creates. The Hamiltonian in its one-particle form is
 
 $` H_{ij} =  t_{ij} + u_i \rho_{ij\overline{\sigma}} `$
 
@@ -207,7 +207,7 @@ The phase-space variables are mapped to the anti-symmetrised number operators:
 
 $` \rho_{ij\sigma} <->  \braket{\hat{E}_{i\sigma}^{j\sigma}} = \frac{1}{2} \braket{\hat{c}^{\dagger}_{j\sigma}\hat{c}_{i\sigma} - \hat{c}_{i\sigma}\hat{c}^{\dagger}_{j\sigma}} `$
 
-The wave-function is mapped to a density probability of one-particle density matrix, and the time-dependent Schrödinger equation becomes a density partial differential equation without even order terms. Hence the truncation at the third order gives us a linear differential equation very close to the mean-field approximation. The density is modeled by with cloud of points, each one of them following independently its own trajectory. Averages of this cloud of points gives us the usual observable like energy, site occupation and site correlation. 
+The wave-function is mapped to a density probability of one-particle density matrix, and the time-dependent Schrödinger equation becomes a density partial differential equation without even order terms. Hence the truncation at the third order gives us a linear differential equation very close to the mean-field approximation. The density is modeled by with cloud of points, each one of them following independently its own trajectory. Averages of this cloud of points gives us the usual observable like energy, site occupation and site correlation.
 
 ### Gaussian Phase-Space Representation (GPSR)
 
@@ -219,9 +219,8 @@ The terms above second order of the density partial differential equation disapp
 
 $` d \rho_{ij\sigma} =  A_{ij\sigma}(\rho) dt + B_{ij\sigma}(\rho) dW_t `$
 
-
 ## Acknowledgements
 
 This code was developped with the funds of the Carls Trygger fundation and the WISE program, under the supervisions of Magnus Ögren, Örebro University, and Olle Eriksson, Uppsala University.
 
-<!--  ---- ***Capitaine Docteur Frousse*** -->
+---- ***Capitaine Docteur Frousse***

@@ -35,31 +35,31 @@ public:
     arma::cx_double                 getCoulombVInteraction(uint iSite, uint jSite);
     FHCoulombInteractionType        getCoulombInteractionType();
 
-    virtual                     std::vector<double>         getParameters(uint set);
-    virtual Json::Value         writeCoulombInteractionJson();                 
+    virtual                         std::vector<double>         getParameters(uint set);
+    virtual Json::Value             writeCoulombInteractionJson();                 
 
-    void                        addSite(arma::cx_dvec interactions);
+    void                            addSite(arma::cx_dvec interactions);
 
     ~FHCoulombInteraction();
 
 private:  
 
 
-    FHLattice*                  fhLattice;
+    FHLattice*                      fhLattice;
 
-    arma::cx_dmat               U;      //<- Opposite spin Interaction
-    arma::cx_dmat               V;      //<- Same spin Interaction
+    arma::cx_dmat                   U;      //<- Opposite spin Interaction
+    arma::cx_dmat                   V;      //<- Same spin Interaction
 
-    FHCoulombInteractionType       CoulombInteractionType;    
+    FHCoulombInteractionType        CoulombInteractionType;    
     
 
-    std::vector<double>         parameterSet1;   //<- Energies
-    std::vector<double>         parameterSet2;  //<- Distances
+    std::vector<double>             parameterSet1;   //<- Energies
+    std::vector<double>             parameterSet2;  //<- Distances
 
 
-    void                        addCoulomb(double distance, double Interaction);
-    void                        addCoulombinU(double distance, double Interaction);
-    void                        addCoulombinV(double distance, double Interaction, bool fillDiagonal = false);
+    void                            addCoulomb(double distance, double Interaction);
+    void                            addCoulombinU(double distance, double Interaction);
+    void                            addCoulombinV(double distance, double Interaction, bool fillDiagonal = false);
 
 
 };

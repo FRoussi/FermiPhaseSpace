@@ -289,10 +289,11 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         if (saveEnergies)
         {
             Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
-            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
-            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
-            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
+            EJson["tH"] = rJson.writeLineInReal(Energies.row(0));
+            EJson["U"] = rJson.writeLineInReal(Energies.row(1));
+            EJson["V"] = rJson.writeLineInReal(Energies.row(2));
+            EJson["pe"] = rJson.writeLineInReal(Energies.row(3));
+            EJson["tot"] = rJson.writeLineInReal(Energies.row(nEnergies));
             simJson["E"] = EJson;
         }
 

@@ -817,11 +817,12 @@ void FHGPSRSolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                En_loc.at(0,t)=  En_loc.at(0,t) + (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);
-                En_loc.at(1,t) = En_loc.at(1,t) + arma::accu((rhou + rhod) % (*tM));
+                En_loc.at(0,t) +=  arma::accu((rhou + rhod) % (*tM));                                                                               //<- Tunneling Energy
+                En_loc.at(1,t) +=  (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);    //<- Opposite Spin Interaction Energy
+
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc.at(2,t) = En_loc.at(2,t) + arma::accu((rhou + rhod) % (*extPot));
+                    En_loc.at(3,t) += arma::accu((rhou + rhod) % (*extPot));                                                                        //<- Potential Energy
                 }
             }
 

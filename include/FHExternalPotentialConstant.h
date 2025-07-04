@@ -8,6 +8,7 @@ class FHExternalPotentialConstant : public FHExternalPotential
 {
 public:
 
+    FHExternalPotentialConstant(FHLattice* lat);
     FHExternalPotentialConstant(FHLattice* lat, arma::dvec Pot);
 
     std::vector<double>         getParameters();

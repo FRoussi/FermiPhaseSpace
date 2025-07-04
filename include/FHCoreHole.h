@@ -15,23 +15,31 @@ class FHCoreHole
 {
 public:
 
+    FHCoreHole();
     FHCoreHole(Json::Value coreHoleJson);
+
 
     uint    getSiteNumber();
     double  getHolePotential();
     double  getHoleTunneling();
     double  getHoleInteraction();
+    uint    getUpSpinOccupation();
+    uint    getDownSpinOccupation();
+
+    Json::Value writeFHCoreHoleJson();
 
     ~FHCoreHole();
 
 
 private:
 
+    bool    presence;
     uint    siteNumber;
     double  holePotential;
     double  holeTunneling;
     double  holeInteraction;
-
+    uint    upSpinOccupation;
+    uint    downSpinOccupation;       
 
 
 };

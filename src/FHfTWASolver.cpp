@@ -424,12 +424,12 @@ void FHfTWASolver::runSimulation( )
             {
                 Nu_loc =  rhou + halfDiag;
                 Nd_loc =  rhod + halfDiag;
-                En_loc.at(0,t) += (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0);
-                En_loc.at(1,t) += arma::accu((Nu_loc + Nd_loc) % (*tM));
-                En_loc.at(2,t) += (arma::dot(Nu_loc.diag(), *V * Nu_loc.diag()) + arma::dot(Nd_loc.diag(), *V * Nd_loc.diag())) / arma::cx_double(2,0);
+                En_loc.at(0,t) += arma::accu((Nu_loc + Nd_loc) % (*tM));                                                                                //<- Tunneling Energy
+                En_loc.at(1,t) += (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0); //<- Opposite Spin Interaction Energy 
+                En_loc.at(2,t) += (arma::dot(Nu_loc.diag(), *V * Nu_loc.diag()) + arma::dot(Nd_loc.diag(), *V * Nd_loc.diag())) / arma::cx_double(2,0); //<- Same Spin Interaction Energy
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc.at(3,t) +=  arma::accu((Nu_loc + Nd_loc) % (*extPot));
+                    En_loc.at(3,t) +=  arma::accu((Nu_loc + Nd_loc) % (*extPot));                                                                       //<- Potential Energy
                 }
             }
 

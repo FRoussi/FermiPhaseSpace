@@ -27,6 +27,11 @@
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
 
+enum FHSystemType {
+    SysVanilla,
+    SysCoreHole
+};
+
 class FHSystem
 {
 public:
@@ -44,10 +49,7 @@ public:
     };
 
 
-    enum FHSystemType {
-        SysVanilla,
-        SysCoreHole
-    };
+
 
 // CONSTRUCTORS
 
@@ -60,7 +62,9 @@ public:
 
 
 // GETTERS
-FHLattice                               getLattice();
+    FHSystemType                        getSystemType();
+    FHLattice*                          getLattice();
+    FHCoreHole*                         getCoreHole();
     // site positions
     unsigned int                        getnSites();
     unsigned int                        getnDimension();
@@ -208,6 +212,12 @@ private:
     FHLattice                       lattice;
 
 
+    // coreHole
+    FHCoreHole coreHole;
+
+    // sites
+    uint                            nSites;
+
 // PARTICLES
     unsigned int                    upSpinParticleNumber;
     unsigned int                    downSpinParticleNumber;
@@ -224,10 +234,10 @@ private:
     FHCoulombInteraction            coulombInteraction;
     FHTunnelingInteraction          tunnelingInteraction;
 
-    //arma::cx_dmat                   UMatrix;
-   // arma::cx_dmat                   VMatrix;
-  //  arma::cx_dmat                   JMatrix;
-  //  arma::cx_dmat                   tMatrix;
+    // arma::cx_dmat                   UMatrix;
+    // arma::cx_dmat                   VMatrix;
+    // arma::cx_dmat                   JMatrix;
+    // arma::cx_dmat                   tMatrix;
     FHExternalPotential             externalPotential;
 
 // INITIAL CONDITIONS
@@ -261,8 +271,7 @@ private:
 
 
 
-// coreHole
-    FHCoreHole* coreHole;
+
 
 
     bool talkative;
