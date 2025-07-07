@@ -51,7 +51,7 @@ Json::Value        FHExternalPotentialConstant::writePotentialJson()
 
 void    FHExternalPotentialConstant::addSite(double pot)
 {
-    std::cout << "fhEstConst" << std::endl;
+   // std::cout << "fhEstConst" << std::endl;
     uint nSites = externalPotential.n_cols;
 
     arma::cx_dmat newPot = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);

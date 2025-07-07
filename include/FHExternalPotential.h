@@ -50,7 +50,7 @@ protected:
 
     double                      currentPotentialTime;
 
-    FHLattice*            fhLattice;
+    FHLattice*                  fhLattice;
 
 
     arma::cx_dmat               externalPotential;

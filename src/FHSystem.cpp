@@ -304,17 +304,14 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     }
 
     // coreHole
-std::cout << "coreHole" << std::endl;
     if (rootSystem.isMember("coreHole"))
     {
         
-        std::cout << "coreHole1" << std::endl;
         Json::Value jsonCoreHole = rootSystem["coreHole"];
 
         if (jsonCoreHole.get("presence", false).asBool())
         {
             
-            std::cout << "coreHole2" << std::endl;
             systemType = FHSystemType::SysCoreHole;
             coreHole = FHCoreHole(jsonCoreHole);
 
@@ -420,56 +417,15 @@ std::string                                 FHSystem::getFPSVersion()           
 
 // SETTERS
 
-    void                                 FHSystem::setLattice(FHLattice newLat)
-    {
-        lattice = newLat;
-    }
-
-void                    FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)
-{
-    lattice.setPositions(positions, sitesName);
-}
-
-void                    FHSystem::setPositions(const arma::dmat& positions, std::vector<std::string> sN)
-{
-    lattice.setPositions(positions, sN);
-}
-
-
-bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
-{
-    return lattice.setSiteTypes(sTypes);
-}
-
-void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
-{
-    lattice.setSiteTypeNames(typeNames);
-}
-
-
-void                    FHSystem::setSymmetry(arma::dmat symVectors)
-{
-     lattice.setSymmetry(symVectors);
-}
-
-void                                FHSystem::setLatticeZero(arma::drowvec latticeZ)
-{
-    lattice.setLatticeZero(latticeZ);
-}
-
-
-void                                FHSystem::setNeighbourDistance(double neigbD)
-{
-    lattice.setNeighbourDistance(neigbD);
-}
-
-
-void                                FHSystem::setSamePointDistance(double samePointD)
-{
-    lattice.setSamePointDistance(samePointD);
-}
-
-
+void        FHSystem::setLattice(FHLattice newLat)                                              {    lattice = newLat;}
+void        FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)          {    lattice.setPositions(positions, sitesName);}
+void        FHSystem::setPositions(const arma::dmat& positions, std::vector<std::string> sN)    {    lattice.setPositions(positions, sN);}
+bool        FHSystem::setSiteTypes(arma::uvec sTypes)                                           {    return lattice.setSiteTypes(sTypes);}
+void        FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)                      {    lattice.setSiteTypeNames(typeNames);}
+void        FHSystem::setSymmetry(arma::dmat symVectors)                                        {    lattice.setSymmetry(symVectors);}
+void        FHSystem::setLatticeZero(arma::drowvec latticeZ)                                    {    lattice.setLatticeZero(latticeZ);}
+void        FHSystem::setNeighbourDistance(double neigbD)                                       {    lattice.setNeighbourDistance(neigbD);}
+void        FHSystem::setSamePointDistance(double samePointD)                                   {    lattice.setSamePointDistance(samePointD);}
 
 
 /// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition

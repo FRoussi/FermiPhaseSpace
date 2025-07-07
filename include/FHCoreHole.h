@@ -23,8 +23,8 @@ public:
     double  getHolePotential();
     double  getHoleTunneling();
     double  getHoleInteraction();
-    uint    getUpSpinOccupation();
-    uint    getDownSpinOccupation();
+    double  getUpSpinOccupation();
+    double  getDownSpinOccupation();
 
     Json::Value writeFHCoreHoleJson();
 
@@ -38,8 +38,8 @@ private:
     double  holePotential;
     double  holeTunneling;
     double  holeInteraction;
-    uint    upSpinOccupation;
-    uint    downSpinOccupation;       
+    double  upSpinOccupation;
+    double  downSpinOccupation;       
 
 
 };

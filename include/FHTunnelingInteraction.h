@@ -42,14 +42,14 @@ public:
     FHTunnelingInteraction(FHLattice* lat, double neighbourDistance, double tunnelingEnergy);
     FHTunnelingInteraction(FHLattice* lat, std::vector<double> tunnelingDistances, std::vector<double> tunnelingEnergies);
 
-    arma::cx_dmat*              getTunnelingInteractionPointer();
-    arma::cx_double             getTunnelingInteraction(uint iSite, uint jSite);
-    FHTunnelingInteractionType       getTunnelingInteractionType();
+    arma::cx_dmat*                  getTunnelingInteractionPointer();
+    arma::cx_double                 getTunnelingInteraction(uint iSite, uint jSite);
+    FHTunnelingInteractionType      getTunnelingInteractionType();
 
-    virtual                     std::vector<double>         getParameters(uint set);
-    virtual Json::Value         writeTunnelingInteractionJson();        
+    virtual std::vector<double>     getParameters(uint set);
+    virtual Json::Value             writeTunnelingInteractionJson();        
 
-    void                        addSite(arma::cx_dvec interactions);
+    void                            addSite(arma::cx_dvec interactions);
 
 
     ~FHTunnelingInteraction();

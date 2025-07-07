@@ -238,7 +238,8 @@ void                         FHCoulombInteraction::addSite(arma::cx_dvec siteInt
         V.submat(nSites-1, 0, nSites-1, nSites-1) += siteInteractions.st()/arma::cx_double(2,0);
 
 
-        CoulombInteractionType == FHCoulombInteractionType::CEgiven;
+        CoulombInteractionType = FHCoulombInteractionType::CEgiven;
+    
     }
 }
 
