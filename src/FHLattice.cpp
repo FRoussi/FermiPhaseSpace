@@ -211,6 +211,7 @@ switch (latticeType)
         break;
     case cubic:
     {
+
         int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
         double a = parameters[3];
         pos = makeBCGrid(n[0], n[1], n[2], a);
@@ -379,6 +380,7 @@ case none:
     computeMatrices();
 
 
+    std::cout<< "nrows = "<< sitePositions.n_rows << std::endl;
 
 }
 

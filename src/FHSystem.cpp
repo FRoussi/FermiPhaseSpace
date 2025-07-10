@@ -339,7 +339,8 @@ FHSystem::FHSystem(FHLattice lat)
     talkative = true;
 
     lattice = lat;
-    nSites = getnSites();
+    nSites = lattice.getnSites();
+
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
     
@@ -475,18 +476,18 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
         {
             for (uint iSite = 0; iSite < getnSites(); iSite ++)
             {
-                std::cout <<  "      ----- part filling : iSite=" << iSite << std::endl;
+                //std::cout <<  "      ----- part filling : iSite=" << iSite << std::endl;
                 if (iSite%2 == 0)
                 {
                     initConditions_upSpin[iSite] = true;
                     upSpinParticleNumber++;
-                    std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
+                    //std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
                 }
                 else
                 {
                     initConditions_downSpin[iSite] = true;
                     downSpinParticleNumber++;
-                    std::cout <<  "      ----- part filling : down part" << iSite << std::endl;
+                    //std::cout <<  "      ----- part filling : down part" << iSite << std::endl;
                 }
 
             }

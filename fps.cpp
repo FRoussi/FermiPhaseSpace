@@ -203,7 +203,6 @@ int main(int argc, char* argv[])
          case dynamicMethod::GPSR:
          {
 
-
             std::cout <<  "== Computation of GPSR dynamic "<< std::endl;
             FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
             GPSRSolver.setResultFile(simName + "_GPSR_res", workFolder);
