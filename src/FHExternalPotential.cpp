@@ -3,7 +3,6 @@
 
 FHExternalPotential::FHExternalPotential()
 {
-    timeDependantPotential = false;
     currentPotentialTime = 0;
     potentialType = FHExternalPotentialType::EPnull;
 }
@@ -18,10 +17,48 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat)
 
     fhLattice = lat;
 
-    timeDependantPotential = false;
     currentPotentialTime = 0;
     potentialType = FHExternalPotentialType::EPnull;
 }
+
+
+FHExternalPotential::FHExternalPotential(FHLattice* lat, arma::dvec Pot)
+{
+    fhLattice = lat;
+    
+    uint nSites = fhLattice->getnSites();
+    externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+
+    arma::dvec diagPot = arma::dvec(nSites);
+    diagPot.subvec(0,arma::size(Pot)) = Pot; 
+    arma::cx_dvec diagPotC = arma::cx_dvec(diagPot, arma::dvec(nSites));
+
+    externalPotential = arma::diagmat(diagPotC);
+
+
+    currentPotentialTime = 0;
+    potentialType = FHExternalPotentialType::EPconstant;
+}
+
+FHExternalPotential::FHExternalPotential(FHLattice* lat, uint iSite, double pot)
+{
+
+    fhLattice = lat;
+    
+    uint nSites = fhLattice->getnSites();
+    externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    
+    if (iSite < nSites)
+    {
+        externalPotential.at(iSite, iSite) = pot;
+    }
+
+
+    currentPotentialTime = 0;
+    potentialType = FHExternalPotentialType::EPconstant;
+}
+
+
 
 bool                    FHExternalPotential::isThePotentialNull()
 {
@@ -30,7 +67,7 @@ bool                    FHExternalPotential::isThePotentialNull()
 
 bool                    FHExternalPotential::isThePotentialTimeDependant()
 {
-    return timeDependantPotential;
+    return (potentialType == FHExternalPotentialType::EPtimeDependant);
 }
 
 bool                    FHExternalPotential::getExternalPotential(double t, arma::cx_dmat& potential)
@@ -97,7 +134,17 @@ void                    FHExternalPotential::updatePotential(double t)
 
 std::vector<double>         FHExternalPotential::getParameters()
 {
-    return std::vector<double>();
+    std::vector<double> diagPot = std::vector<double>();
+
+    if (potentialType == FHExternalPotentialType::EPconstant)
+    {
+        for (uint iS = 0; iS < externalPotential.n_cols; iS++)
+        {
+            diagPot.push_back(externalPotential.at(iS, iS).real());
+        }
+    }
+
+    return diagPot;
 }
 
 FHExternalPotentialType FHExternalPotential::getExternalPotentialType()
@@ -108,7 +155,20 @@ FHExternalPotentialType FHExternalPotential::getExternalPotentialType()
 Json::Value         FHExternalPotential::writePotentialJson()
 {
     Json::Value jpot;
-    jpot["type"] = "null";
+    if (potentialType == FHExternalPotentialType::EPconstant)
+    {
+        jpot["type"] = "constant";
+        Json::Value diagP(Json::arrayValue);
+        for (uint iS = 0; iS < externalPotential.n_cols; iS++)
+        {
+            diagP.append(externalPotential.at(iS, iS).real());
+        }
+        jpot["diagonal"] = diagP;
+    }
+    else
+    {
+        jpot["type"] = "null";
+    }
     return jpot;
 }
 

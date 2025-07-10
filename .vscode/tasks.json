@@ -17,8 +17,6 @@
                 "${workspaceFolder}/src/FHCoulombInteraction.cpp",
                 "${workspaceFolder}/src/FHExternalPotential.cpp",
                 "${workspaceFolder}/src/FHExternalPotentialPulse.cpp",
-                "${workspaceFolder}/src/FHExternalPotentialConstant.cpp",
-                "${workspaceFolder}/src/FHExternalPotentialCoreHole.cpp",
                 "${workspaceFolder}/src/FHSolver.cpp",
                 "${workspaceFolder}/src/ResultWriterTxt.cpp",
                 "${workspaceFolder}/src/ResultWriterJson.cpp",

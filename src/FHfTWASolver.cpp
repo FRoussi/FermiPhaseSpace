@@ -116,6 +116,8 @@ void FHfTWASolver::initiateSolver()
             rhod0_mean.at(it, it) = arma::cx_double(initialDiagD(it) - 0.5, 0);          
         }
 
+
+
         nPartU = static_cast<unsigned int>(std::floor(arma::accu(initialDiagU)));
         nPartD = static_cast<unsigned int>(std::floor(arma::accu(initialDiagD)));
 
@@ -360,7 +362,6 @@ void FHfTWASolver::runSimulation( )
         rhod = arma::diagmat(initialDiagD) - halfDiag + wnd;
         rhod = rotMatrixD * rhod * rotMatrixD.t();
 
-    
 
         // We compute the trajectory dynamic and add up the diagonal to the result
         for (unsigned int t = 0;  t<nTimePoints; t++)

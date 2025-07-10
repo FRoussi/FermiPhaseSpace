@@ -13,8 +13,6 @@
 #include "FHCoulombInteraction.h"
 #include "FHExternalPotential.h"
 #include "FHExternalPotentialPulse.h"
-#include "FHExternalPotentialConstant.h"
-#include "FHExternalPotentialCoreHole.h"
 #include "json/json.h"
 
 

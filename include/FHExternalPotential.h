@@ -9,14 +9,14 @@
 #include "json/json.h"
 #include "FHLattice.h"
 #include "FHCoreHole.h"
+#include "FHTunnelingInteraction.h"
 //#include "FHSystem.h"
 
 
 enum FHExternalPotentialType{
     EPnull,
     EPconstant,
-    EPcoreHole,
-    EPpulse
+    EPtimeDependant
 };
 
 class FHExternalPotential
@@ -26,6 +26,9 @@ public:
 
     FHExternalPotential();
     FHExternalPotential(FHLattice* lat);
+    FHExternalPotential(FHLattice* lat, arma::dvec Pot);
+    FHExternalPotential(FHLattice* lat, uint iSite, double pot);
+
 
     bool                        getExternalPotential(double time, arma::cx_dmat& potential);
     arma::cx_dmat*              getExternalPotentialPointer();
@@ -34,8 +37,8 @@ public:
     arma::cx_dmat               getExternalPotential(double t);
     FHExternalPotentialType     getExternalPotentialType();
 
-    virtual                     std::vector<double>         getParameters();
-    virtual Json::Value         writePotentialJson();                 
+    std::vector<double>         getParameters();
+    Json::Value                 writePotentialJson();                 
 
     void                        updatePotential(double t);
 
@@ -46,7 +49,7 @@ public:
 
 protected:  
 
-    bool                        timeDependantPotential;
+
 
     double                      currentPotentialTime;
 

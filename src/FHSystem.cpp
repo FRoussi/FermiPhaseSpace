@@ -168,13 +168,13 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
         else if (extPotType == "constant")
         {
-            externalPotential = FHExternalPotentialConstant(&lattice, arma::dvec(lattice.getnSites()));
+            externalPotential = FHExternalPotential(&lattice, arma::dvec(lattice.getnSites()));
         }
         else if (extPotType == "coreHole")
         {
             uint site = ExtPotJ.get("site", 0).asUInt();
             double hPot = ExtPotJ.get("holePotential", -1).asDouble();
-            externalPotential = FHExternalPotentialCoreHole(&lattice, site, hPot);
+            externalPotential = FHExternalPotential(&lattice, site, hPot);
         }
         
     }
@@ -319,7 +319,7 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
             tunInt.at(coreHole.getSiteNumber()) = arma::cx_double(coreHole.getHoleTunneling(), 0);
             tunnelingInteraction.addSite(tunInt);
 
-            externalPotential = FHExternalPotentialConstant(&lattice);
+            externalPotential = FHExternalPotential(&lattice);
             externalPotential.addSite(coreHole.getHolePotential());
 
             arma::cx_dvec couInt = arma::cx_dvec(nSites+1, arma::fill::zeros);
@@ -475,18 +475,18 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
         {
             for (uint iSite = 0; iSite < getnSites(); iSite ++)
             {
-                //std::cout <<  "      ----- part filling : iSite=" << iSite << std::endl;
+                std::cout <<  "      ----- part filling : iSite=" << iSite << std::endl;
                 if (iSite%2 == 0)
                 {
                     initConditions_upSpin[iSite] = true;
                     upSpinParticleNumber++;
-                  //  std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
+                    std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
                 }
                 else
                 {
                     initConditions_downSpin[iSite] = true;
                     downSpinParticleNumber++;
-                    //std::cout <<  "      ----- part filling : down part" << iSite << std::endl;
+                    std::cout <<  "      ----- part filling : down part" << iSite << std::endl;
                 }
 
             }
@@ -555,11 +555,11 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
     {
         case FHInitialConditionType::givenDiagonal:
         {
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*upSpinParticleNumber); iSite +=2)
             {
                     initConditions_upSpin[iSite] = true;
             }
-            for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            for (uint iSite = 1; iSite < std::min((uint)getnSites(), 2*downSpinParticleNumber); iSite +=2)
             {
                     initConditions_downSpin[iSite] = true;
             }
@@ -567,11 +567,11 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
         }
         case FHInitialConditionType::spinWave:
         {
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*upSpinParticleNumber); iSite +=2)
             {
                     initConditions_upSpin[iSite] = true;
             }
-            for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            for (uint iSite = 1; iSite < std::min((uint)getnSites(), 2*downSpinParticleNumber); iSite +=2)
             {
                     initConditions_downSpin[iSite] = true;
             }
@@ -579,12 +579,12 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
         }
         case FHInitialConditionType::chargeWave:
         {
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*upSpinParticleNumber); iSite +=2)
             {
                     initConditions_upSpin[iSite] = true;
 
             }
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*downSpinParticleNumber); iSite +=2)
             {
                     initConditions_downSpin[iSite] = true;
             }

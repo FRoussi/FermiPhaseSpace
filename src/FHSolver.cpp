@@ -210,7 +210,9 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         {
             //Json::Value n12uJS(Json::arrayValue);
             //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
-            simJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
+
+            simJson["N1hu"] = rJson.writeLine(Nu.tube(0,Nu.n_cols-1));
+            simJson["N1hd"] = rJson.writeLine(Nd.tube(0,Nd.n_cols-1));
         }
 
         if (saveDiagDMatrix)
