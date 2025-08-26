@@ -2,6 +2,7 @@
 
 
 
+
 FHLattice::FHLattice(bool talk)
 {
 

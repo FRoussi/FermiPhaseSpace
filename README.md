@@ -123,14 +123,14 @@ For example, "./makeSitesSystem 6sites grid 3 2" writes two files called "6sites
 
 The possible lattice geometry are
 
-- grid nx ny nz a               cubic grid
-- bcc nx ny nz a                Bulk Centered Cubic
-- fcc nx ny nz a                Face Centered Cubic
-- triangular nx ny nz a         Tetragones
-- honeyCombs nc a               Graphene sheet build by Hexagones
-- graphene nx ny a              Graphene sheet build with the minimal cell of two sites
-- moire nx ny phi d a           2 graphene sheets with a phi angle
-- kagome nx ny a                Kagome lattice
+- Cubic grid : -*grid* nx ny nz a-
+- Bulk Centered Cubic : -*bcc* nx ny nz a-
+- Face Centered Cubic : -*fcc* nx ny nz a-
+- Tetragones : -*triangular* nx ny nz a-
+- Graphene sheet build by Hexagones : -*honeyCombs* nc a-
+- Graphene sheet build with the minimal cell of two sites : -*graphene* nx ny a-
+- 2 graphene sheets with a phi angle : -*moire* nx ny phi d a-
+- Kagome lattice : -*kagome* nx ny a-
 
 Missing parameters are replaced by "1".
 

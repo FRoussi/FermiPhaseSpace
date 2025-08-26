@@ -956,32 +956,32 @@ void                                FHSystem::computeMFGroundState(bool withExte
 arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
 arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
 
-    uint nSites = lattice.getnSites();
+uint nSitesLattice = lattice.getnSites();
 
-    arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
+    arma::cx_dvec diagMku = arma::cx_dvec(nSitesLattice, arma::fill::zeros);
     if (upSpinParticleNumber > 0) diagMku.subvec(0,upSpinParticleNumber-1).ones();
     arma::cx_dmat Mku = arma::diagmat(diagMku);
 
-    arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
+    arma::cx_dvec diagMkd = arma::cx_dvec(nSitesLattice, arma::fill::zeros);
     if (downSpinParticleNumber > 0) diagMkd.subvec(0,downSpinParticleNumber-1).ones();
     arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
-    double thresholdConverged = 0.0001 * nSites;
+    double thresholdConverged = 0.0001 * nSitesLattice;
     bool isConverged = false;
     int maxIt = 100;
     iterationsForMFState = 0;
 
-    arma::cx_dvec diagNu = arma::cx_dvec(nSites) * (double)upSpinParticleNumber / (double)nSites;
-    arma::cx_dvec diagNd = arma::cx_dvec(nSites) * (double)downSpinParticleNumber / (double)nSites;
+    arma::cx_dvec diagNu = arma::cx_dvec(nSitesLattice) * (double)upSpinParticleNumber / (double)nSitesLattice;
+    arma::cx_dvec diagNd = arma::cx_dvec(nSitesLattice) * (double)downSpinParticleNumber / (double)nSitesLattice;
 
-    arma::cx_dmat mfuHuU = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    arma::cx_dmat mfuHuD = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    arma::cx_dmat mfuHuU = arma::cx_dmat(nSitesLattice, nSitesLattice, arma::fill::zeros);
+    arma::cx_dmat mfuHuD = arma::cx_dmat(nSitesLattice, nSitesLattice, arma::fill::zeros);
 
 
     while ((iterationsForMFState < maxIt) && !isConverged)
     {
 
-        for (int i = 0; i < nSites; i++)
+        for (int i = 0; i < nSitesLattice; i++)
         {
             mfuHuU.at(i,i) = arma::dot(UMatrix->row(i), diagNd);
             mfuHuD.at(i,i) = arma::dot(UMatrix->row(i), diagNu);
@@ -1256,8 +1256,6 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         fileAdressName = folderName + "/" + wtDatFile;
     }
 
-    uint nSites = getnSites();
-
     std::ofstream datFile(fileAdressName);
     if (datFile.is_open())
     {
@@ -1403,7 +1401,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
 
  void FHSystem::WannierToolsSystemInofStream(std::ofstream& wannierFileStream)
  {
-        uint nSites = getnSites();
+
         uint nProjectors_unfold = 2;
 
 

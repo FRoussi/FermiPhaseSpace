@@ -33,7 +33,7 @@ public:
 
 private:
 
-    bool    presence;
+   // bool    presence;
     uint    siteNumber;
     double  holePotential;
     double  holeTunneling;

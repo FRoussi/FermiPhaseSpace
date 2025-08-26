@@ -13,7 +13,7 @@
 #include "include/FHEDSolver.h"
 #include "include/FHHFSolver.h"
 #include "include/FHfTWASolver.h"
-#include "include/FHfTWAStateSearch.h"
+//#include "include/FHfTWAStateSearch.h"
 #include "include/FHGPSRSolver.h"
 #include "include/json/json.h"
 
@@ -242,12 +242,12 @@ int main(int argc, char* argv[])
             int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
 
             std::cout <<  "== Search of fTWA Ground State "<< std::endl;
-            FHfTWAStateSearch fTWAGSSearch = FHfTWAStateSearch(&fhSystem);
+            //FHfTWAStateSearch fTWAGSSearch = FHfTWAStateSearch(&fhSystem);
 
             std::cout <<  "== Init Search "<< std::endl;
-            fTWAGSSearch.initiateStateSearch();
+            //fTWAGSSearch.initiateStateSearch();
             std::cout <<  "== Run Search "<< std::endl;
-            fTWAGSSearch.findDensity();
+            //fTWAGSSearch.findDensity();
 
             break;
       }

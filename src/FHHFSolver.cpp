@@ -255,11 +255,12 @@ void FHHFSolver::runSimulation( )
             fhSystem->computeTBGroundState();
         }
         V_1p = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+
         if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
         {
             uint nLatticeSize = fhSystem->getLattice()->getnSites();
             V_1p = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-            V_1p.submat(0, 0, nLatticeSize, nLatticeSize) = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
+            V_1p.submat(0, 0, nLatticeSize-1, nLatticeSize-1) = arma::cx_dmat(*fhSystem->get_tbgs_V_Pointer());
             V_1p.at(nSites-1, nSites-1) = arma::cx_double(1,0);
         }
 
@@ -363,6 +364,8 @@ void FHHFSolver::runSimulation( )
         }
         if (saveTBStates)
         {
+
+        
             arma::cx_dmat M = V_1p.t() * Nut * V_1p;
             Mkku.col(t) = M.diag();
 
