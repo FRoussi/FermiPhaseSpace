@@ -201,7 +201,7 @@ void FHHFSolver::runSimulation( )
     std::cout << "   -- Start simulation." << std::endl;
 
     unsigned int nSites = fhSystem->getnSites();
-    std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
+    timeLine = std::vector<double>(nTimePoints,0);
 
     Nut = Nu0;
     Ndt = Nd0;
@@ -211,18 +211,7 @@ void FHHFSolver::runSimulation( )
 
 
 
-    arma::cx_dcube Nu;
-    arma::cx_dcube Nd;
-    arma::cx_dmat Niiu;
-    arma::cx_dmat Niid;
-    arma::cx_dmat Mkku;
-    arma::cx_dmat Mkkd;
-    arma::cx_dmat Mukku;
-    arma::cx_dmat Mukkd;
-    arma::cx_dmat Energies;
-    arma::cx_dmat N2iiu, N2iid;
-    arma::cx_dmat NiuNid;   
-    arma::cx_dmat V_1p;
+
     //arma::cx_drowvec EU;
     //arma::cx_drowvec EtH;
     //arma::cx_drowvec EpotExt;
@@ -306,6 +295,10 @@ void FHHFSolver::runSimulation( )
         {
             Energies.at(3,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
         }
+    }
+    if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+    {
+        NiCH = arma::cx_dmat(2,nTimePoints, arma::fill::zeros);
     }
 
 
@@ -401,6 +394,12 @@ void FHHFSolver::runSimulation( )
             }
 
         }
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+        {
+            uint iSiteCH = fhSystem->getCoreHole()->getSiteNumber();
+            NiCH(0,t) = Nut(iSiteCH ,nSites-1);
+            NiCH(1,t) = Ndt(iSiteCH ,nSites-1);
+        }
         
     }
 
@@ -431,7 +430,7 @@ void FHHFSolver::runSimulation( )
     }
 
        // Writing the results :
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+    writeResults();
 
 
 

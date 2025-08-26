@@ -682,7 +682,8 @@ void FHEDSolver::runSimulation()
     uint nSites = fhSystem->getnSites();
 
 
-    std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
+    timeLine = std::vector<double>(nTimePoints, 0);
+    /*
     arma::cx_dmat niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat Energies = arma::cx_dmat(nEnergies + 1, nTimePoints, arma::fill::zeros);
@@ -691,9 +692,13 @@ void FHEDSolver::runSimulation()
     //arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_dmat Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid; 
-    arma::cx_dcube Nu, Nd;
+    arma::cx_dcube Nu, Nd;*/
 
-
+    if (saveDiagDMatrix)
+    {
+        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
     if (saveNiuNid)
     {
         NiuNid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
@@ -707,6 +712,10 @@ void FHEDSolver::runSimulation()
     {
         Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveEnergies)
+    {
+        Energies = arma::cx_dmat(nEnergies+1, nTimePoints, arma::fill::zeros);
     }
 
 
@@ -723,8 +732,8 @@ void FHEDSolver::runSimulation()
         timeLine[t] = t * dt;
         for (uint iSite = 0; iSite < nSites; iSite++)
         {
-            niiu.at(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
-            niid.at(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
+            Niiu.at(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
+            Niid.at(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
         }
 
         if (saveEnergies)
@@ -769,7 +778,7 @@ void FHEDSolver::runSimulation()
     //printf("Test 3 - small system dynamic, n_1u : \n");
     //niiu.row(0).print();
     
-    writeResults(Nu, Nd, niiu, niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+    writeResults();
     
 
 }

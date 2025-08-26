@@ -577,13 +577,7 @@ void FHfTWAMPISolver::runSimulation( )
         // Computation of different observables :
 
         arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
-        arma::cx_dcube  Nu, Nd   ;
-        arma::cx_dmat   Niiu, Niid ;   
-        arma::cx_dmat   N2iiu, N2iid;   
-        arma::cx_dmat   Mkku ,  Mkkd ;
-        arma::cx_dmat   Mukku,  Mukkd;
-        arma::cx_dmat   NiuNid;
-        arma::cx_dmat   Energies;
+
 
 
         if (saveWholeDMatrix)
@@ -662,7 +656,7 @@ void FHfTWAMPISolver::runSimulation( )
         }
 
 
-       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+       writeResults(timeLine);
     }
 
 

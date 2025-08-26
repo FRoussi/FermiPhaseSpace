@@ -130,7 +130,7 @@ void FHSolver::setJsonFile(Json::Value file)
 
 
 
-void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &NiuNid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
+void FHSolver:: writeResults()
 {
 
     // Writing the results :
@@ -192,7 +192,6 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         Json::Value resJson = jsonFile;
 
         resJson["fpsVersion"] = fhSystem->getFPSVersion(); 
-
         if (fhSystem->isTBGroundStateComputed())
         {
             resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
@@ -290,6 +289,7 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
 
         if (saveEnergies)
         {
+
             Json::Value EJson(Json::objectValue);
             EJson["tH"] = rJson.writeLineInReal(Energies.row(0));
             EJson["U"] = rJson.writeLineInReal(Energies.row(1));
@@ -309,6 +309,8 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         std::ofstream resultFile(fileAdressName);
         resultFile << document;
         resultFile.close();
+
+
 
         std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
     }

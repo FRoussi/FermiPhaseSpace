@@ -237,13 +237,12 @@ void FHfTWASolver::runSimulation( )
     unsigned int nSites = fhSystem->getnSites();
 
     
-    std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
+    timeLine = std::vector<double>(nTimePoints,0);
     //std::cout << "nSites=" << nSites << " , nTPoints="<< nTimePoints <<  std::endl;
     arma::cx_dcube  rhou_t,     rhod_t;
     arma::cx_dmat   rhoiiu,     rhoiid;
     arma::cx_dmat   rho2iiu,    rho2iid;
     arma::cx_dmat   rhoiurhoid;
-    arma::cx_dmat   Energies;
     arma::cx_dmat   mkku, mkkd, mukku, mukkd;
 
     if (saveWholeDMatrix)
@@ -326,7 +325,7 @@ void FHfTWASolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        En_loc          = arma::cx_dmat(nEnergies,nTimePoints, arma::fill::zeros);
+        En_loc          = arma::cx_dmat(nEnergies+1,nTimePoints, arma::fill::zeros);
     }
 
     arma::cx_dmat Nu_loc    = arma::cx_dmat(nSites, nSites);
@@ -478,13 +477,6 @@ void FHfTWASolver::runSimulation( )
 // Computation of different observables :
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
-    arma::cx_dcube  Nu, Nd   ;
-    arma::cx_dmat   Niiu, Niid ;   
-    arma::cx_dmat   N2iiu, N2iid;   
-    arma::cx_dmat   Mkku ,  Mkkd ;
-    arma::cx_dmat   Mukku,  Mukkd;
-    arma::cx_dmat   NiuNid;
-
 
     if (saveWholeDMatrix)
     {
@@ -541,7 +533,8 @@ void FHfTWASolver::runSimulation( )
         Energies.row(nEnergies) = arma::sum(Energies,0);
     }
 
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+
+    writeResults();
 
 }
 
