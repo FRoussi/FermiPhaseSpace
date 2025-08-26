@@ -21,10 +21,9 @@ LDFLAGS = -L$(ARMADILLO_LIB_DIR) -larmadillo
 
 
 # Source files
-SRCS = ./src/jsoncpp.cpp ./src/FHLattice.cpp ./src/FHSystem.cpp \
+SRCS = ./src/jsoncpp.cpp ./src/FHLattice.cpp ./src/FHSystem.cpp ./src/FHCoreHole.cpp \
        ./src/FHTunnelingInteraction.cpp ./src/FHCoulombInteraction.cpp \
-       ./src/FHExternalPotential.cpp ./src/FHExternalPotentialConstant.cpp \
-       ./src/FHExternalPotentialPulse.cpp ./src/FHExternalPotentialCoreHole.cpp \
+       ./src/FHExternalPotential.cpp ./src/FHExternalPotentialPulse.cpp \
        ./src/ResultWriterTxt.cpp ./src/ResultWriterJson.cpp ./src/FHSolver.cpp \
        ./src/FHfTWASolver.cpp ./src/FHfTWAMPISolver.cpp \
        fps_fTWA_MPI.cpp

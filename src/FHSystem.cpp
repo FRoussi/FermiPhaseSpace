@@ -328,6 +328,8 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
             nSites +=1;
 
+            std::cout << "   -- Core Hole linked to site :    " << coreHole.getSiteNumber() << std::endl; 
+
         }
     }
 

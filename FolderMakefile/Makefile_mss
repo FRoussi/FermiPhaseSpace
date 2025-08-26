@@ -20,10 +20,9 @@ LDFLAGS = -L$(ARMADILLO_LIB_DIR) -larmadillo
 
 
 # Source files
-SRCS = ./src/jsoncpp.cpp ./src/FHLattice.cpp ./src/FHSystem.cpp \
+SRCS = ./src/jsoncpp.cpp ./src/FHLattice.cpp ./src/FHSystem.cpp ./src/FHCoreHole.cpp \
        ./src/FHTunnelingInteraction.cpp ./src/FHCoulombInteraction.cpp \
        ./src/FHExternalPotential.cpp ./src/FHExternalPotentialPulse.cpp \
-       ./src/FHExternalPotentialConstant.cpp ./src/FHExternalPotentialCoreHole.cpp \
        makeSitesSystem.cpp
 
 # Object files
