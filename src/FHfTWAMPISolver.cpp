@@ -198,8 +198,8 @@ void FHfTWAMPISolver::runSimulation( )
             if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::tbGroundState)
             {
                 // Initial matrices in momentum space :
-                arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
-                arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
+                arma::cx_dmat  mU = arma::diagmat(initialDiagU) - halfDiag + wnu;
+                arma::cx_dmat  mD = arma::diagmat(initialDiagD) - halfDiag + wnd;
 
                 // Initial matrices in position space :
                 rhou = (*fhSystem->get_tbgs_V_Pointer()) * mU * (*fhSystem->get_tbgs_V_Pointer()).t() ;
@@ -209,8 +209,8 @@ void FHfTWAMPISolver::runSimulation( )
             else if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::mfGroundState)
             {
                 // Initial matrices in momentum space :
-                arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
-                arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
+                arma::cx_dmat  mU = arma::diagmat(initialDiagU) - halfDiag + wnu;
+                arma::cx_dmat  mD = arma::diagmat(initialDiagD) - halfDiag + wnd;
 
                 // Initial matrices in position space :
                 rhou = (*fhSystem->get_mfgs_Vu_Pointer()) * mU * ((*fhSystem->get_mfgs_Vu_Pointer()).t()) ;
@@ -656,7 +656,7 @@ void FHfTWAMPISolver::runSimulation( )
         }
 
 
-       writeResults(timeLine);
+       writeResults();
     }
 
 

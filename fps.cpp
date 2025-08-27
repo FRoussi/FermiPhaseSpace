@@ -26,6 +26,10 @@
 int main(int argc, char* argv[])
 {
 
+
+
+
+
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
 
    std::cout << "== FPS version:  " << FPS_VERSION_MAJOR << "." << FPS_VERSION_MINOR << "." << FPS_VERSION_PATCH << std::endl;
@@ -35,6 +39,7 @@ int main(int argc, char* argv[])
 
 
 // Environment variables :
+   //setenv("OPENBLAS_NUM_THREADS","1",0);               <- OPENBLAS DOES NOT SEE IT !!!!!!!!!!!
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
    char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 

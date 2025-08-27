@@ -59,6 +59,7 @@ void                        FHSolver::setResultsToSave(Json::Value res)
     saveTBStates        = res.get("tbStates", false).asBool();
     saveMFStates        = res.get("mfStates", false).asBool();
 
+
 }
 
 
@@ -297,6 +298,14 @@ void FHSolver:: writeResults()
             EJson["pe"] = rJson.writeLineInReal(Energies.row(3));
             EJson["tot"] = rJson.writeLineInReal(Energies.row(nEnergies));
             simJson["E"] = EJson;
+        }
+
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+        {
+            Json::Value NiCHJson(Json::objectValue);
+            NiCHJson["u"] = rJson.writeLine(NiCH.row(0));
+            NiCHJson["d"] = rJson.writeLine(NiCH.row(1));
+            simJson["NiCh"] = NiCHJson;
         }
 
         resJson["simulation"] = simJson;

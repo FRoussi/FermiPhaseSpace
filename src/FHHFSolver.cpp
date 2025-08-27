@@ -276,9 +276,7 @@ void FHHFSolver::runSimulation( )
     }
     if (saveEnergies)
     {
-        //EU = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        //EtH = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
-        //EpotExt = arma::cx_drowvec(nTimePoints, arma::fill::zeros);
+
         Energies = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
         Energies.at(0,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
 
@@ -400,6 +398,7 @@ void FHHFSolver::runSimulation( )
             NiCH(0,t) = Nut(iSiteCH ,nSites-1);
             NiCH(1,t) = Ndt(iSiteCH ,nSites-1);
         }
+
         
     }
 

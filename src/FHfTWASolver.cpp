@@ -278,6 +278,10 @@ void FHfTWASolver::runSimulation( )
         mukku       = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         mukkd       = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     }
+    if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+    {
+        NiCH = arma::cx_dmat(2,nTimePoints, arma::fill::zeros);
+    }
 
 
 // PARALLEL LOOP ON TRAJECTORIES
@@ -292,6 +296,7 @@ void FHfTWASolver::runSimulation( )
 
     arma::cx_dmat En_loc;   
     arma::cx_dmat mkku_loc, mkkd_loc, mukku_loc, mukkd_loc;
+    arma::cx_dmat NiCH_loc;
 
 
     if (saveWholeDMatrix)
@@ -326,6 +331,10 @@ void FHfTWASolver::runSimulation( )
     if (saveEnergies)
     {
         En_loc          = arma::cx_dmat(nEnergies+1,nTimePoints, arma::fill::zeros);
+    }
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+    {
+        NiCH_loc = arma::cx_dmat(2,nTimePoints, arma::fill::zeros);
     }
 
     arma::cx_dmat Nu_loc    = arma::cx_dmat(nSites, nSites);
@@ -408,6 +417,11 @@ void FHfTWASolver::runSimulation( )
                     En_loc.at(3,t) +=  arma::accu((Nu_loc + Nd_loc) % (*extPot));                                                                       //<- Potential Energy
                 }
             }
+            if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+            {
+                NiCH_loc(0,t) = rhou(fhSystem->getCoreHole()->getSiteNumber(), nSites-1);
+                NiCH_loc(1,t) = rhod(fhSystem->getCoreHole()->getSiteNumber(), nSites-1);
+            }
 
             // We do 'nStepsPerTimePoint' simulation steps
             for (unsigned int t_s = 0; t_s < nStepsPerTimePoint; t_s ++)
@@ -460,12 +474,16 @@ void FHfTWASolver::runSimulation( )
             mukku += mukku_loc;
             mukkd += mukkd_loc;
         }
-        if (saveEnergies)
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
         {
             for (uint ie =0; ie < nEnergies; ie ++)
             {
                 Energies.row(ie) +=En_loc.row(ie);
             }
+        }
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+        {
+            NiCH += NiCH_loc;
         }
 
     }
@@ -531,6 +549,10 @@ void FHfTWASolver::runSimulation( )
     {
         Energies = Energies/nTraj_arma;
         Energies.row(nEnergies) = arma::sum(Energies,0);
+    }
+    if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+    {
+        NiCH = NiCH/arma::cx_double(nTraj,0);
     }
 
 
