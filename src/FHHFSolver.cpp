@@ -304,6 +304,21 @@ void FHHFSolver::runSimulation( )
     arma::cx_dmat dNd_dt = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
 
+
+// PRINT MATRICES
+/*
+std::cout << "U : " << std::endl;
+U->print();
+std::cout << "tM : " << std::endl;
+tM->print();
+std::cout << "V : " << fhSystem->getCoulombInteractionType() << std::endl;
+V->print();
+std::cout << "Pot : " << fhSystem->isExternalPotentialNull() << std::endl;
+extPot->print();
+std::cout << "Nu(0) : " << std::endl;
+Nut.print();*/
+
+
 // Simulation :
     for (unsigned int t = 1;  t< nTimePoints; t++)
     {
