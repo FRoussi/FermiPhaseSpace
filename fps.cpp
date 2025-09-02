@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 
 
 // Environment variables :
-   //setenv("OPENBLAS_NUM_THREADS","1",0);               <- OPENBLAS DOES NOT SEE IT !!!!!!!!!!!
+   //setenv("OPENBLAS_NUM_THREADS","1",0);               <- OPENBLAS DOES NOT SEE IT !!!!!!!!!!! (tuned before the compilation ?)
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
    char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 
