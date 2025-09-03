@@ -221,6 +221,6 @@ $` d \rho_{ij\sigma} =  A_{ij\sigma}(\rho) dt + B_{ij\sigma}(\rho) dW_t `$
 
 ## Acknowledgements
 
-This code was developped with the funds of the Carls Trygger fundation and the WISE program, under the supervisions of Magnus Ögren, Örebro University, and Olle Eriksson, Uppsala University.
+This code was developped the supervision Olle Eriksson, Uppsala University, with the support from the Swedish Research Council, the Knut and Alice Wallenberg Foundation, the European Research Council via Synergy Grant No. 854843- FASTCORR, Swedish energy agency and eSSENCE.
 
 ---- ***Capitaine Docteur Frousse***

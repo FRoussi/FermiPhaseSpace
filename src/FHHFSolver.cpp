@@ -316,8 +316,8 @@ V->print();
 std::cout << "Pot : " << fhSystem->isExternalPotentialNull() << std::endl;
 extPot->print();
 std::cout << "Nu(0) : " << std::endl;
-Nut.print();*/
-
+Nut.print();
+*/
 
 // Simulation :
     for (unsigned int t = 1;  t< nTimePoints; t++)

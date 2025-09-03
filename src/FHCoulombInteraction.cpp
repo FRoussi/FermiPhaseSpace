@@ -236,6 +236,7 @@ void                         FHCoulombInteraction::addSite(arma::cx_dvec siteInt
 
         V.submat(0, nSites-1, nSites-1, nSites-1) += siteInteractions/arma::cx_double(2,0);
         V.submat(nSites-1, 0, nSites-1, nSites-1) += siteInteractions.st()/arma::cx_double(2,0);
+        V.at(nSites-1,nSites-1) = 0;
 
 
         CoulombInteractionType = FHCoulombInteractionType::CEgiven;

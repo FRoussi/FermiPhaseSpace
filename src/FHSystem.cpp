@@ -323,7 +323,8 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
             externalPotential.addSite(coreHole.getHolePotential());
 
             arma::cx_dvec couInt = arma::cx_dvec(nSites+1, arma::fill::zeros);
-            couInt.at(0) = arma::cx_double(coreHole.getHoleInteraction(), 0);
+            couInt.at(coreHole.getSiteNumber()) = arma::cx_double(coreHole.getHoleSiteInteraction(), 0);
+            couInt.at(nSites) = arma::cx_double(coreHole.getHoleInteraction(), 0);
             coulombInteraction.addSite(couInt);
 
             nSites +=1;

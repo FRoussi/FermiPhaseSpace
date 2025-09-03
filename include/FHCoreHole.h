@@ -23,6 +23,7 @@ public:
     double  getHolePotential();
     double  getHoleTunneling();
     double  getHoleInteraction();
+    double  getHoleSiteInteraction();
     double  getUpSpinOccupation();
     double  getDownSpinOccupation();
 
@@ -38,6 +39,7 @@ private:
     double  holePotential;
     double  holeTunneling;
     double  holeInteraction;
+    double  holeSiteInteraction;
     double  upSpinOccupation;
     double  downSpinOccupation;       
 
