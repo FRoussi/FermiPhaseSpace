@@ -187,7 +187,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters)
 {
     
-    vector<vector<double>> pos = makeBCGrid(2,1,1,1);
+    vector<array<double,3>> pos = makeBCGrid(2,1,1,1);
 
     isPeriodicBool = false;
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
@@ -330,7 +330,7 @@ switch (latticeType)
     }
 
 
-    setPositions(armaMatfromVectorsVector(pos), "C");
+    setPositions(armaMatfromVectorsPosition(pos), "C");
 
     computeMatrices();
 }
@@ -338,7 +338,7 @@ switch (latticeType)
 FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters)
 {
 
- vector<vector<double>> pos = makeBCGrid(2,1,1,1);
+ vector<array<double,3>> pos = makeBCGrid(2,1,1,1);
 
      isPeriodicBool = false;
     latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
@@ -373,8 +373,7 @@ case none:
     break;
 }
 
-
-    setPositions(armaMatfromVectorsVector(pos), "C");
+    setPositions(armaMatfromVectorsPosition(pos), "C");
 
     computeMatrices();
 
@@ -663,7 +662,7 @@ void                                FHLattice::readPositions(std::string xyzFile
 {
 
     uint nSites = 0;
-    vector<vector<double>> positions3;
+    vector<array<double,3>> positions3;
 
     siteNames = vector<std::string>();
     std::string line;
@@ -694,7 +693,11 @@ void                                FHLattice::readPositions(std::string xyzFile
                 coordinates.push_back(d);
             }                      
             coordinates.resize(3);
-            positions3.push_back(coordinates);
+            
+            array<double,3> coordinatesArr;
+            std::memcpy(&coordinatesArr, &coordinates,  3 );
+   
+            positions3.push_back(coordinatesArr);
         }
 
         posFile.close();
@@ -711,7 +714,7 @@ void                                FHLattice::readPositions(std::string xyzFile
         {
             std::cout << "   -- Position file read, sites :   " << nSites << std::endl;
         }
-        setPositions(armaMatfromVectorsVector(positions3));
+        setPositions(armaMatfromVectorsPosition(positions3));
     }
     else
     {
@@ -903,12 +906,12 @@ FHLattice::~FHLattice()
 /// @param nz number of sites in the Z dimension
 /// @param a distance between nearest neighbours
 /// @return a vector of site positions
-vector<vector<double>> makeBCGrid(uint nx, uint ny, uint nz, double a)
+vector<array<double,3>> makeBCGrid(uint nx, uint ny, uint nz, double a)
 {
     
     uint nPoints = nx*ny*nz;
     //std::cout <<"makegrid" << nx << " " << ny << " " << nz << " " << a << std::endl; 
-    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+    vector<array<double,3>> pos = vector<array<double,3>>(nPoints);
 
     uint counter = 0;
     for (uint z = 0; z < nz; z++)
@@ -918,7 +921,7 @@ vector<vector<double>> makeBCGrid(uint nx, uint ny, uint nz, double a)
             for (uint x = 0; x < nx; x++)
             {
                 //std::cout <<"makegrid in" << x << " " << y << " " << z << " " << std::endl; 
-                vector<double> newPos = {a*x, a*y, a*z};
+                array<double,3> newPos = {a*x, a*y, a*z};
                 pos[counter] = newPos;
                 counter +=1;
             }
@@ -940,11 +943,11 @@ arma::dmat findBCGridBox(uint nx, uint ny, uint nz, double a)
 /// @param nz number of cubes in the Z dimension
 /// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(3)
 /// @return a vector of site positions
-vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a)
+vector<array<double,3>> makeBCCGrid(uint nx, uint ny, uint nz, double a)
 {
     
     uint nPoints = 2*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
-    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+    vector<array<double,3>> pos = vector<array<double,3>>(nPoints);
 
 
     uint counter = 0;
@@ -954,7 +957,7 @@ vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a)
         {
             for (uint x = 0; x <= nx; x++)
             {
-                vector<double> newPos = {a*x, a*y, a*z};
+                array<double,3> newPos = {a*x, a*y, a*z};
                 pos[counter] = newPos;
                 counter +=1;
                 if ((x != nx) && (y != ny) && (z != nz) )
@@ -979,11 +982,11 @@ vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a)
 /// @param nz number of cubes in the Z dimension
 /// @param a side of a cube, so the distance between nearest neighbours is a/sqrt(2)
 /// @return a vector of site positions
-vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a)
+vector<array<double,3>> makeFCCGrid(uint nx, uint ny, uint nz, double a)
 {
     
     uint nPoints = 4*(nx+1)*(ny+1)*(nz+1) + 2 *((nx+1)*(ny+1) + (nx+1)*(nz+1) + (ny+1)*(nz+1)) +1;
-    vector<vector<double>> pos = vector<vector<double>>(nPoints);
+    vector<array<double,3>> pos = vector<array<double,3>>(nPoints);
 
     uint counter = 0;
     for (uint z = 0; z <= nz; z++)
@@ -992,7 +995,7 @@ vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a)
         {
             for (uint x = 0; x <= nx; x++)
             {
-                vector<double> newPos = {a*x, a*y, a*z};
+                array<double,3> newPos = {a*x, a*y, a*z};
                 pos[counter] = newPos;
                 counter +=1;
                 if ((y != ny) && (z != nz) )
@@ -1029,20 +1032,20 @@ vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a)
 /// @param nCombs number of combds in the graphene sheet
 /// @param a distance between nearest neighbours
 /// @return a vector of site positions
-vector<vector<double>> makeHoneyCombs(uint nCombs, double a)
+vector<array<double,3>> makeHoneyCombs(uint nCombs, double a)
 {
 
     double sqrt3 = std::sqrt(3);
     uint nOfPoints = 0;
-    vector<vector<double>> pos = vector<vector<double>>();
+    vector<array<double,3>> pos = vector<array<double,3>>();
 
-    vector<vector<double>> pos0 = { {-sqrt3/2 *a, -0.5 *a, 0},
+    vector<array<double,3>> pos0 = { {-sqrt3/2 *a, -0.5 *a, 0},
                                 {-sqrt3/2 *a, 0.5 *a, 0},
                                 {0   *a,      1   *a, 0},
                                 {0   *a,      -1  *a, 0},
                                 {sqrt3/2 *a, -0.5 *a, 0},
                                 {sqrt3/2 *a, 0.5  *a, 0}};
-    vector<vector<double>> posNew = pos0;
+    vector<array<double,3>> posNew = pos0;
 
 
     double iVec[2] = {sqrt3 *a, 0 *a};
@@ -1124,13 +1127,13 @@ arma::dmat findHoneyCombGridBox(uint nCombs, double a)
 }
 
 
-vector<vector<double>> makeGraphene(int nx, int ny, double a)
+vector<array<double,3>> makeGraphene(int nx, int ny, double a)
 {
     double sqrt3 = std::sqrt(3);
     uint nOfPoints =0;
-    vector<vector<double>> pos = vector<vector<double>>();
+    vector<array<double,3>> pos = vector<array<double,3>>();
 
-    vector<vector<double>> pos0 = { {0, -0.5 *a , 0},
+    vector<array<double,3>> pos0 = { {0, -0.5 *a , 0},
                                     {0, 0.5 *a  , 0}};
 
 
@@ -1140,14 +1143,14 @@ vector<vector<double>> makeGraphene(int nx, int ny, double a)
 
     for (int j = 0; j < ny; j++)
     {
-        vector<vector<double>> posNewY = pos0;
+        vector<array<double,3>> posNewY = pos0;
         posNewY[0][0] += jVec[0] * j;
         posNewY[0][1] += jVec[1] * j;
         posNewY[1][0] += jVec[0] * j;
         posNewY[1][1] += jVec[1] * j;
         for (int i = 0; i<nx; i++)
         {
-            vector<vector<double>> posNew = posNewY;
+            vector<array<double,3>> posNew = posNewY;
             posNew[0][0] += iVec[0] * i;
             posNew[0][1] += iVec[1] * i;
             posNew[1][0] += iVec[0] * i;
@@ -1173,11 +1176,11 @@ arma::dmat findGrapheneGridBox(int nx, int ny, double a)
     return mat3;
 }
 
-vector<vector<double>> makeTetragones(int nx, int ny, int nz, double a)
+vector<array<double,3>> makeTetragones(int nx, int ny, int nz, double a)
 {
     uint nOfPoints = 0;
     double sqrt3 = std::sqrt(3);
-    vector<vector<double>> pos = vector<vector<double>>();
+    vector<array<double,3>> pos = vector<array<double,3>>();
     double iVec[3] = {a     , 0 , 0};
     double jVec[3] = {1./2. *a, sqrt3 / 2. * a     , 0};
     double kVec[3] = {1./2. *a, 1. / (2*sqrt3) * a , sqrt(2) / sqrt3 * a};
@@ -1188,7 +1191,7 @@ vector<vector<double>> makeTetragones(int nx, int ny, int nz, double a)
         {
             for (int i = 0; i<nx; i++)
             {
-                vector<double> newVec = {   i * iVec[0] + j * jVec[0] + k * kVec[0],   
+                array<double,3> newVec = {   i * iVec[0] + j * jVec[0] + k * kVec[0],   
                                             i * iVec[1] + j * jVec[1] + k * kVec[1],           
                                             i * iVec[2] + j * jVec[2] + k * kVec[2]};
                 pos.push_back(newVec);
@@ -1209,13 +1212,13 @@ arma::dmat findTetragonesGridBox(int nx,int ny, int nz, double a)
     return mat3;
 }
 
-vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta)
+vector<array<double,3>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta)
 {
     double samePointThreshold = 0.001 * a;
     double sqrt3 = std::sqrt(3);
     uint nOfPoints = 0;
     uint nLayers = 2;
-    vector<vector<double>> pos = vector<vector<double>>();
+    vector<array<double,3>> pos;
 
     arma::dmat pos0 =  { {-sqrt3/2   , -sqrt3/2  , 0, 0  , sqrt3/2   , sqrt3/2   },
                          {-0.5       , 0.5       , 1, -1 , -0.5      , 0.5       },
@@ -1294,7 +1297,7 @@ vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, doub
         
         for (uint iPos = 0; iPos < positionsLayer.n_cols ; iPos++)
         {
-            vector<double> iVec = {positionsLayer(0,iPos), positionsLayer(1,iPos), positionsLayer(2,iPos)};
+            array<double,3> iVec = {positionsLayer(0,iPos), positionsLayer(1,iPos), positionsLayer(2,iPos)};
             pos.push_back(iVec);
         }
     }
@@ -1303,9 +1306,9 @@ vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, doub
 }
 
 
-vector<vector<double>> makeMoireGraphene(int nx, int ny, double a, double b, double theta)
+vector<array<double,3>> makeMoireGraphene(int nx, int ny, double a, double b, double theta)
 {
-    vector<vector<double>> pos = vector<vector<double>>();
+    vector<array<double,3>> pos;
     uint nLayers = 2;
     double   thetaDeg = theta * arma::datum::pi/180;
 
@@ -1318,18 +1321,20 @@ vector<vector<double>> makeMoireGraphene(int nx, int ny, double a, double b, dou
                                         {sinT   , cosT  , 0},
                                         {0      ,   0   , 1}};
 
-        vector<vector<double>> posLayer = makeGraphene(nx, ny, a);
+        vector<array<double,3>> posLayer = makeGraphene(nx, ny, a);
 
         arma::dmat graphBox = findGrapheneGridBox(nx, ny, a);
         arma::dcolvec midBox = (graphBox.col(0) + graphBox.col(1))/2.;
         
-        for ( vector<vector<double>>::iterator itPos = posLayer.begin(); itPos != posLayer.end(); itPos++)
+        for ( vector<array<double,3>>::iterator itPos = posLayer.begin(); itPos != posLayer.end(); itPos++)
         {
-            arma::dcolvec aPos = arma::dcolvec(*itPos);     //      { (*itPos)[0],  (*itPos)[1],  (*itPos)[2]} ;
+            arma::dcolvec aPos = arma::dcolvec((*itPos).data(),3);     //      { (*itPos)[0],  (*itPos)[1],  (*itPos)[2]} ;
             aPos -= midBox;
             aPos = rotationLayer * aPos;
             aPos(2) = iLayer * b;
-            (*itPos) = arma::conv_to<vector<double>>::from(aPos); // {aPos(0), aPos(1), aPos(2)};
+
+            std::memcpy((&itPos), aPos.memptr(), 3 );
+
         }
 
 
@@ -1343,22 +1348,21 @@ vector<vector<double>> makeMoireGraphene(int nx, int ny, double a, double b, dou
 /// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
 /// @param vecVec A vector of vector of double 
 /// @return The arma::dmat version of the vector
-arma::dmat armaMatfromVectorsVector(vector<vector<double>>& vecVec)
+arma::dmat armaMatfromVectorsPosition(vector<array<double,3>>& vecPos)
 {
     arma::dmat mattrix = arma::dmat();
-    if (vecVec.size() > 0)
+    if (vecPos.size() > 0)
     {
-        if (vecVec[0].size() > 0)
+        mattrix = arma::dmat(vecPos.size(), 3, arma::fill::zeros);
+        for (uint iRow = 0; iRow < vecPos.size(); iRow ++)
         {
-            mattrix = arma::dmat(vecVec.size(), vecVec[0].size(), arma::fill::zeros);
-            for (uint iRow = 0; iRow < vecVec.size(); iRow ++)
+            for (uint iCol = 0; iCol < 3; iCol ++)
             {
-                for (uint iCol = 0; iCol < std::min(vecVec[iRow].size(), vecVec[0].size()); iCol ++)
-                {
-                    mattrix(iRow, iCol) = vecVec[iRow][iCol];
-                }
+                mattrix.col(iRow) = arma::dvec(vecPos[iRow].data(),3);
+                mattrix(iRow, iCol) = vecPos[iRow][iCol];
             }
         }
+        
     }
 
     return mattrix;

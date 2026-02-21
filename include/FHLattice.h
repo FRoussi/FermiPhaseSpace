@@ -13,24 +13,25 @@
 #include "json/json.h"
 
 using std::vector;
+using std::array;
 
-vector<vector<double>> makeBCGrid(uint nx, uint ny, uint nz, double a);
+vector<array<double,3>> makeBCGrid(uint nx, uint ny, uint nz, double a);
 arma::dmat findBCGridBox(uint nx, uint ny, uint nz, double a);
-vector<vector<double>> makeBCCGrid(uint nx, uint ny, uint nz, double a);
-vector<vector<double>> makeFCCGrid(uint nx, uint ny, uint nz, double a);
-vector<vector<double>> makeHoneyCombs(uint nCombs, double a);
+vector<array<double,3>> makeBCCGrid(uint nx, uint ny, uint nz, double a);
+vector<array<double,3>> makeFCCGrid(uint nx, uint ny, uint nz, double a);
+vector<array<double,3>> makeHoneyCombs(uint nCombs, double a);
 arma::dmat findHoneyCombGridBox(uint nCombs, double a);
-vector<vector<double>> makeGraphene(int nx, int ny, double a);
+vector<array<double,3>> makeGraphene(int nx, int ny, double a);
 arma::dmat findGrapheneGridBox(int nx, int ny, double a);
-vector<vector<double>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta);
+vector<array<double,3>> makeMoireHoneyCombs(uint nCombs, double a, double b, double theta);
 void getNextIndexMoireHoneyCombs(int &n, int &m, int &l);
-vector<vector<double>> makeMoireGraphene(int nx, int ny, double a, double b, double theta);
-vector<vector<double>> makeTetragones(int nx, int ny, int nz, double a);
+vector<array<double,3>> makeMoireGraphene(int nx, int ny, double a, double b, double theta);
+vector<array<double,3>> makeTetragones(int nx, int ny, int nz, double a);
 arma::dmat findTetragonesGridBox(int nx, int ny, int nz, double a);
 
 void getNextIndex(uint& i, uint& j);
 
-arma::dmat armaMatfromVectorsVector(vector<vector<double>>& vecVec);
+arma::dmat armaMatfromVectorsPosition(vector<array<double,3>>& vecPos);
 
 template <typename T>       bool isIn(T w, vector<T>& v);
 
