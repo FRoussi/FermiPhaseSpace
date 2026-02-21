@@ -142,6 +142,17 @@ void FHEDSolver::initiateSolver()
             psi_0 = getMFGroundState();
             break;
         }
+        case FHSystem::FHInitialConditionType::groundState:
+        {
+            
+            arma::dmat eigVec;
+            arma::dvec eigVal;
+            arma::eigs_sym(eigVal, eigVec, H, 1, "sa") ;  
+            psi_0 = arma::cx_dvec( eigVec.col(0), arma::dvec(arma::size( eigVec.col(0)), arma::fill::zeros));
+            psi_0 = psi_0 / arma::norm(psi_0,2);
+
+            break;
+        }
         default:
         {
             this->posPartU = bitsetFromVector(fhSystem->getInitialCondition_upSpin());
@@ -658,7 +669,6 @@ void FHEDSolver::step(double d_t)
     }
 
     std::complex<double> alpha = std::complex<double>(0, -d_t); // <- alpha = -i dt / h
-
     this->psi = expmv(alpha, H, this->psi);
     currentSimulationTime +=dt;
 }
@@ -672,7 +682,8 @@ void FHEDSolver::runSimulation()
     uint nSites = fhSystem->getnSites();
 
 
-    std::vector<double> timeLine = std::vector<double>(nTimePoints, 0);
+    timeLine = std::vector<double>(nTimePoints, 0);
+    /*
     arma::cx_dmat niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
     arma::cx_dmat Energies = arma::cx_dmat(nEnergies + 1, nTimePoints, arma::fill::zeros);
@@ -681,9 +692,13 @@ void FHEDSolver::runSimulation()
     //arma::drowvec EpotExt = arma::drowvec(nTimePoints, arma::fill::zeros);
     //arma::drowvec E = arma::drowvec(nTimePoints, arma::fill::zeros);
     arma::cx_dmat Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid; 
-    arma::cx_dcube Nu, Nd;
+    arma::cx_dcube Nu, Nd;*/
 
-
+    if (saveDiagDMatrix)
+    {
+        Niiu = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+        Niid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
     if (saveNiuNid)
     {
         NiuNid = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
@@ -697,6 +712,10 @@ void FHEDSolver::runSimulation()
     {
         Mukku = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
         Mukkd = arma::cx_dmat(nSites, nTimePoints, arma::fill::zeros);
+    }
+    if (saveEnergies)
+    {
+        Energies = arma::cx_dmat(nEnergies+1, nTimePoints, arma::fill::zeros);
     }
 
 
@@ -713,16 +732,17 @@ void FHEDSolver::runSimulation()
         timeLine[t] = t * dt;
         for (uint iSite = 0; iSite < nSites; iSite++)
         {
-            niiu.at(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
-            niid.at(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
+            Niiu.at(iSite,t) = arma::cdot(psi, NijuSet[iSite][iSite] * psi);
+            Niid.at(iSite,t) = arma::cdot(psi, NijdSet[iSite][iSite] * psi);
         }
 
         if (saveEnergies)
         {
-            Energies.at(0,t) = arma::cdot(psi, H_U * psi);
-            Energies.at(1,t) = arma::cdot(psi, H_t * psi);
-            Energies.at(2,t) = arma::cdot(psi, H_externalPotential * psi);
-            Energies.at(3,t) = arma::sum(Energies.col(t)); 
+            Energies.at(0,t) = arma::cdot(psi, H_t * psi);
+            Energies.at(1,t) = arma::cdot(psi, H_U * psi);
+
+            Energies.at(3,t) = arma::cdot(psi, H_externalPotential * psi);
+            Energies.at(nEnergies,t) = arma::sum(Energies.col(t)); 
         }
         if(saveNiuNid)
         {
@@ -758,7 +778,7 @@ void FHEDSolver::runSimulation()
     //printf("Test 3 - small system dynamic, n_1u : \n");
     //niiu.row(0).print();
     
-    writeResults(Nu, Nd, niiu, niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+    writeResults();
     
 
 }
@@ -1145,24 +1165,25 @@ std::bitset<MAX_BITS> expandBitSetUnderConstraint(std::bitset<MAX_BITS> reducedB
 
 
 
-/// @brief Copy of the EXPOKIT expmv function
+/// @brief EXPOKIT expmv function
 /// @param t double
 /// @param A sparse matrix
 /// @param v vector
 /// @param tol
 /// @param m1
 /// @return exp(t.A)v
-arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, double tol, unsigned int m1 )
+arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, double tol, int m1 )
 {
-    unsigned int n = A.n_rows;
-    unsigned int m = std::min(n, m1);
+
+    int n = A.n_rows;
+    int m = std::min(n, m1);
     double anorm = arma::norm(A, "inf");
     unsigned int mxrej = 10;
     double btol = 1.E-7;
     double gamma = 0.9;
     double delta = 1.2;
-    unsigned int mb = m;
-    unsigned int mx = mb;
+    int mb = m;
+    int mx = mb;
     double t_out = std::abs(t);
     int nstep = 0;
     double t_new = 0;
@@ -1172,7 +1193,7 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, 
     double s_error = 0;
     double rndoff = anorm * 1.E-15;
 
-    unsigned int k1 = 2;
+    int k1 = 2;
     double xm = 1/(double)m;
     double normv = arma::norm(v,2);
     double avnorm = 0;
@@ -1188,6 +1209,7 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, 
     arma::cx_dvec w = v;
     double hump = normv;
 
+
     while(t_now < t_out)
     {
         nstep +=1;
@@ -1195,7 +1217,6 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, 
         arma::cx_dmat V = arma::cx_dmat(n, m+1); 
         arma::cx_dmat H = arma::cx_dmat(m+2, m+2);
         arma::cx_dmat F;
-
         V.col(0) = (1/beta) * w;
         for (unsigned int j = 0; j<m; j++)
         {
@@ -1216,7 +1237,6 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, 
             H(j+1, j) = s;
             V.col(j+1) = (1/s) * p;
         }
-
         if (k1 != 0)
         {
             H(m+1, m) = 1;
@@ -1225,6 +1245,7 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, 
         unsigned int ireject = 0;
         while(ireject < mxrej)
         {
+
             mx = mb + k1;
             F = arma::expmat(sgn * t_step * H.submat(0, 0, mx-1, mx-1));
             if (k1 ==0)
@@ -1269,7 +1290,9 @@ arma::cx_dvec expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, 
                 ireject+=1;
             }
         }
-        mx = mb + std::max((unsigned int)0, k1-1);
+
+        mx = mb + std::max((int)0, k1-1);
+
         w = V.cols(0, mx-1) * (beta * (F.col(0)).subvec(0,mx-1));
         beta = arma::norm(w, 2);
         hump = std::max(hump, beta);

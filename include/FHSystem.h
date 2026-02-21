@@ -8,22 +8,27 @@
 #include <fstream>
 
 #include "FHLattice.h"
+#include "FHCoreHole.h"
 #include "FHTunnelingInteraction.h"
 #include "FHCoulombInteraction.h"
 #include "FHExternalPotential.h"
 #include "FHExternalPotentialPulse.h"
-#include "FHExternalPotentialConstant.h"
-#include "FHExternalPotentialCoreHole.h"
 #include "json/json.h"
 
 
 
+
 #define FPS_VERSION_MAJOR 0
-#define FPS_VERSION_MINOR 4
-#define FPS_VERSION_PATCH 5
+#define FPS_VERSION_MINOR 5
+#define FPS_VERSION_PATCH 0
 
 
 std::complex<double> U_os_nij(double U0, double alpha, double d);
+
+enum FHSystemType {
+    SysVanilla,
+    SysCoreHole
+};
 
 class FHSystem
 {
@@ -43,6 +48,7 @@ public:
 
 
 
+
 // CONSTRUCTORS
 
     FHSystem(bool talk = true);
@@ -54,7 +60,9 @@ public:
 
 
 // GETTERS
-FHLattice                               getLattice();
+    FHSystemType                        getSystemType();
+    FHLattice*                          getLattice();
+    FHCoreHole*                         getCoreHole();
     // site positions
     unsigned int                        getnSites();
     unsigned int                        getnDimension();
@@ -87,7 +95,7 @@ FHLattice                               getLattice();
     FHCoulombInteractionType            getCoulombInteractionType();
     FHTunnelingInteractionType          getTunnelingInteractionType();
     FHExternalPotentialType             getExternalPotentialType();
-   // FHSameSpinInteractionType           getSameSpinInteractionType();
+    //FHCoulombInteractionType            getSameSpinInteractionType();
    // tJExchangeCouplingType              getExchangeCouplingEnergyType();
 
     std::complex<double>                getCoulombInteraction(int iSite, int jSite);
@@ -197,8 +205,16 @@ FHLattice                               getLattice();
 private:
     
 
+    FHSystemType                    systemType;
+
     FHLattice                       lattice;
 
+
+    // coreHole
+    FHCoreHole coreHole;
+
+    // sites
+    uint                            nSites;
 
 // PARTICLES
     unsigned int                    upSpinParticleNumber;
@@ -214,12 +230,12 @@ private:
 
 
     FHCoulombInteraction            coulombInteraction;
-    FHTunnelingInteraction            tunnelingInteraction;
+    FHTunnelingInteraction          tunnelingInteraction;
 
-    //arma::cx_dmat                   UMatrix;
-   // arma::cx_dmat                   VMatrix;
-  //  arma::cx_dmat                   JMatrix;
-  //  arma::cx_dmat                   tMatrix;
+    // arma::cx_dmat                   UMatrix;
+    // arma::cx_dmat                   VMatrix;
+    // arma::cx_dmat                   JMatrix;
+    // arma::cx_dmat                   tMatrix;
     FHExternalPotential             externalPotential;
 
 // INITIAL CONDITIONS
@@ -250,6 +266,9 @@ private:
     std::string                     systemName;
     std::string                     systemFolder;
     Json::Value                     originalJsonSystem;
+
+
+
 
 
 

@@ -47,7 +47,7 @@ std::bitset<MAX_BITS>               expandBitSetUnderConstraint(std::bitset<MAX_
 bool                                canHopHalf(std::bitset<MAX_BITS>& phiH1, std::bitset<MAX_BITS>& phiH2, unsigned int n_pH, unsigned int& idFrom, unsigned int& idTo);
 
 
-arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, unsigned int m = 30);
+arma::cx_dvec                       expmv(std::complex<double> t, arma::sp_dmat& A, arma::cx_dvec& v, double tol = 1.e-7, int m = 30);
 
 
 

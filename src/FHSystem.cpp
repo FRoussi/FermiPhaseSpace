@@ -7,7 +7,7 @@ FHSystem::FHSystem(bool talk)
     talkative = talk;
     lattice = FHLattice(talk);
 
-    uint nSites = lattice.getnSites();
+    nSites = lattice.getnSites();
 
     std::vector<unsigned int> initCond_up =  std::vector<unsigned int>(nSites);
     std::vector<unsigned int> initCond_down =  std::vector<unsigned int>(nSites);
@@ -33,8 +33,8 @@ FHSystem::FHSystem(int x, bool talk)
 {
     talkative = talk;
 
-lattice = FHLattice(x, talk);
-
+    lattice = FHLattice(x, talk);
+    nSites = lattice.getnSites();
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
     for (int d=0; d<x; d++)
     {
@@ -78,6 +78,7 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
     talkative = talk;
 
     lattice = FHLattice(x,y,z,talk);
+    nSites = lattice.getnSites();
 
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
     int tabIndex = 0;
@@ -130,11 +131,12 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 {
 
     talkative = talk;
+    systemType = FHSystemType::SysVanilla;
 
     Json::Value rootLattice = rootSystem.get("lattice","" );
 
     lattice = FHLattice(rootLattice, folderName, talk);
-    
+    nSites = lattice.getnSites();
 
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
@@ -166,13 +168,13 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
         else if (extPotType == "constant")
         {
-            externalPotential = FHExternalPotentialConstant(&lattice, arma::dvec(lattice.getnSites()));
+            externalPotential = FHExternalPotential(&lattice, arma::dvec(lattice.getnSites()));
         }
         else if (extPotType == "coreHole")
         {
             uint site = ExtPotJ.get("site", 0).asUInt();
             double hPot = ExtPotJ.get("holePotential", -1).asDouble();
-            externalPotential = FHExternalPotentialCoreHole(&lattice, site, hPot);
+            externalPotential = FHExternalPotential(&lattice, site, hPot);
         }
         
     }
@@ -183,6 +185,10 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
     if (jsonIC != Json::Value::null)
     {
         std::string typeIC = jsonIC.get("type", "givenDiagonal").asString();
+        std::vector<uint> nPart = std::vector<uint>(2);
+        nPart[0] = jsonIC.get("nPartUp",  std::ceil((double)lattice.getnSites() / 2.)).asUInt();
+        nPart[1] = jsonIC.get("nPartDown",  std::floor((double)lattice.getnSites() / 2.)).asUInt(); 
+
         if (typeIC == "givenDiagonal")
         {
             initialCondition = FHInitialConditionType::givenDiagonal;
@@ -192,11 +198,11 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 
             if (subtypeIC == "spinWave")
             {
-               setInitialConditions(FHInitialConditionType::spinWave);
+               setInitialConditions(FHInitialConditionType::spinWave, nPart);
             }  
             else if (subtypeIC == "chargeWave")
             {
-                setInitialConditions(FHInitialConditionType::chargeWave);
+                setInitialConditions(FHInitialConditionType::chargeWave, nPart);
             }     
             else if (subtypeIC == "spinWave3")
             {
@@ -267,14 +273,15 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         else if (typeIC == "tbGroundState")
         {
             //std::cout << "  -- Initial Condition : TB ground State." << std::endl;
-            setInitialConditions(FHInitialConditionType::tbGroundState);
+            setInitialConditions(FHInitialConditionType::tbGroundState, nPart);
         }
         else if (typeIC == "mfGroundState")
         {
-            setInitialConditions(FHInitialConditionType::mfGroundState);
+            setInitialConditions(FHInitialConditionType::mfGroundState, nPart);
         }
         else if (typeIC == "groundState")
         {
+            std::cout << "GS" << std::endl;
             setInitialConditions(FHInitialConditionType::groundState);
         }
         else if (typeIC == "givenInFile")
@@ -287,14 +294,45 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
         }
 
         std::cout << "   -- Initial condtion :            " << typeIC << std::endl;  
-        std::cout << "   -- Particle number :             " << upSpinParticleNumber + downSpinParticleNumber << std::endl;  
+        std::cout << "   -- Particle number :             " << upSpinParticleNumber + downSpinParticleNumber << std::endl; 
+        
+
     }
     else
     {
         std::cout << "No Initial condition in the json file.  " << std::endl;  
     }
 
+    // coreHole
+    if (rootSystem.isMember("coreHole"))
+    {
+        
+        Json::Value jsonCoreHole = rootSystem["coreHole"];
 
+        if (jsonCoreHole.get("presence", false).asBool())
+        {
+            
+            systemType = FHSystemType::SysCoreHole;
+            coreHole = FHCoreHole(jsonCoreHole);
+
+            arma::cx_dvec tunInt = arma::cx_dvec(nSites, arma::fill::zeros);
+            tunInt.at(coreHole.getSiteNumber()) = arma::cx_double(coreHole.getHoleTunneling(), 0);
+            tunnelingInteraction.addSite(tunInt);
+
+            externalPotential = FHExternalPotential(&lattice);
+            externalPotential.addSite(coreHole.getHolePotential());
+
+            arma::cx_dvec couInt = arma::cx_dvec(nSites+1, arma::fill::zeros);
+            couInt.at(coreHole.getSiteNumber()) = arma::cx_double(coreHole.getHoleSiteInteraction(), 0);
+            couInt.at(nSites) = arma::cx_double(coreHole.getHoleInteraction(), 0);
+            coulombInteraction.addSite(couInt);
+
+            nSites +=1;
+
+            std::cout << "   -- Core Hole linked to site :    " << coreHole.getSiteNumber() << std::endl; 
+
+        }
+    }
 
 }
 
@@ -304,6 +342,8 @@ FHSystem::FHSystem(FHLattice lat)
     talkative = true;
 
     lattice = lat;
+    nSites = lattice.getnSites();
+
     TBGroundStateComputed = false;
     MFGroundStateComputed = false;
     
@@ -311,9 +351,10 @@ FHSystem::FHSystem(FHLattice lat)
 }
 
 
-
-FHLattice                                   FHSystem::getLattice()                                  {    return lattice;}
-unsigned int                                FHSystem::getnSites()                                   {    return lattice.getnSites();}
+FHSystemType                                FHSystem::getSystemType()                               {    return systemType;}
+FHLattice*                                  FHSystem::getLattice()                                  {    return &lattice;}
+FHCoreHole*                                 FHSystem::getCoreHole()                                 {    return &coreHole;}
+unsigned int                                FHSystem::getnSites()                                   {    return nSites;}
 unsigned int                                FHSystem::getnDimension()                               {    return lattice.getnDimension();}
 arma::drowvec                               FHSystem::getSitePosition(uint iSite)                   {    return lattice.getSitePosition(iSite);}
 double                                      FHSystem::getCoordinate(uint dim, uint iSite)           {    return lattice.getCoordinate(dim, iSite);}
@@ -380,56 +421,15 @@ std::string                                 FHSystem::getFPSVersion()           
 
 // SETTERS
 
-    void                                 FHSystem::setLattice(FHLattice newLat)
-    {
-        lattice = newLat;
-    }
-
-void                    FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)
-{
-    lattice.setPositions(positions, sitesName);
-}
-
-void                    FHSystem::setPositions(const arma::dmat& positions, std::vector<std::string> sN)
-{
-    lattice.setPositions(positions, sN);
-}
-
-
-bool                    FHSystem::setSiteTypes(arma::uvec sTypes)
-{
-    return lattice.setSiteTypes(sTypes);
-}
-
-void                    FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)
-{
-    lattice.setSiteTypeNames(typeNames);
-}
-
-
-void                    FHSystem::setSymmetry(arma::dmat symVectors)
-{
-     lattice.setSymmetry(symVectors);
-}
-
-void                                FHSystem::setLatticeZero(arma::drowvec latticeZ)
-{
-    lattice.setLatticeZero(latticeZ);
-}
-
-
-void                                FHSystem::setNeighbourDistance(double neigbD)
-{
-    lattice.setNeighbourDistance(neigbD);
-}
-
-
-void                                FHSystem::setSamePointDistance(double samePointD)
-{
-    lattice.setSamePointDistance(samePointD);
-}
-
-
+void        FHSystem::setLattice(FHLattice newLat)                                              {    lattice = newLat;}
+void        FHSystem::setPositions(const arma::dmat& positions, std::string sitesName)          {    lattice.setPositions(positions, sitesName);}
+void        FHSystem::setPositions(const arma::dmat& positions, std::vector<std::string> sN)    {    lattice.setPositions(positions, sN);}
+bool        FHSystem::setSiteTypes(arma::uvec sTypes)                                           {    return lattice.setSiteTypes(sTypes);}
+void        FHSystem::setSiteTypeNames(std::vector<std::string> typeNames)                      {    lattice.setSiteTypeNames(typeNames);}
+void        FHSystem::setSymmetry(arma::dmat symVectors)                                        {    lattice.setSymmetry(symVectors);}
+void        FHSystem::setLatticeZero(arma::drowvec latticeZ)                                    {    lattice.setLatticeZero(latticeZ);}
+void        FHSystem::setNeighbourDistance(double neigbD)                                       {    lattice.setNeighbourDistance(neigbD);}
+void        FHSystem::setSamePointDistance(double samePointD)                                   {    lattice.setSamePointDistance(samePointD);}
 
 
 /// @brief Set up the Fermi-Hubbard system from site positions and vectors of site number as initial condition
@@ -484,7 +484,7 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType)
                 {
                     initConditions_upSpin[iSite] = true;
                     upSpinParticleNumber++;
-                  //  std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
+                    //std::cout <<  "      ----- part filling : up part" << iSite << std::endl;
                 }
                 else
                 {
@@ -559,11 +559,11 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
     {
         case FHInitialConditionType::givenDiagonal:
         {
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*upSpinParticleNumber); iSite +=2)
             {
                     initConditions_upSpin[iSite] = true;
             }
-            for (uint iSite = 1; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            for (uint iSite = 1; iSite < std::min((uint)getnSites(), 2*downSpinParticleNumber); iSite +=2)
             {
                     initConditions_downSpin[iSite] = true;
             }
@@ -571,11 +571,24 @@ void FHSystem::setInitialConditions(FHInitialConditionType initCondType, std::ve
         }
         case FHInitialConditionType::spinWave:
         {
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), upSpinParticleNumber); iSite +=2)
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*upSpinParticleNumber); iSite +=2)
             {
                     initConditions_upSpin[iSite] = true;
             }
-            for (uint iSite = 0; iSite < std::min((uint)getnSites(), downSpinParticleNumber); iSite +=2)
+            for (uint iSite = 1; iSite < std::min((uint)getnSites(), 2*downSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_downSpin[iSite] = true;
+            }
+            break;
+        }
+        case FHInitialConditionType::chargeWave:
+        {
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*upSpinParticleNumber); iSite +=2)
+            {
+                    initConditions_upSpin[iSite] = true;
+
+            }
+            for (uint iSite = 0; iSite < std::min((uint)getnSites(), 2*downSpinParticleNumber); iSite +=2)
             {
                     initConditions_downSpin[iSite] = true;
             }
@@ -923,11 +936,11 @@ arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
 
 //std::cout << "     --- Comp TB 1, npu=" << upSpinParticleNumber << std::endl;
     arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMku.subvec(0,upSpinParticleNumber-1).ones();
+    if (upSpinParticleNumber>0)     diagMku.subvec(0,upSpinParticleNumber-1).ones();
     arma::cx_dmat Mku = arma::diagmat(diagMku);
 
     arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMkd.subvec(0,downSpinParticleNumber-1).ones();
+    if (downSpinParticleNumber>0)   diagMkd.subvec(0,downSpinParticleNumber-1).ones();
     arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
 //std::cout << "     --- Comp TB 2" << std::endl;
@@ -946,32 +959,32 @@ void                                FHSystem::computeMFGroundState(bool withExte
 arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
 arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
 
-    uint nSites = lattice.getnSites();
+uint nSitesLattice = lattice.getnSites();
 
-    arma::cx_dvec diagMku = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMku.subvec(0,upSpinParticleNumber-1).ones();
+    arma::cx_dvec diagMku = arma::cx_dvec(nSitesLattice, arma::fill::zeros);
+    if (upSpinParticleNumber > 0) diagMku.subvec(0,upSpinParticleNumber-1).ones();
     arma::cx_dmat Mku = arma::diagmat(diagMku);
 
-    arma::cx_dvec diagMkd = arma::cx_dvec(lattice.getnSites(), arma::fill::zeros);
-    diagMkd.subvec(0,downSpinParticleNumber-1).ones();
+    arma::cx_dvec diagMkd = arma::cx_dvec(nSitesLattice, arma::fill::zeros);
+    if (downSpinParticleNumber > 0) diagMkd.subvec(0,downSpinParticleNumber-1).ones();
     arma::cx_dmat Mkd = arma::diagmat(diagMkd);
 
-    double thresholdConverged = 0.0001 * nSites;
+    double thresholdConverged = 0.0001 * nSitesLattice;
     bool isConverged = false;
     int maxIt = 100;
     iterationsForMFState = 0;
 
-    arma::cx_dvec diagNu = arma::cx_dvec(nSites) * (double)upSpinParticleNumber / (double)nSites;
-    arma::cx_dvec diagNd = arma::cx_dvec(nSites) * (double)downSpinParticleNumber / (double)nSites;
+    arma::cx_dvec diagNu = arma::cx_dvec(nSitesLattice) * (double)upSpinParticleNumber / (double)nSitesLattice;
+    arma::cx_dvec diagNd = arma::cx_dvec(nSitesLattice) * (double)downSpinParticleNumber / (double)nSitesLattice;
 
-    arma::cx_dmat mfuHuU = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
-    arma::cx_dmat mfuHuD = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
+    arma::cx_dmat mfuHuU = arma::cx_dmat(nSitesLattice, nSitesLattice, arma::fill::zeros);
+    arma::cx_dmat mfuHuD = arma::cx_dmat(nSitesLattice, nSitesLattice, arma::fill::zeros);
 
 
     while ((iterationsForMFState < maxIt) && !isConverged)
     {
 
-        for (int i = 0; i < nSites; i++)
+        for (int i = 0; i < nSitesLattice; i++)
         {
             mfuHuU.at(i,i) = arma::dot(UMatrix->row(i), diagNd);
             mfuHuD.at(i,i) = arma::dot(UMatrix->row(i), diagNu);
@@ -1246,8 +1259,6 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
         fileAdressName = folderName + "/" + wtDatFile;
     }
 
-    uint nSites = getnSites();
-
     std::ofstream datFile(fileAdressName);
     if (datFile.is_open())
     {
@@ -1393,7 +1404,7 @@ Json::Value                    FHSystem::getOriginalJsonSystem()
 
  void FHSystem::WannierToolsSystemInofStream(std::ofstream& wannierFileStream)
  {
-        uint nSites = getnSites();
+
         uint nProjectors_unfold = 2;
 
 

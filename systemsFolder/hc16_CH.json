@@ -1,0 +1,84 @@
+{
+	"method" : "HF",
+	"parameters" : 
+	{
+		"dt" : 0.01,
+		"int_order" : 4,
+		"n_traj" : 10000,
+		"stepsPerTimePoints" : 1,
+		"t_max" : 10.0
+	},
+	"results" : 
+	{
+		"diag2DMatrix" : false,
+		"diagDMatrix" : true,
+		"energies" : true,
+		"mfStates" : false,
+		"onSiteDoublons" : false,
+		"tbStates" : true,
+		"wholeDMatrix" : false
+	},
+	"sim_name" : "hc16_CH",
+	"system" : 
+	{
+		"IC" : 
+		{
+			"subtype" : "spinWave",
+			"type" : "tbGroundState"
+		},
+		"coulombInteraction" : 
+		{
+			"onSiteInteraction" : 1.0,
+			"type" : "onSite"
+		},
+		"externalPotential" : 
+		{
+			"type" : "null"
+		},
+		"lattice" : 
+		{
+			"latticeMatrix" : 
+			[
+				[
+					6.9282032302755088,
+					3.4641016151377544,
+					0.0
+				],
+				[
+					0.0,
+					6.0,
+					0.0
+				],
+				[
+					0.0,
+					0.0,
+					10.0
+				]
+			],
+			"latticeType" : "honeyCombs",
+			"latticeZero" : 
+			[
+				0.0,
+				0.0,
+				0.0
+			],
+			"periodic" : false,
+			"positionsFile" : "hc16.xyz"
+		},
+		"tunnelingInteraction" : 
+		{
+			"neighborDistance" : 1.0,
+			"neighborInteraction" : -1.0,
+			"type" : "nearestNeighbors"
+		},
+		"coreHole" :
+		{
+			"presence" : true,
+			"site" : 6,
+			"eps" : -2,
+			"X" : -1,
+			"G" : 1,
+			"IC" : [0,1]
+		}
+	}
+}

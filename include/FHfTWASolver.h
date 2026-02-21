@@ -64,10 +64,11 @@ protected:
     unsigned int nPartU;
     unsigned int nPartD;
 
-    arma::dvec                  diagNu0;
-    arma::dvec                  diagNd0;
-    arma::dvec                  diagMu0;
-    arma::dvec                  diagMd0;
+    arma::dvec                  initialDiagU;
+    arma::dvec                  initialDiagD;
+
+    arma::cx_dmat                  rotMatrixU;
+    arma::cx_dmat                  rotMatrixD;
 
     arma::cx_dmat               rhou0_mean;           // Initial rho matrices before adding the noise:
     arma::cx_dmat               rhod0_mean;

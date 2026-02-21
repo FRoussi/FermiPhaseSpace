@@ -676,12 +676,11 @@ void FHGPSRSolver::runSimulation( )
     //printf("GPSR dynamic, nTraj=%i \n", nTraj);
     std::cout << "   -- Start simulation." << std::endl;
     unsigned int nSites = fhSystem->getnSites();
-    std::vector<double> timeLine = std::vector<double>(nTimePoints,0);
+    timeLine = std::vector<double>(nTimePoints,0);
     arma::cx_dcube  rhou_t,     rhod_t;
     arma::cx_dmat   rhoiiu,     rhoiid;
     arma::cx_dmat   rho2iiu,    rho2iid;
     arma::cx_dmat   rhoiurhoid;
-    arma::cx_dmat   Energies;
     arma::cx_dmat   mkku, mkkd, mukku, mukkd;
 
     if (saveWholeDMatrix)
@@ -817,11 +816,12 @@ void FHGPSRSolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                En_loc.at(0,t)=  En_loc.at(0,t) + (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);
-                En_loc.at(1,t) = En_loc.at(1,t) + arma::accu((rhou + rhod) % (*tM));
+                En_loc.at(0,t) +=  arma::accu((rhou + rhod) % (*tM));                                                                               //<- Tunneling Energy
+                En_loc.at(1,t) +=  (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);    //<- Opposite Spin Interaction Energy
+
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc.at(2,t) = En_loc.at(2,t) + arma::accu((rhou + rhod) % (*extPot));
+                    En_loc.at(3,t) += arma::accu((rhou + rhod) % (*extPot));                                                                        //<- Potential Energy
                 }
             }
 
@@ -885,13 +885,6 @@ void FHGPSRSolver::runSimulation( )
 
     arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
 
-    arma::cx_dcube  Nu, Nd   ;
-    arma::cx_dmat   Niiu, Niid ;   
-    arma::cx_dmat   N2iiu, N2iid;   
-    arma::cx_dmat   Mkku ,  Mkkd ;
-    arma::cx_dmat   Mukku,  Mukkd;
-    arma::cx_dmat   NiuNid;
-
 
    if (saveWholeDMatrix)
     {
@@ -944,7 +937,7 @@ void FHGPSRSolver::runSimulation( )
         Energies.row(nEnergies) = arma::sum(Energies,0);
     }
 
-    writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+    writeResults();
 
 }
 
@@ -952,7 +945,7 @@ void FHGPSRSolver::runSimulation( )
 
 
 
-/// @brief Copy of the MATLAB rsvd function.  random SVD
+/// @brief random SVD
 /// Extremely fast computation of the truncated Singular Value Decomposition, using
 /// randomized algorithms as described in Halko et al. 'finding structure with randomness'.
 /// Antoine Liutkus  (c) Inria 2014

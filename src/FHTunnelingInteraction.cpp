@@ -4,21 +4,24 @@
 FHTunnelingInteraction::FHTunnelingInteraction()
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    init_tunnelingNameMap();
+    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
+    init_tunnelingMaps();
 }
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat)
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
+    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
     fhLattice = lat;
-    init_tunnelingNameMap();
+    init_tunnelingMaps();
 }
 
 
 FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJson)
 {
     tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    init_tunnelingNameMap();
+    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
+    init_tunnelingMaps();
     fhLattice = lat;
 
     // get the tunneling type :
@@ -124,6 +127,14 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJ
             break;
     }
 
+
+}
+
+FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, FHCoreHole* coreHole, Json::Value tunnJson):FHTunnelingInteraction(lat, tunnJson)
+{
+    arma::cx_dvec interactions = arma::cx_dvec(fhLattice->getnSites(), arma::fill::zeros); 
+    interactions.at(coreHole->getSiteNumber()) = arma::cx_double(coreHole->getHoleTunneling(),0);
+    addSite(interactions);
 
 }
 
@@ -261,6 +272,27 @@ Json::Value         FHTunnelingInteraction::writeTunnelingInteractionJson()
     return jpot;
 }
 
+void                         FHTunnelingInteraction::addSite(arma::cx_dvec siteInteractions)
+{    
+    uint nSites = tunnelingInteraction.n_cols;
+
+    if (siteInteractions.size() != nSites)
+    {
+        std::cout << "!!error : FHTunnelingInteraction - addSite - Wrong vector size" << std::endl;
+    } 
+    else
+    {
+        arma::cx_dmat newTun = arma::cx_dmat(nSites+1, nSites+1, arma::fill::zeros);
+
+        newTun.submat(0, 0, arma::size(tunnelingInteraction)) = tunnelingInteraction;
+
+        newTun.submat(0, nSites, nSites-1, nSites) = siteInteractions;
+        newTun.submat(nSites, 0, nSites, nSites-1) = siteInteractions.st();
+
+        tunnelingInteraction = newTun;
+    }
+
+}
 
 
 
@@ -405,7 +437,7 @@ double                      FHTunnelingInteraction::getTunnelingEnergyOrder2(dou
     }
 }
 
-void                                    FHTunnelingInteraction::init_tunnelingNameMap()
+void                                    FHTunnelingInteraction::init_tunnelingMaps()
 {
     tunnelingInteractionTypeNames = std::map<FHTunnelingInteractionType, std::string>();
     tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnull] = "null";
@@ -422,6 +454,24 @@ void                                    FHTunnelingInteraction::init_tunnelingNa
     {
         tunnelingInteractionTypeNamesReverse.emplace(it->second, it->first);
     }
+
+
+
+    tunnelingInteractionRelationNames = std::map<FHTunnelingInteractionRelation, std::string>();
+    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERall] = "all";
+    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERsameSpecies] = "sameSpecies";
+    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERAB] = "AB";
+ 
+
+
+    tunnelingInteractionRelationNamesReverse = std::map<std::string, FHTunnelingInteractionRelation>();
+
+    for (std::map<FHTunnelingInteractionRelation, std::string>::iterator it = tunnelingInteractionRelationNames.begin(); it != tunnelingInteractionRelationNames.end(); it ++)
+    {
+        tunnelingInteractionRelationNamesReverse.emplace(it->second, it->first);
+    }
+
+
 }
 
 FHTunnelingInteraction::~FHTunnelingInteraction()

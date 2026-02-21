@@ -198,8 +198,8 @@ void FHfTWAMPISolver::runSimulation( )
             if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::tbGroundState)
             {
                 // Initial matrices in momentum space :
-                arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
-                arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
+                arma::cx_dmat  mU = arma::diagmat(initialDiagU) - halfDiag + wnu;
+                arma::cx_dmat  mD = arma::diagmat(initialDiagD) - halfDiag + wnd;
 
                 // Initial matrices in position space :
                 rhou = (*fhSystem->get_tbgs_V_Pointer()) * mU * (*fhSystem->get_tbgs_V_Pointer()).t() ;
@@ -209,8 +209,8 @@ void FHfTWAMPISolver::runSimulation( )
             else if (fhSystem->getInitialCondition() == FHSystem::FHInitialConditionType::mfGroundState)
             {
                 // Initial matrices in momentum space :
-                arma::cx_dmat  mU = arma::diagmat(diagMu0) - halfDiag + wnu;
-                arma::cx_dmat  mD = arma::diagmat(diagMd0) - halfDiag + wnd;
+                arma::cx_dmat  mU = arma::diagmat(initialDiagU) - halfDiag + wnu;
+                arma::cx_dmat  mD = arma::diagmat(initialDiagD) - halfDiag + wnd;
 
                 // Initial matrices in position space :
                 rhou = (*fhSystem->get_mfgs_Vu_Pointer()) * mU * ((*fhSystem->get_mfgs_Vu_Pointer()).t()) ;
@@ -577,13 +577,7 @@ void FHfTWAMPISolver::runSimulation( )
         // Computation of different observables :
 
         arma::cx_double nTraj_arma = arma::cx_double(nTraj,0);
-        arma::cx_dcube  Nu, Nd   ;
-        arma::cx_dmat   Niiu, Niid ;   
-        arma::cx_dmat   N2iiu, N2iid;   
-        arma::cx_dmat   Mkku ,  Mkkd ;
-        arma::cx_dmat   Mukku,  Mukkd;
-        arma::cx_dmat   NiuNid;
-        arma::cx_dmat   Energies;
+
 
 
         if (saveWholeDMatrix)
@@ -662,7 +656,7 @@ void FHfTWAMPISolver::runSimulation( )
         }
 
 
-       writeResults(Nu, Nd, Niiu, Niid, Mkku, Mkkd, Mukku, Mukkd, N2iiu, N2iid, NiuNid, Energies, timeLine);
+       writeResults();
     }
 
 

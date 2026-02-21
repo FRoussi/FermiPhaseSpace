@@ -60,8 +60,8 @@ int main(int argc, char* argv[])
 
         std::string instructionsFileName = jsonFile;
         std::stringstream instructionsStream("");
-        std::string systemFileName;
-        bool systemLoaded;
+        //std::string systemFileName;
+        //bool systemLoaded;
         Json::Value rootSim;
 
 

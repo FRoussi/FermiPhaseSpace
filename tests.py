@@ -64,3 +64,8 @@ with open(filePath, 'w') as jsonFile:
     json.dump(jsondt, jsonFile, indent=4)
 
 subprocess.run(['./fps', filePath])
+
+
+
+# We congratulate ourself
+print('\n Good, great code !')

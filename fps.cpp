@@ -13,6 +13,7 @@
 #include "include/FHEDSolver.h"
 #include "include/FHHFSolver.h"
 #include "include/FHfTWASolver.h"
+//#include "include/FHfTWAStateSearch.h"
 #include "include/FHGPSRSolver.h"
 #include "include/json/json.h"
 
@@ -25,6 +26,10 @@
 int main(int argc, char* argv[])
 {
 
+
+
+
+
    std::cout << "--- Fermi-Hubbard Dynamic with Phase-space methods --- " << std::endl;
 
    std::cout << "== FPS version:  " << FPS_VERSION_MAJOR << "." << FPS_VERSION_MINOR << "." << FPS_VERSION_PATCH << std::endl;
@@ -34,6 +39,7 @@ int main(int argc, char* argv[])
 
 
 // Environment variables :
+   //setenv("OPENBLAS_NUM_THREADS","1",0);               <- OPENBLAS DOES NOT SEE IT !!!!!!!!!!! (tuned before the compilation ?)
    char* env_OMP = std::getenv("OMP_NUM_THREADS");
    char* env_OPENBLAS_OMP = std::getenv("OPENBLAS_NUM_THREADS");
 
@@ -102,6 +108,7 @@ int main(int argc, char* argv[])
       {
          HF,
          fTWA,
+         fTWA_GSSearch,
          GPSR,
          ED
       };
@@ -149,9 +156,10 @@ int main(int argc, char* argv[])
       std::string stringMethod = rootSim.get("method", "HF").asString();
 
       dynamicMethod chosenMethod = dynamicMethod::HF;
-      if (stringMethod == "fTWA")         chosenMethod = dynamicMethod::fTWA; 
-      else if (stringMethod == "GPSR")    chosenMethod = dynamicMethod::GPSR;
-      else if (stringMethod == "ED")      chosenMethod = dynamicMethod::ED;
+      if (stringMethod == "fTWA")            chosenMethod = dynamicMethod::fTWA; 
+      else if (stringMethod == "GPSR")       chosenMethod = dynamicMethod::GPSR;
+      else if (stringMethod == "ED")         chosenMethod = dynamicMethod::ED;
+      else if (stringMethod == "fTWA_GS")    chosenMethod = dynamicMethod::fTWA_GSSearch;
 
 
       Json::Value systemJSON = rootSim.get("system", "");
@@ -165,8 +173,8 @@ int main(int argc, char* argv[])
 
       switch (chosenMethod)
       {
-      case dynamicMethod::HF:
-      {
+         case dynamicMethod::HF:
+         {
 
             std::cout << "== Computation of HF dynamic " << std::endl;
             FHHFSolver hfSolver = FHHFSolver(&fhSystem);
@@ -180,9 +188,9 @@ int main(int argc, char* argv[])
             hfSolver.runSimulation();
 
             break;
-      }   
-      case dynamicMethod::fTWA:
-      {
+         }   
+         case dynamicMethod::fTWA:
+         {
 
             std::cout << "== Computation of fTWA dynamic "<< std::endl;
             FHfTWASolver fTWASolver = FHfTWASolver(&fhSystem);
@@ -196,10 +204,9 @@ int main(int argc, char* argv[])
             fTWASolver.runSimulation();
 
             break;
-      }
-      case dynamicMethod::GPSR:
-      {
-
+         }
+         case dynamicMethod::GPSR:
+         {
 
             std::cout <<  "== Computation of GPSR dynamic "<< std::endl;
             FHGPSRSolver GPSRSolver = FHGPSRSolver(&fhSystem);
@@ -230,6 +237,22 @@ int main(int argc, char* argv[])
 
             EDSolver.initiateSolver();
             EDSolver.runSimulation();
+
+            break;
+      }
+      case dynamicMethod::fTWA_GSSearch:
+      {
+            double param_dt = rootSim["parameters"].get("dt", 0.01).asDouble();
+            double param_tm = rootSim["parameters"].get("t_max", 2).asDouble();
+            int param_sptp = rootSim["parameters"].get("stepsParTimePoints", 1).asInt();
+
+            std::cout <<  "== Search of fTWA Ground State "<< std::endl;
+            //FHfTWAStateSearch fTWAGSSearch = FHfTWAStateSearch(&fhSystem);
+
+            std::cout <<  "== Init Search "<< std::endl;
+            //fTWAGSSearch.initiateStateSearch();
+            std::cout <<  "== Run Search "<< std::endl;
+            //fTWAGSSearch.findDensity();
 
             break;
       }

@@ -22,7 +22,7 @@ FHSolver::FHSolver(FHSystem *fhS)
     saveMFStates = false;
     saveEnergies = true;
 
-    nEnergies = 3;
+    nEnergies = 4;
 
 }
 
@@ -58,6 +58,7 @@ void                        FHSolver::setResultsToSave(Json::Value res)
     saveEnergies        = res.get("energies", true).asBool();
     saveTBStates        = res.get("tbStates", false).asBool();
     saveMFStates        = res.get("mfStates", false).asBool();
+
 
 }
 
@@ -130,7 +131,7 @@ void FHSolver::setJsonFile(Json::Value file)
 
 
 
-void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dmat &Niiu, arma::cx_dmat &Niid, arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd, arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, arma::cx_dmat &NiuNid, arma::cx_dmat &Energies,std::vector<double> &timeLine)
+void FHSolver:: writeResults()
 {
 
     // Writing the results :
@@ -192,7 +193,6 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         Json::Value resJson = jsonFile;
 
         resJson["fpsVersion"] = fhSystem->getFPSVersion(); 
-
         if (fhSystem->isTBGroundStateComputed())
         {
             resJson["tbGroundState"] = fhSystem->writeTBGroundStateJson();
@@ -210,7 +210,9 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         {
             //Json::Value n12uJS(Json::arrayValue);
             //n12uJS.append(rJson.writeLineInReal(Nu.tube(1,2)));
-            simJson["N12u"] = rJson.writeLineInReal(Nu.tube(1,2));
+
+            simJson["N1hu"] = rJson.writeLine(Nu.tube(0,Nu.n_cols-1));
+            simJson["N1hd"] = rJson.writeLine(Nd.tube(0,Nd.n_cols-1));
         }
 
         if (saveDiagDMatrix)
@@ -288,12 +290,22 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
 
         if (saveEnergies)
         {
+
             Json::Value EJson(Json::objectValue);
-            EJson["U"] = rJson.writeLineInReal(Energies.row(0));
-            EJson["tH"] = rJson.writeLineInReal(Energies.row(1));
-            EJson["pe"] = rJson.writeLineInReal(Energies.row(2));
-            EJson["tot"] = rJson.writeLineInReal(Energies.row(3));
+            EJson["tH"] = rJson.writeLineInReal(Energies.row(0));
+            EJson["U"] = rJson.writeLineInReal(Energies.row(1));
+            EJson["V"] = rJson.writeLineInReal(Energies.row(2));
+            EJson["pe"] = rJson.writeLineInReal(Energies.row(3));
+            EJson["tot"] = rJson.writeLineInReal(Energies.row(nEnergies));
             simJson["E"] = EJson;
+        }
+
+        if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
+        {
+            Json::Value NiCHJson(Json::objectValue);
+            NiCHJson["u"] = rJson.writeLine(NiCH.row(0));
+            NiCHJson["d"] = rJson.writeLine(NiCH.row(1));
+            simJson["NiCh"] = NiCHJson;
         }
 
         resJson["simulation"] = simJson;
@@ -306,6 +318,8 @@ void FHSolver:: writeResults(arma::cx_dcube &Nu, arma::cx_dcube &Nd, arma::cx_dm
         std::ofstream resultFile(fileAdressName);
         resultFile << document;
         resultFile.close();
+
+
 
         std::cout << "   -- Results written in " << folderName << workName << ".json" << std::endl;
     }

@@ -2,12 +2,16 @@
 # Compiler
 CXX = CC
 
+# Installation directory
+WORK_DIR = /users/roussefr/
+LIB_DIR = $(WORK_DIR)opt/
+
 # Directories
-ARMADILLO_INCLUDE_DIR = /users/roussefr/opt/armadillo/include
-ARMADILLO_LIB_DIR = /users/roussefr/opt/armadillo/lib64
-#OPENMP_INCLUDE_DIR = /users/roussefr/opt/openmp/include
-#OPENMP_LIB_DIR = /users/roussefr/opt/openmp/lib
-#FPS_DIR = /users/roussefr/FermiPhaseSpace 
+ARMADILLO_INCLUDE_DIR = $(LIB_DIR)armadillo/include
+ARMADILLO_LIB_DIR = $(LIB_DIR)armadillo/lib64
+#OPENMP_INCLUDE_DIR = $(LIB_DIR)openmp/include
+#OPENMP_LIB_DIR =$(LIB_DIR)openmp/lib
+#FPS_DIR = $(WORK_DIR)FermiPhaseSpace 
 
 # Compiler flags
 CXXFLAGS = -I$(ARMADILLO_INCLUDE_DIR)  -std=c++14 -Wshadow -Wall -pedantic -Og -fopenmp
@@ -17,10 +21,9 @@ LDFLAGS = -L$(ARMADILLO_LIB_DIR) -larmadillo
 
 
 # Source files
-SRCS = ./src/jsoncpp.cpp ./src/FHSystem.cpp ./src/FHLattice.cpp \
+SRCS = ./src/jsoncpp.cpp ./src/FHSystem.cpp ./src/FHLattice.cpp ./src/FHCoreHole.cpp \
        ./src/FHTunnelingInteraction.cpp ./src/FHCoulombInteraction.cpp \
        ./src/FHExternalPotential.cpp ./src/FHExternalPotentialPulse.cpp \
-       ./src/FHExternalPotentialConstant.cpp ./src/FHExternalPotentialCoreHole.cpp \
        ./src/ResultWriterTxt.cpp ./src/ResultWriterJson.cpp \
        ./src/FHSolver.cpp ./src/FHHFSolver.cpp ./fps_HF.cpp
 

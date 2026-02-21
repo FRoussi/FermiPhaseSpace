@@ -102,7 +102,6 @@ public:
     const std::vector<std::vector<bool>>*       getNeighbourMatrix();
 
 
-
     // SETTERS      
 
     void                                        setPositions(const arma::dmat& positions, std::string sitesName = "C");

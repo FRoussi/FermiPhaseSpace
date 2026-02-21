@@ -89,15 +89,23 @@ protected:
     unsigned int            nTimePoints;                  //<- Number of time steps (=tMax/dt)
               
     
+    std::vector<double> timeLine;
+    arma::cx_dcube Nu;
+    arma::cx_dcube Nd;
+    arma::cx_dmat Niiu;
+    arma::cx_dmat Niid;
+    arma::cx_dmat Mkku;
+    arma::cx_dmat Mkkd;
+    arma::cx_dmat Mukku;
+    arma::cx_dmat Mukkd;
+    arma::cx_dmat Energies;
+    arma::cx_dmat N2iiu, N2iid;
+    arma::cx_dmat NiuNid;   
+    arma::cx_dmat V_1p;
+    arma::cx_dmat NiCH;
 
     
-    void                        writeResults(arma::cx_dcube &Nu_t, arma::cx_dcube &Nd_t, 
-        arma::cx_dmat &Niiu_t, arma::cx_dmat &Niid_t, 
-        arma::cx_dmat &Mkku, arma::cx_dmat &Mkkd, 
-        arma::cx_dmat &Mukku, arma::cx_dmat &Mukkd,                                             
-        arma::cx_dmat &N2iiu, arma::cx_dmat &N2iid, 
-        arma::cx_dmat &NiuNid, 
-        arma::cx_dmat &E,std::vector<double> &timeLine);
+    void                        writeResults();
 
 
     
