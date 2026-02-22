@@ -15,6 +15,8 @@
 using std::vector;
 using std::array;
 
+
+
 vector<array<double,3>> makeBCGrid(uint nx, uint ny, uint nz, double a);
 arma::dmat findBCGridBox(uint nx, uint ny, uint nz, double a);
 vector<array<double,3>> makeBCCGrid(uint nx, uint ny, uint nz, double a);
@@ -33,9 +35,9 @@ void getNextIndex(uint& i, uint& j);
 
 arma::dmat armaMatfromVectorsPosition(vector<array<double,3>>& vecPos);
 
-template <typename T>       bool isIn(T w, vector<T>& v);
+//template <typename T>       bool isIn(T w, vector<T>& v);
 
-template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex);
+//template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex);
 
     enum FHLatticeType {
         none,

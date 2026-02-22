@@ -1340,7 +1340,6 @@ vector<array<double,3>> makeMoireGraphene(int nx, int ny, double a, double b, do
 
         }
 
-
         pos.insert(pos.end(), posLayer.begin(), posLayer.end());
     }
 
@@ -1371,6 +1370,7 @@ arma::dmat armaMatfromVectorsPosition(vector<array<double,3>>& vecPos)
     return mattrix;
 }
 
+/*
 /// @brief Check if a vector contains an element.
 /// @param w the element to look for
 /// @param v the vector of possibilities
@@ -1406,6 +1406,7 @@ template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex)
     firstIndex = index-1;
     return isInB;
 }
+    */
 
 /// @brief The suite of integer doubles S defined by  S(t+1) = getNextIndex(S(t))
 /// and starting by (0,0) paves the positive plan in an ordely fashion. The
