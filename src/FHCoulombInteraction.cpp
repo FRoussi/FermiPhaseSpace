@@ -95,7 +95,7 @@ arma::cx_dmat*          FHCoulombInteraction::getCoulombVInteractionPointer()
 }
 
 
-arma::cx_double         FHCoulombInteraction::getCoulombUInteraction(uint iSite, uint jSite)
+arma::cx_double         FHCoulombInteraction::getCoulombUInteraction(uint iSite, uint jSite) const
 {
     if (CoulombInteractionType == FHCoulombInteractionType::CEnull)
     {
@@ -108,7 +108,7 @@ arma::cx_double         FHCoulombInteraction::getCoulombUInteraction(uint iSite,
 
 }
 
-arma::cx_double         FHCoulombInteraction::getCoulombVInteraction(uint iSite, uint jSite)
+arma::cx_double         FHCoulombInteraction::getCoulombVInteraction(uint iSite, uint jSite) const
 {
     if (CoulombInteractionType == FHCoulombInteractionType::CEnull)
     {
@@ -124,7 +124,7 @@ arma::cx_double         FHCoulombInteraction::getCoulombVInteraction(uint iSite,
 
 
 
-std::vector<double>         FHCoulombInteraction::getParameters(uint set)
+std::vector<double>         FHCoulombInteraction::getParameters(uint set) const
 {
     if (set == 1)
     {
@@ -141,7 +141,7 @@ std::vector<double>         FHCoulombInteraction::getParameters(uint set)
 
 }
 
-FHCoulombInteractionType FHCoulombInteraction::getCoulombInteractionType()
+FHCoulombInteractionType FHCoulombInteraction::getCoulombInteractionType() const
 {
     return CoulombInteractionType;
 }

@@ -60,50 +60,50 @@ public:
 
 
 // GETTERS
-    FHSystemType                        getSystemType();
-    FHLattice*                          getLattice();
-    FHCoreHole*                         getCoreHole();
+    FHSystemType                        getSystemType() const;
+    FHLattice*                          getLattice() ;
+    FHCoreHole*                         getCoreHole() ;
     // site positions
-    unsigned int                        getnSites();
-    unsigned int                        getnDimension();
-    arma::drowvec                       getSitePosition(uint iSite);
-    double                              getCoordinate(uint dim, uint pos);
-    arma::drowvec                       getLatticeSitePosition(uint iSite);
-    double                              getLatticeCoordinate(uint dim, uint pos);
+    unsigned int                        getnSites() const;
+    unsigned int                        getnDimension() const;
+    arma::drowvec                       getSitePosition(uint iSite) const;
+    double                              getCoordinate(uint dim, uint pos) const;
+    arma::drowvec                       getLatticeSitePosition(uint iSite) const;
+    double                              getLatticeCoordinate(uint dim, uint pos) const;
     // site names
-    bool                                sitesHaveNames();
-    std::string                         getSiteName(uint site);
+    bool                                sitesHaveNames() const;
+    std::string                         getSiteName(uint site) const;
     // system symmetry
-    bool                                isPeriodic();
-    arma::dmat                          getLatticeMatrix();
-    arma::drowvec                       getLatticeZeroVector();
+    bool                                isPeriodic() const;
+    arma::dmat                          getLatticeMatrix() const;
+    arma::drowvec                       getLatticeZeroVector() const;
 
     // 
-    bool                                isSystemTimeDependant();
-    bool                                isExternalPotentialNull();
-    bool                                isTBGroundStateComputed();
-    bool                                isMFGroundStateComputed();
+    bool                                isSystemTimeDependant() const;
+    bool                                isExternalPotentialNull() const;
+    bool                                isTBGroundStateComputed() const;
+    bool                                isMFGroundStateComputed() const;
 
    // double                              computeDistance(uint iSite, uint jSite);
-    double                              getDistance(uint iSite, uint jSite);
-    bool                                areNeighbour(uint iSite, uint jSite);
+    double                              getDistance(uint iSite, uint jSite) const;
+    bool                                areNeighbour(uint iSite, uint jSite) const;
 
-    FHInitialConditionType              getInitialCondition();
-    unsigned int                        getUpSpinParticleNumber();
-    unsigned int                        getDownSpinParticleNumber();
+    FHInitialConditionType              getInitialCondition() const;
+    unsigned int                        getUpSpinParticleNumber() const;
+    unsigned int                        getDownSpinParticleNumber() const;
 
-    FHCoulombInteractionType            getCoulombInteractionType();
-    FHTunnelingInteractionType          getTunnelingInteractionType();
-    FHExternalPotentialType             getExternalPotentialType();
+    FHCoulombInteractionType            getCoulombInteractionType() ;
+    FHTunnelingInteractionType          getTunnelingInteractionType() ;
+    FHExternalPotentialType             getExternalPotentialType() const;
     //FHCoulombInteractionType            getSameSpinInteractionType();
    // tJExchangeCouplingType              getExchangeCouplingEnergyType();
 
-    std::complex<double>                getCoulombInteraction(int iSite, int jSite);
-    std::complex<double>                getSameSpinInteractionEnergy(int iSite, int jSite);
-    std::complex<double>                getTunnelingInteraction(int iSite, int jSite);
+    std::complex<double>                getCoulombInteraction(int iSite, int jSite) ;
+    std::complex<double>                getSameSpinInteractionEnergy(int iSite, int jSite) ;
+    std::complex<double>                getTunnelingInteraction(int iSite, int jSite) ;
     //std::complex<double>                getExchangeCouplingEnergy(int iSite, int jSite);
-    std::complex<double>                getExternalPotential(int iSite, double time);
-    std::complex<double>                getExternalPotential(int iSite, int jSite, double time);
+    std::complex<double>                getExternalPotential(int iSite, double time) ;
+    std::complex<double>                getExternalPotential(int iSite, int jSite, double time) ;
     arma::cx_dmat                       getExternalPotential(double time);
     void                                updateExternalPotential(double time);
 

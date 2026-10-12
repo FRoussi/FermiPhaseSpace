@@ -60,12 +60,12 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat, uint iSite, double pot)
 
 
 
-bool                    FHExternalPotential::isThePotentialNull()
+bool                    FHExternalPotential::isThePotentialNull() const
 {
     return (potentialType == FHExternalPotentialType::EPnull);
 }
 
-bool                    FHExternalPotential::isThePotentialTimeDependant()
+bool                    FHExternalPotential::isThePotentialTimeDependant() const
 {
     return (potentialType == FHExternalPotentialType::EPtimeDependant);
 }
@@ -89,12 +89,12 @@ bool                    FHExternalPotential::getExternalPotential(double t, arma
 }
 
 
-arma::cx_dmat*          FHExternalPotential::getExternalPotentialPointer()
+arma::cx_dmat*          FHExternalPotential::getExternalPotentialPointer() 
 {
     return &externalPotential;
 }
 
-arma::cx_double         FHExternalPotential::getExternalPotential(uint iSite, uint jSite)
+arma::cx_double         FHExternalPotential::getExternalPotential(uint iSite, uint jSite) const
 {
     if (potentialType == FHExternalPotentialType::EPnull)
     {
@@ -119,7 +119,7 @@ arma::cx_double         FHExternalPotential::getExternalPotential(double t, uint
 }
 
 
-arma::cx_dmat        FHExternalPotential::getExternalPotential(double t)
+arma::cx_dmat        FHExternalPotential::getExternalPotential(double t) const
 {
     arma::cx_dmat extPot = externalPotential;
 
@@ -132,7 +132,7 @@ void                    FHExternalPotential::updatePotential(double t)
 }
 
 
-std::vector<double>         FHExternalPotential::getParameters()
+std::vector<double>         FHExternalPotential::getParameters() const
 {
     std::vector<double> diagPot = std::vector<double>();
 
@@ -147,7 +147,7 @@ std::vector<double>         FHExternalPotential::getParameters()
     return diagPot;
 }
 
-FHExternalPotentialType FHExternalPotential::getExternalPotentialType()
+FHExternalPotentialType FHExternalPotential::getExternalPotentialType() const
 {
     return potentialType;
 }

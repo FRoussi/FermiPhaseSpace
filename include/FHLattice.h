@@ -70,38 +70,38 @@ public:
 
     // GETTERS
     // site positions
-    const uint                                  getnSites();
-    const uint                                  getnDimension();
-    const arma::drowvec                         getSitePosition(uint iSite);
-    const arma::dmat*                           getSitePositions();
-    const double                                getCoordinate(uint dim, uint pos);
-    const arma::drowvec                         getLatticeSitePosition(uint iSite);
-    const double                                getLatticeCoordinate(uint dim, uint pos);
-    const FHLatticeType                         getLatticeType();
-    std::string                                 getLatticeName();
+    uint                                        getnSites() const;
+    uint                                        getnDimension() const ;
+    arma::drowvec                               getSitePosition(uint iSite) const ;
+    const arma::dmat*                           getSitePositions() const ;
+    double                                      getCoordinate(uint dim, uint pos) const ;
+    arma::drowvec                               getLatticeSitePosition(uint iSite) const ;
+    double                                      getLatticeCoordinate(uint dim, uint pos)const ;
+    FHLatticeType                               getLatticeType()const ;
+    std::string                                 getLatticeName()const ;
     // site names
-    bool                                        sitesHaveNames();
-    uint                                        getSiteNameNumber();
-    std::vector<std::string>                    getSiteNames();
-    std::string                                 getSiteName(uint iSite);
-    arma::uvec                                  getSiteTypes();
-    uint                                        getSiteType(uint iSite);
-    std::vector<std::string>                    getSiteTypeNames();
+    bool                                        sitesHaveNames()const ;
+    uint                                        getSiteNameNumber()const ;
+    std::vector<std::string>                    getSiteNames()const ;
+    std::string                                 getSiteName(uint iSite)const ;
+    arma::uvec                                  getSiteTypes()const ;
+    uint                                        getSiteType(uint iSite)const ;
+    std::vector<std::string>                    getSiteTypeNames()const ;
     // system symmetry      
-    bool                                        isPeriodic();
-    arma::dmat                                  getLatticeMatrix();
-    arma::drowvec                               getLatticeZeroVector();
+    bool                                        isPeriodic()const ;
+    arma::dmat                                  getLatticeMatrix() const ;
+    arma::drowvec                               getLatticeZeroVector() const ;
 
 
-    double                                      getNeighbourDistance();
-    double                                      getSamePointDistance();
-    double                                      computeDistance(uint iSite, uint jSite);
-    double                                      getDistance(uint iSite, uint jSite);
-    bool                                        areNeighbour(uint iSite, uint jSite);
-    bool                                        areSameSite(uint iSite, uint jSite);
+    double                                      getNeighbourDistance() const;
+    double                                      getSamePointDistance() const;
+    double                                      computeDistance(uint iSite, uint jSite) const ;
+    double                                      getDistance(uint iSite, uint jSite) const;
+    bool                                        areNeighbour(uint iSite, uint jSite) const ;
+    bool                                        areSameSite(uint iSite, uint jSite) const ;
 
-    const arma::dmat*                           getDistanceMatrix();
-    const std::vector<std::vector<bool>>*       getNeighbourMatrix();
+    const arma::dmat*                           getDistanceMatrix() const ;
+    const std::vector<std::vector<bool>>*       getNeighbourMatrix() const ;
 
 
     // SETTERS      

@@ -31,19 +31,19 @@ public:
 
 
     bool                        getExternalPotential(double time, arma::cx_dmat& potential);
-    arma::cx_dmat*              getExternalPotentialPointer();
-    arma::cx_double             getExternalPotential(uint iSite, uint jSite);
+    arma::cx_dmat*              getExternalPotentialPointer() ;
+    arma::cx_double             getExternalPotential(uint iSite, uint jSite) const;
     arma::cx_double             getExternalPotential(double t, uint iSite, uint jSite);
-    arma::cx_dmat               getExternalPotential(double t);
-    FHExternalPotentialType     getExternalPotentialType();
+    arma::cx_dmat               getExternalPotential(double t) const;
+    FHExternalPotentialType     getExternalPotentialType() const;
 
-    std::vector<double>         getParameters();
+    std::vector<double>         getParameters() const;
     Json::Value                 writePotentialJson();                 
 
     void                        updatePotential(double t);
 
-    bool                        isThePotentialNull();
-    bool                        isThePotentialTimeDependant();
+    bool                        isThePotentialNull() const;
+    bool                        isThePotentialTimeDependant() const;
 
     void                        addSite(double pot);
 

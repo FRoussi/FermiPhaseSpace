@@ -418,14 +418,14 @@ FHLattice::FHLattice(FHLattice* lat)
 
 /// @brief getter - number of sites
 /// @return number of sites
-const uint                                FHLattice::getnSites()
+uint                                FHLattice::getnSites() const
 {
     return sitePositions.n_rows;
 }
 
 /// @brief getter - number of dimension (we always work in dim 3 though)
 /// @return number of dimensions (if not 3, weird)
-const uint                                FHLattice::getnDimension()
+uint                                FHLattice::getnDimension() const
 {
     return sitePositions.n_cols;
 }
@@ -433,12 +433,12 @@ const uint                                FHLattice::getnDimension()
 /// @brief getter - position row vector of site 'iSite'
 /// @param iSite a site number 
 /// @return row vector of coordinates
-const arma::drowvec                               FHLattice::getSitePosition(uint iSite)
+arma::drowvec                               FHLattice::getSitePosition(uint iSite) const 
 {
     return sitePositions.row(iSite);
 }
 
-const arma::dmat*                         FHLattice::getSitePositions()
+const arma::dmat*                         FHLattice::getSitePositions() const 
 {
     return &sitePositions;
 }
@@ -447,7 +447,7 @@ const arma::dmat*                         FHLattice::getSitePositions()
 /// @param dim coordinate dimension
 /// @param iSite site number
 /// @return coordinate of site 'iSite'in dimension 'dim'
-const double                                      FHLattice::getCoordinate(uint dim, uint iSite)
+double                                      FHLattice::getCoordinate(uint dim, uint iSite) const 
 { 
     if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
     {
@@ -462,7 +462,7 @@ const double                                      FHLattice::getCoordinate(uint 
 /// @brief getter - relative position row vector of site 'iSite'
 /// @param iSite a site number 
 /// @return row vector of relative coordinates
-const arma::drowvec                       FHLattice::getLatticeSitePosition(uint iSite)
+arma::drowvec                       FHLattice::getLatticeSitePosition(uint iSite) const
 {
     //std::cout << sitePositions.row(iSite) << std::endl;
     //std::cout << inverseLatticeMatrix << std::endl;
@@ -472,7 +472,7 @@ const arma::drowvec                       FHLattice::getLatticeSitePosition(uint
     return (inverseLatticeMatrix * pos.t()).t();
 }
 
-const double                              FHLattice::getLatticeCoordinate(uint dim, uint iSite)
+double                              FHLattice::getLatticeCoordinate(uint dim, uint iSite) const
 {
     if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
     {
@@ -485,56 +485,56 @@ const double                              FHLattice::getLatticeCoordinate(uint d
     }
 }
 
-const FHLatticeType                       FHLattice::getLatticeType()
+FHLatticeType                       FHLattice::getLatticeType() const
 {
     return latticeType;
 }
 
-bool                                        FHLattice::sitesHaveNames()
+bool                                        FHLattice::sitesHaveNames() const
 {
     return (siteTypes.n_rows == sitePositions.n_rows);
 }
 
-uint                                FHLattice::getSiteNameNumber()
+uint                                FHLattice::getSiteNameNumber() const
 {
     return (uint)siteNames.size();
 }
 
-std::string                                 FHLattice::getSiteName(uint iSite)
+std::string                                 FHLattice::getSiteName(uint iSite) const
 {
     //return siteTypeNames[siteTypes[site]];
     return siteNames[iSite];
 }
 
-vector<std::string>            FHLattice::getSiteNames()
+vector<std::string>            FHLattice::getSiteNames() const
 {
     return siteNames;
 }
 
-arma::uvec                          FHLattice::getSiteTypes()
+arma::uvec                          FHLattice::getSiteTypes() const
 {
     return siteTypes;
 }
 
-uint                                FHLattice::getSiteType(uint iSite)
+uint                                FHLattice::getSiteType(uint iSite) const
 {
     return siteTypes[iSite];
 }
 
-vector<std::string>                         FHLattice::getSiteTypeNames()       {    return siteTypeNames;}
-bool                                        FHLattice::isPeriodic()             {    return isPeriodicBool;}
-arma::dmat                                  FHLattice::getLatticeMatrix()       {    return latticeMatrix;}
-arma::drowvec                               FHLattice::getLatticeZeroVector()   {    return latticeZeroVector;}
-double                                      FHLattice::getNeighbourDistance()
+vector<std::string>                         FHLattice::getSiteTypeNames() const {    return siteTypeNames;}
+bool                                        FHLattice::isPeriodic() const     {    return isPeriodicBool;}
+arma::dmat                                  FHLattice::getLatticeMatrix() const {    return latticeMatrix;}
+arma::drowvec                               FHLattice::getLatticeZeroVector() const   {    return latticeZeroVector;}
+double                                      FHLattice::getNeighbourDistance() const
 {
     return neighbourDistance;
 }
-double                                   FHLattice::getSamePointDistance()
+double                                   FHLattice::getSamePointDistance() const
 {
     return samePointDistance;
 }
 
-double                                      FHLattice::computeDistance(uint iSite, uint jSite)
+double                                      FHLattice::computeDistance(uint iSite, uint jSite) const 
 {
     arma::drowvec dVec = sitePositions.row(iSite) - sitePositions.row(jSite); 
     double d = arma::norm(dVec);
@@ -581,13 +581,13 @@ double                                      FHLattice::evaluateNearestNeighbor()
 }
 
 
-double                                      FHLattice::getDistance(uint i, uint j)      {   return distanceMatrix(i,j);}
-bool                                        FHLattice::areNeighbour(uint i, uint j)     {   return neighbourMatrix[i][j];}
-bool                                        FHLattice::areSameSite(uint i, uint j)      {   return sameSiteMatrix[i][j];}
-std::string                                 FHLattice::getLatticeName()                 {   return latticeName;}
+double                                      FHLattice::getDistance(uint i, uint j)    const   {   return distanceMatrix(i,j);}
+bool                                        FHLattice::areNeighbour(uint i, uint j)   const   {   return neighbourMatrix[i][j];}
+bool                                        FHLattice::areSameSite(uint i, uint j)      const   {   return sameSiteMatrix[i][j];}
+std::string                                 FHLattice::getLatticeName()                 const   {   return latticeName;}
 
-const arma::dmat*                           FHLattice::getDistanceMatrix()              {   return &distanceMatrix;}
-const vector<vector<bool>>*                 FHLattice::getNeighbourMatrix()             {   return &neighbourMatrix;}
+const arma::dmat*                           FHLattice::getDistanceMatrix()              const   {   return &distanceMatrix;}
+const vector<vector<bool>>*                 FHLattice::getNeighbourMatrix()             const   {   return &neighbourMatrix;}
 
 
 // SETTERS

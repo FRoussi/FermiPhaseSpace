@@ -351,50 +351,50 @@ FHSystem::FHSystem(FHLattice lat)
 }
 
 
-FHSystemType                                FHSystem::getSystemType()                               {    return systemType;}
-FHLattice*                                  FHSystem::getLattice()                                  {    return &lattice;}
-FHCoreHole*                                 FHSystem::getCoreHole()                                 {    return &coreHole;}
-unsigned int                                FHSystem::getnSites()                                   {    return nSites;}
-unsigned int                                FHSystem::getnDimension()                               {    return lattice.getnDimension();}
-arma::drowvec                               FHSystem::getSitePosition(uint iSite)                   {    return lattice.getSitePosition(iSite);}
-double                                      FHSystem::getCoordinate(uint dim, uint iSite)           {    return lattice.getCoordinate(dim, iSite);}
-arma::drowvec                               FHSystem::getLatticeSitePosition(uint iSite)            {    return lattice.getLatticeSitePosition(iSite);}
-double                                      FHSystem::getLatticeCoordinate(uint dim, uint iSite)    {    return lattice.getLatticeCoordinate(dim, iSite);}
+FHSystemType                                FHSystem::getSystemType()                       const        {    return systemType;}
+FHLattice*                                  FHSystem::getLattice()                                   {    return &lattice;}
+FHCoreHole*                                 FHSystem::getCoreHole()                                  {    return &coreHole;}
+unsigned int                                FHSystem::getnSites()                                   const {    return nSites;}
+unsigned int                                FHSystem::getnDimension()                               const {    return lattice.getnDimension();}
+arma::drowvec                               FHSystem::getSitePosition(uint iSite)                   const {    return lattice.getSitePosition(iSite);}
+double                                      FHSystem::getCoordinate(uint dim, uint iSite)           const {    return lattice.getCoordinate(dim, iSite);}
+arma::drowvec                               FHSystem::getLatticeSitePosition(uint iSite)            const {    return lattice.getLatticeSitePosition(iSite);}
+double                                      FHSystem::getLatticeCoordinate(uint dim, uint iSite)    const {    return lattice.getLatticeCoordinate(dim, iSite);}
 
-bool                                        FHSystem::sitesHaveNames()                              {    return lattice.sitesHaveNames();}
-std::string                                 FHSystem::getSiteName(uint iSite)                       {    return lattice.getSiteName(iSite);}
-bool                                        FHSystem::isPeriodic()                                  {    return lattice.isPeriodic();}
+bool                                        FHSystem::sitesHaveNames()                              const {    return lattice.sitesHaveNames();}
+std::string                                 FHSystem::getSiteName(uint iSite)                       const {    return lattice.getSiteName(iSite);}
+bool                                        FHSystem::isPeriodic()                                  const {    return lattice.isPeriodic();}
 
-arma::dmat                                  FHSystem::getLatticeMatrix()                            {    return lattice.getLatticeMatrix();}
-arma::drowvec                               FHSystem::getLatticeZeroVector()                        {    return lattice.getLatticeZeroVector();}
+arma::dmat                                  FHSystem::getLatticeMatrix()                            const {    return lattice.getLatticeMatrix();}
+arma::drowvec                               FHSystem::getLatticeZeroVector()                        const {    return lattice.getLatticeZeroVector();}
 
-bool                                        FHSystem::isSystemTimeDependant()                       {    return externalPotential.isThePotentialTimeDependant();}
-bool                                        FHSystem::isExternalPotentialNull()                     {    return externalPotential.isThePotentialNull();}
-bool                                        FHSystem::isTBGroundStateComputed()                     {    return TBGroundStateComputed;}
-bool                                        FHSystem::isMFGroundStateComputed()                     {    return MFGroundStateComputed;}
+bool                                        FHSystem::isSystemTimeDependant()                       const {    return externalPotential.isThePotentialTimeDependant();}
+bool                                        FHSystem::isExternalPotentialNull()                     const {    return externalPotential.isThePotentialNull();}
+bool                                        FHSystem::isTBGroundStateComputed()                     const {    return TBGroundStateComputed;}
+bool                                        FHSystem::isMFGroundStateComputed()                     const {    return MFGroundStateComputed;}
 
-double                                      FHSystem::getDistance(uint i, uint j)                   {    return lattice.getDistance(i,j);}
-bool                                        FHSystem::areNeighbour(uint i, uint j)                  {    return lattice.areNeighbour(i,j);}
+double                                      FHSystem::getDistance(uint i, uint j)                   const {    return lattice.getDistance(i,j);}
+bool                                        FHSystem::areNeighbour(uint i, uint j)                  const {    return lattice.areNeighbour(i,j);}
 
-FHSystem::FHInitialConditionType            FHSystem::getInitialCondition()                         {    return initialCondition;}
-std::vector<bool>                           FHSystem::getInitialCondition_upSpin()                  {    return initConditions_upSpin;}
-std::vector<bool>                           FHSystem::getInitialCondition_downSpin()                {    return initConditions_downSpin;}
-unsigned int                                FHSystem::getUpSpinParticleNumber()                     {    return upSpinParticleNumber;}
-unsigned int                                FHSystem::getDownSpinParticleNumber()                   {    return downSpinParticleNumber;}
+FHSystem::FHInitialConditionType            FHSystem::getInitialCondition()                         const {    return initialCondition;}
+std::vector<bool>                           FHSystem::getInitialCondition_upSpin()                   {    return initConditions_upSpin;}
+std::vector<bool>                           FHSystem::getInitialCondition_downSpin()                 {    return initConditions_downSpin;}
+unsigned int                                FHSystem::getUpSpinParticleNumber()                     const {    return upSpinParticleNumber;}
+unsigned int                                FHSystem::getDownSpinParticleNumber()                   const {    return downSpinParticleNumber;}
 
-FHCoulombInteractionType                    FHSystem::getCoulombInteractionType()                   {    return coulombInteraction.getCoulombInteractionType();}
-FHTunnelingInteractionType                  FHSystem::getTunnelingInteractionType()                 {    return tunnelingInteraction.getTunnelingInteractionType();}
-FHExternalPotentialType                     FHSystem::getExternalPotentialType()                    {    return externalPotential.getExternalPotentialType();}
-//FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  {    return VInteractionType;}
-//FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               {    return tJExCType;}
-std::complex<double>                        FHSystem::getCoulombInteraction(int i, int j)            {    return coulombInteraction.getCoulombUInteraction(i,j);}
-std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)    {    return coulombInteraction.getCoulombVInteraction(i,j);}
-std::complex<double>                        FHSystem::getTunnelingInteraction(int i, int j)              {    return tunnelingInteraction.getTunnelingInteraction(i,j);}
-//std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)       {    return JMatrix(i,j);}
+FHCoulombInteractionType                    FHSystem::getCoulombInteractionType()                    {    return coulombInteraction.getCoulombInteractionType();}
+FHTunnelingInteractionType                  FHSystem::getTunnelingInteractionType()                  {    return tunnelingInteraction.getTunnelingInteractionType();}
+FHExternalPotentialType                     FHSystem::getExternalPotentialType()                    const {    return externalPotential.getExternalPotentialType();}
+//FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  const {    return VInteractionType;}
+//FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               const {    return tJExCType;}
+std::complex<double>                        FHSystem::getCoulombInteraction(int i, int j)             {    return coulombInteraction.getCoulombUInteraction(i,j);}
+std::complex<double>                        FHSystem::getSameSpinInteractionEnergy(int i, int j)     {    return coulombInteraction.getCoulombVInteraction(i,j);}
+std::complex<double>                        FHSystem::getTunnelingInteraction(int i, int j)               {    return tunnelingInteraction.getTunnelingInteraction(i,j);}
+//std::complex<double>                        FHSystem::getExchangeCouplingEnergy(int i, int j)       const {    return JMatrix(i,j);}
 
-std::complex<double>                        FHSystem::getExternalPotential(int i, double t)         {    return externalPotential.getExternalPotential(t,i,i);}
-std::complex<double>                        FHSystem::getExternalPotential(int i, int j, double t)  {    return externalPotential.getExternalPotential(t,i,j);}
-arma::cx_dmat                               FHSystem::getExternalPotential(double time)             {    return externalPotential.getExternalPotential(time);}
+std::complex<double>                        FHSystem::getExternalPotential(int i, double t)          {    return externalPotential.getExternalPotential(t,i,i);}
+std::complex<double>                        FHSystem::getExternalPotential(int i, int j, double t)   {    return externalPotential.getExternalPotential(t,i,j);}
+arma::cx_dmat                               FHSystem::getExternalPotential(double time)              {    return externalPotential.getExternalPotential(time);}
 void                                        FHSystem::updateExternalPotential(double time)          {    externalPotential.updatePotential(time);}
 
 const arma::cx_dmat*                        FHSystem::getUMatrixPointer()                           {   return coulombInteraction.getCoulombUInteractionPointer();}

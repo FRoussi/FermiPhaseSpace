@@ -30,12 +30,12 @@ public:
     FHCoulombInteraction(FHLattice* lat, std::vector<double> coulombDistances, std::vector<double> coulombEnergies);
 
     arma::cx_dmat*                  getCoulombUInteractionPointer();
-    arma::cx_double                 getCoulombUInteraction(uint iSite, uint jSite);
+    arma::cx_double                 getCoulombUInteraction(uint iSite, uint jSite) const;
     arma::cx_dmat*                  getCoulombVInteractionPointer();
-    arma::cx_double                 getCoulombVInteraction(uint iSite, uint jSite);
-    FHCoulombInteractionType        getCoulombInteractionType();
+    arma::cx_double                 getCoulombVInteraction(uint iSite, uint jSite) const;
+    FHCoulombInteractionType        getCoulombInteractionType() const;
 
-    virtual                         std::vector<double>         getParameters(uint set);
+    virtual                         std::vector<double>         getParameters(uint set) const;
     virtual Json::Value             writeCoulombInteractionJson();                 
 
     void                            addSite(arma::cx_dvec interactions);
