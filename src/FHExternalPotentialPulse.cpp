@@ -22,7 +22,7 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
 }
 
 
-FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat): FHExternalPotential(lat)
+FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat& tunMat): FHExternalPotential(lat)
 {
     uint nSites = lat->getnSites();
     externalPotential = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
@@ -44,10 +44,10 @@ FHExternalPotentialPulse::FHExternalPotentialPulse(FHLattice* lat, double intens
 }
 
 
-void FHExternalPotentialPulse::setTunnelingMatrix(const arma::cx_dmat* tunMat)
+void FHExternalPotentialPulse::setTunnelingMatrix(const arma::cx_dmat& tunMat)
 {
     withTunnelingCoefficients = true;
-    tunnelingMatrix = tunMat;
+    tunnelingMatrix = &tunMat;
 }
 
 

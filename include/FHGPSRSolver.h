@@ -87,11 +87,11 @@ private:
     arma::cx_dmat                   rhod0;
 
 // Link to Energy matrices
-    const arma::cx_dmat*            U;                     
-    const arma::cx_dmat*            tM;
+    const arma::cx_dmat&            U;                     
+    const arma::cx_dmat&            tM;
     //const arma::cx_dmat*            J;
-    const arma::cx_dmat*            V;
-    const arma::cx_dmat*            extPot;
+    const arma::cx_dmat&            V;
+    const arma::cx_dmat&            extPot;
 
 // Usefull things :
     arma::cx_dmat                   sqrtU;

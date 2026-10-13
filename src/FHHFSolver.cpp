@@ -1,30 +1,18 @@
 #include "../include/FHHFSolver.h"
 
 
-FHHFSolver::FHHFSolver(FHSystem* fhS) : FHSolver(fhS)
+FHHFSolver::FHHFSolver(FHSystem* fhS) : 
+    FHSolver(fhS),
+    currentSimulationTime(0),
+    integratorOrder(2),
+    integrator(HFIntegrator::RungeKutta2),
+    U(fhS->getUMatrix()),
+    tM(fhS->gettMatrix()),
+    V(fhS->getVMatrix()),
+    extPot(fhS->getExtPot())
 {
 
-/*
-    fhSystem = fhS;
 
-    computeMomenta = false;
-    talkative = false;
-    jsonFile = Json::Value();
-
-    writeResultsTxt = false;
-    writeResultsJson = false;
-    writeResultsHDF5 = false; */
-
-    currentSimulationTime = 0;
-    integratorOrder = 2;
-    integrator = HFIntegrator::RungeKutta2;
-    
-
-    U = fhSystem->getUMatrixPointer();
-    tM = fhSystem->gettMatrixPointer();
-    //J = fhSystem->getJMatrixPointer();
-    V = fhSystem->getVMatrixPointer();
-    extPot = fhSystem->getExtPotPointer();
 
 }
 
@@ -107,8 +95,8 @@ void FHHFSolver::initiateSolver()
         if (talkative)
         {
             std::cout << "E matrices" << std::endl;
-            tM->print();
-            U->print();
+            tM.print();
+            U.print();
         }
 
         if (talkative)
@@ -278,20 +266,20 @@ void FHHFSolver::runSimulation( )
     {
 
         Energies = arma::cx_dmat(nEnergies + 1,nTimePoints, arma::fill::zeros);
-        Energies.at(0,0) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);
+        Energies.at(0,0) =  arma::accu(tM % Nut) + arma::accu(tM % Ndt);
 
         if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
         {
-            Energies.at(1,0) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);
+            Energies.at(1,0) = (arma::dot(Nut.diag(), U * Ndt.diag()) + arma::dot(Ndt.diag(),  U * Nut.diag())) / arma::cx_double(2,0);
             if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
             {
-                Energies.at(2,0) = (arma::dot(Nut.diag(), *V * Nut.diag()) + arma::dot(Ndt.diag(),  *V * Ndt.diag()) 
-                             - arma::accu(*V % Nut % Nut.st()) - arma::accu(*V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);
+                Energies.at(2,0) = (arma::dot(Nut.diag(), V * Nut.diag()) + arma::dot(Ndt.diag(),  V * Ndt.diag()) 
+                             - arma::accu(V % Nut % Nut.st()) - arma::accu(V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);
             }
         }
         if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
         {
-            Energies.at(3,0) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);
+            Energies.at(3,0) =  arma::accu(extPot % Nut) + arma::accu(extPot % Ndt);
         }
     }
     if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
@@ -391,19 +379,19 @@ Nut.print();
         //std::cout << "Save En, t " << t << std::endl;
         if (saveEnergies)
         {
-            Energies.at(0,t) =  arma::accu(*tM % Nut) + arma::accu(*tM % Ndt);                                                                  //<- Tunneling energy
+            Energies.at(0,t) =  arma::accu(tM % Nut) + arma::accu(tM % Ndt);                                                                  //<- Tunneling energy
             if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
             {
-                Energies.at(1,t) = (arma::dot(Nut.diag(), *U * Ndt.diag()) + arma::dot(Ndt.diag(),  *U * Nut.diag())) / arma::cx_double(2,0);   //<- Opposite Spin Interaction Energy
+                Energies.at(1,t) = (arma::dot(Nut.diag(), U * Ndt.diag()) + arma::dot(Ndt.diag(),  U * Nut.diag())) / arma::cx_double(2,0);   //<- Opposite Spin Interaction Energy
                 if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
                 {
-                    Energies.at(2,t) = (arma::dot(Nut.diag(), *V * Nut.diag()) + arma::dot(Ndt.diag(),  *V * Ndt.diag()) 
-                                 - arma::accu(*V % Nut % Nut.st()) - arma::accu(*V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);                 //<- Same Spin Interaction Energy
+                    Energies.at(2,t) = (arma::dot(Nut.diag(), V * Nut.diag()) + arma::dot(Ndt.diag(),  V * Ndt.diag()) 
+                                 - arma::accu(V % Nut % Nut.st()) - arma::accu(V % Ndt % Ndt.st())  ) / arma::cx_double(2,0);                 //<- Same Spin Interaction Energy
                 }
             }
             if (fhSystem->getExternalPotentialType() != FHExternalPotentialType::EPnull)
             {
-                Energies.at(3,t) =  arma::accu(*extPot % Nut) + arma::accu(*extPot % Ndt);                                                      //<- Potential energy
+                Energies.at(3,t) =  arma::accu(extPot % Nut) + arma::accu(extPot % Ndt);                                                      //<- Potential energy
             }
 
         }
@@ -592,18 +580,18 @@ void FHHFSolver::step_RK45(double d_t)
 void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt)
 {
 
-    arma::cx_dmat DeltaUp = *tM;   
-    arma::cx_dmat DeltaDo = *tM; 
+    arma::cx_dmat DeltaUp = tM;   
+    arma::cx_dmat DeltaDo = tM; 
 
     if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
     {
-        DeltaUp += arma::diagmat(*U * ndt.diag());
-        DeltaDo += arma::diagmat(*U * nut.diag());
+        DeltaUp += arma::diagmat(U * ndt.diag());
+        DeltaDo += arma::diagmat(U * nut.diag());
 
         if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
         {
-            DeltaUp += arma::diagmat(*V * nut.diag()) - nut % *V;
-            DeltaDo += arma::diagmat(*V * ndt.diag()) - ndt % *V;
+            DeltaUp += arma::diagmat(V * nut.diag()) - nut % V;
+            DeltaDo += arma::diagmat(V * ndt.diag()) - ndt % V;
         }
     }
 
@@ -614,8 +602,8 @@ void FHHFSolver::derivative(double currentTime, const arma::cx_dmat& nut, const 
         {
             fhSystem->updateExternalPotential(currentTime);
         }
-        DeltaUp += *extPot;
-        DeltaDo += *extPot;
+        DeltaUp += extPot;
+        DeltaDo += extPot;
     }
 
 

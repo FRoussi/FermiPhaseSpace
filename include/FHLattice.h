@@ -1,20 +1,32 @@
 #pragma once
 
-
-#include <vector>
-//#define ARMA_DONT_USE_OPENMP
-#include <armadillo>
 #include <cmath>
-#include <map>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
 
+#include <armadillo>
 
 #include "json/json.h"
+
 
 using std::vector;
 using std::array;
 
+/// @brief The structural type of a lattice.
+enum class FHLatticeType {
+    none,
+    cubic,
+    bulkCenteredCubic,
+    faceCenteredCubic,
+    triangular,
+    honeyCombs,
+    graphene,
+    moireHC,
+    moire,
+    kagome
+};
 
 
 vector<array<double,3>> makeBCGrid(uint nx, uint ny, uint nz, double a);
@@ -30,147 +42,114 @@ void getNextIndexMoireHoneyCombs(int &n, int &m, int &l);
 vector<array<double,3>> makeMoireGraphene(int nx, int ny, double a, double b, double theta);
 vector<array<double,3>> makeTetragones(int nx, int ny, int nz, double a);
 arma::dmat findTetragonesGridBox(int nx, int ny, int nz, double a);
-
 void getNextIndex(uint& i, uint& j);
+arma::dmat armaMatfromVectorsPosition(const vector<array<double,3>>& vecPos);
 
-arma::dmat armaMatfromVectorsPosition(vector<array<double,3>>& vecPos);
 
-//template <typename T>       bool isIn(T w, vector<T>& v);
-
-//template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex);
-
-    enum FHLatticeType {
-        none,
-        cubic,
-        bulkCenteredCubic,
-        faceCenteredCubic,
-        triangular,
-        honeyCombs,
-        graphene,
-        moireHC,
-        moire,
-        kagome
-    };
-
-class FHLattice  	
+/// @brief A lattice of sites: positions, names, symmetry and connectivity.
+///
+/// Sites are stored as rows of an (nSites x nDimensions) matrix.
+/// "Lattice" coordinates of a site are its position expressed in the basis of
+/// the lattice symmetry vectors (see getLatticeSitePosition).
+class FHLattice
 {
-
-
-
 public:
     FHLattice(bool talk = true);
     FHLattice(int x, bool talk = true);
     FHLattice(int x, int y, int z, bool talk = true);
-  //  FHSystem(std::string fileName, std::string folderName = "");
     FHLattice(Json::Value rootSystem, std::string folderName, bool talk = true);
-    FHLattice(std::string latticeTypeString, vector<double> parameters);
-    FHLattice(FHLatticeType latType, vector<double> parameters);
-
+    FHLattice(std::string latticeTypeString, std::vector<double> parameters);
+    FHLattice(FHLatticeType latType, std::vector<double> parameters);
     FHLattice(FHLattice* fhLattice);
+
+    ~FHLattice() = default;
 
     // GETTERS
     // site positions
-    uint                                        getnSites() const;
-    uint                                        getnDimension() const ;
-    arma::drowvec                               getSitePosition(uint iSite) const ;
-    const arma::dmat*                           getSitePositions() const ;
-    double                                      getCoordinate(uint dim, uint pos) const ;
-    arma::drowvec                               getLatticeSitePosition(uint iSite) const ;
-    double                                      getLatticeCoordinate(uint dim, uint pos)const ;
-    FHLatticeType                               getLatticeType()const ;
-    std::string                                 getLatticeName()const ;
+    uint                                getnSites() const;
+    uint                                getnDimension() const;
+    arma::drowvec                       getSitePosition(uint iSite) const;
+    const arma::dmat*                   getSitePositions() const;
+    double                              getCoordinate(uint dim, uint iSite) const;
+    arma::drowvec                       getLatticeSitePosition(uint iSite) const;
+    double                              getLatticeCoordinate(uint dim, uint iSite) const;
+    FHLatticeType                       getLatticeType() const;
+    std::string                         getLatticeName() const;
     // site names
-    bool                                        sitesHaveNames()const ;
-    uint                                        getSiteNameNumber()const ;
-    std::vector<std::string>                    getSiteNames()const ;
-    std::string                                 getSiteName(uint iSite)const ;
-    arma::uvec                                  getSiteTypes()const ;
-    uint                                        getSiteType(uint iSite)const ;
-    std::vector<std::string>                    getSiteTypeNames()const ;
-    // system symmetry      
-    bool                                        isPeriodic()const ;
-    arma::dmat                                  getLatticeMatrix() const ;
-    arma::drowvec                               getLatticeZeroVector() const ;
+    bool                                sitesHaveNames() const;
+    uint                                getSiteNameNumber() const;
+    std::vector<std::string>            getSiteNames() const;
+    std::string                         getSiteName(uint iSite) const;
+    arma::uvec                          getSiteTypes() const;
+    uint                                getSiteType(uint iSite) const;
+    std::vector<std::string>            getSiteTypeNames() const;
+    // system symmetry
+    bool                                isPeriodic() const;
+    arma::dmat                          getLatticeMatrix() const;
+    arma::drowvec                       getLatticeZeroVector() const;
 
+    // distances and connectivity
+    double                              getNeighbourDistance() const;
+    double                              getSamePointDistance() const;
+    double                              computeDistance(uint iSite, uint jSite) const;
+    double                              getDistance(uint iSite, uint jSite) const;
+    bool                                areNeighbour(uint iSite, uint jSite) const;
+    bool                                areSameSite(uint iSite, uint jSite) const;
+    double                              evaluateNearestNeighbor() const;
+    const arma::dmat*                   getDistanceMatrix() const;
+    const std::vector<std::vector<bool>>* getNeighbourMatrix() const;
 
-    double                                      getNeighbourDistance() const;
-    double                                      getSamePointDistance() const;
-    double                                      computeDistance(uint iSite, uint jSite) const ;
-    double                                      getDistance(uint iSite, uint jSite) const;
-    bool                                        areNeighbour(uint iSite, uint jSite) const ;
-    bool                                        areSameSite(uint iSite, uint jSite) const ;
+    // SETTERS
+    void                                setPositions(const arma::dmat& positions, std::string siteName = "C");
+    void                                setPositions(const arma::dmat& positions, std::vector<std::string> siteNames);
+    bool                                setSiteTypes(arma::uvec siteTypes);
+    void                                setSiteTypeNames(std::vector<std::string> typeNames);
+    void                                setSymmetry(arma::dmat latticeMat);
+    void                                setLatticeZero(arma::drowvec latticeZero);
+    void                                computeInverseLatticeMatrix();
+    void                                setNeighbourDistance(double neighbourD);
+    void                                setSamePointDistance(double samePointD);
+    void                                setLatticeName(std::string newName);
+    void                                computeMatrices();
 
-    const arma::dmat*                           getDistanceMatrix() const ;
-    const std::vector<std::vector<bool>>*       getNeighbourMatrix() const ;
+    // XYZ file
+    void                                readPositions(std::string xyzFile);
+    void                                writePositions(std::string xyzFile, std::string folderName = "");
 
-
-    // SETTERS      
-
-    void                                        setPositions(const arma::dmat& positions, std::string sitesName = "C");
-    void                                        setPositions(const arma::dmat& positions, std::vector<std::string> siteNames);
-
-    bool                                        setSiteTypes(arma::uvec sTypes);
-    void                                        setSiteTypeNames(vector<std::string> typeNames);  
-
-    void                                        setSymmetry(arma::dmat latticeMat); 
-    void                                        setLatticeZero(arma::drowvec latticeZ);
-    void                                        computeInverseLatticeMatrix();
-    void                                        setNeighbourDistance(double neigbD); 
-    void                                        setSamePointDistance(double samePointD); 
-
-    void                                        setLatticeName(std::string newName);
-
-    void                                        computeMatrices();
-    double                                      evaluateNearestNeighbor();
-
-    // XYZ file     
-    void                                        readPositions(std::string xyzFile);
-    void                                        writePositions(std::string xyzFile, std::string folderName = "");
-
-    // Json     
-    Json::Value                                 writeFHLatticeJson();
-
-    ~FHLattice();
-
+    // Json
+    Json::Value                         writeFHLatticeJson() const;
 
 private:
+    // Sites
+    arma::dmat                          sitePositions;
+    arma::uvec                          siteTypes;
+    std::vector<std::string>            siteTypeNames;
+    std::vector<std::string>            siteNames;
 
-    // SITES
-    arma::dmat                              sitePositions;
-    arma::uvec                              siteTypes;
-    vector<std::string>                     siteTypeNames;
-    vector<std::string>                     siteNames;
+    // Lattice symmetry
+    bool                                isPeriodicBool = false;
+    arma::dmat                          latticeMatrix  = arma::dmat(3, 3, arma::fill::zeros);
+    arma::dmat                          inverseLatticeMatrix = arma::dmat(3, 3, arma::fill::zeros);
+    arma::drowvec                       latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
 
-// LATTICE      
-    bool                                    isPeriodicBool;
-    arma::dmat                              latticeMatrix;
-    arma::dmat                              inverseLatticeMatrix;
-    arma::drowvec                           latticeZeroVector;
+    // Type and parameters
+    FHLatticeType                       latticeType = FHLatticeType::none;
+    std::vector<int>                    intParameters;
+    std::vector<double>                 floatParameters;
 
-// TYPE     
-    FHLatticeType                           latticeType;
-    vector<int>                             intParameters;
-    vector<double>                          floatParameters; 
+    // Connectivity
+    double                              neighbourDistance = 1;
+    double                              samePointDistance = 0.0001;
+    arma::dmat                          distanceMatrix;
+    std::vector<std::vector<bool>>      neighbourMatrix;
+    std::vector<std::vector<bool>>      sameSiteMatrix;
 
-// Connections      
-    double                                  neighbourDistance = 1;
-    double                                  samePointDistance = 0.0001;
-    arma::dmat                              distanceMatrix;
-    vector<vector<bool>>                    neighbourMatrix;
-    vector<vector<bool>>                    sameSiteMatrix;
+    // Lattice type names
+    std::map<FHLatticeType, std::string> latticeTypeNames;
+    std::map<std::string, FHLatticeType> latticeTypeNamesReverse;
 
-// Lattice type names
-//MapDoubleEntry<int>           latticeNamesMap;
-    //MapDoubleEntry<FHLatticeType>           latticeNamesMap;
-    std::map<FHLatticeType, std::string>    latticeTypeNames;
-    std::map<std::string, FHLatticeType>    latticeTypeNamesReverse;
+    std::string                         latticeName;
+    bool                                talkative = true;
 
-// Names
-    std::string                             latticeName;
-    bool                                    talkative;
-
-
-
-    void                                    init_latticeNameMap();
-
+    void                                init_latticeNameMap();
 };

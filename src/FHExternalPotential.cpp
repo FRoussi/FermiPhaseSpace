@@ -89,9 +89,9 @@ bool                    FHExternalPotential::getExternalPotential(double t, arma
 }
 
 
-arma::cx_dmat*          FHExternalPotential::getExternalPotentialPointer() 
+const arma::cx_dmat&          FHExternalPotential::getExternalPotentialReference() const 
 {
-    return &externalPotential;
+    return externalPotential;
 }
 
 arma::cx_double         FHExternalPotential::getExternalPotential(uint iSite, uint jSite) const

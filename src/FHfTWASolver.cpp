@@ -1,28 +1,21 @@
 #include "../include/FHfTWASolver.h"
 
 
-FHfTWASolver::FHfTWASolver(FHSystem* fhS) : FHSolver(fhS)
+FHfTWASolver::FHfTWASolver(FHSystem* fhS) : 
+    FHSolver(fhS),
+    nTraj(1),
+    integratorOrder(2),
+    integrator(fTWAIntegrator::RungeKutta2),
+    U(fhS->getUMatrix()),
+    tM(fhS->gettMatrix()),
+    V(fhS->getVMatrix()),
+    extPot(fhS->getExtPot())
 {
-
- 
-    
-    nTraj = 1;
-    integrator = fTWAIntegrator::RungeKutta2;
-
     unsigned int nSites = fhSystem->getnSites();
     arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
 
     halfDiag = 0.5 * arma::cx_dmat(nSites, nSites, arma::fill::eye);
     halfVec = 0.5 * arma::cx_dvec(nSites, arma::fill::ones);
-
-
-
-    U = fhSystem->getUMatrixPointer();
-    tM = fhSystem->gettMatrixPointer();
-    //J = fhSystem->getJMatrixPointer();
-    V = fhSystem->getVMatrixPointer();
-    extPot = fhSystem->getExtPotPointer();
-
 
 }
 
@@ -409,12 +402,12 @@ void FHfTWASolver::runSimulation( )
             {
                 Nu_loc =  rhou + halfDiag;
                 Nd_loc =  rhod + halfDiag;
-                En_loc.at(0,t) += arma::accu((Nu_loc + Nd_loc) % (*tM));                                                                                //<- Tunneling Energy
-                En_loc.at(1,t) += (arma::dot(Nu_loc.diag(), *U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), *U * Nu_loc.diag())) / arma::cx_double(2,0); //<- Opposite Spin Interaction Energy 
-                En_loc.at(2,t) += (arma::dot(Nu_loc.diag(), *V * Nu_loc.diag()) + arma::dot(Nd_loc.diag(), *V * Nd_loc.diag())) / arma::cx_double(2,0); //<- Same Spin Interaction Energy
+                En_loc.at(0,t) += arma::accu((Nu_loc + Nd_loc) % (tM));                                                                                //<- Tunneling Energy
+                En_loc.at(1,t) += (arma::dot(Nu_loc.diag(), U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), U * Nu_loc.diag())) / arma::cx_double(2,0); //<- Opposite Spin Interaction Energy 
+                En_loc.at(2,t) += (arma::dot(Nu_loc.diag(), V * Nu_loc.diag()) + arma::dot(Nd_loc.diag(), V * Nd_loc.diag())) / arma::cx_double(2,0); //<- Same Spin Interaction Energy
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc.at(3,t) +=  arma::accu((Nu_loc + Nd_loc) % (*extPot));                                                                       //<- Potential Energy
+                    En_loc.at(3,t) +=  arma::accu((Nu_loc + Nd_loc) % (extPot));                                                                       //<- Potential Energy
                 }
             }
             if (fhSystem->getSystemType() == FHSystemType::SysCoreHole)
@@ -573,17 +566,17 @@ void FHfTWASolver::runSimulation( )
 void FHfTWASolver::derivative(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
 
-    arma::cx_dmat DeltaUp = *tM; 
-    arma::cx_dmat DeltaDo = *tM;
+    arma::cx_dmat DeltaUp = tM; 
+    arma::cx_dmat DeltaDo = tM;
     
     if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEnull)
     {
-        DeltaUp += arma::diagmat(*U * (rhod.diag() + halfVec)) ;
-        DeltaDo += arma::diagmat(*U * (rhou.diag() + halfVec)) ;
+        DeltaUp += arma::diagmat(U * (rhod.diag() + halfVec)) ;
+        DeltaDo += arma::diagmat(U * (rhou.diag() + halfVec)) ;
         if (fhSystem->getCoulombInteractionType() != FHCoulombInteractionType::CEonSite)
         {
-            DeltaUp += arma::diagmat(*V * (rhou.diag() + halfVec)) ;
-            DeltaDo += arma::diagmat(*V * (rhod.diag() + halfVec)) ;       
+            DeltaUp += arma::diagmat(V * (rhou.diag() + halfVec)) ;
+            DeltaDo += arma::diagmat(V * (rhod.diag() + halfVec)) ;       
         }
     }
 
@@ -595,8 +588,8 @@ void FHfTWASolver::derivative(double currentSimulationTime, const arma::cx_dmat&
            fhSystem->updateExternalPotential(currentSimulationTime);
         }
 
-        DeltaUp += *extPot;
-        DeltaDo += *extPot;
+        DeltaUp += extPot;
+        DeltaDo += extPot;
 
     }
 

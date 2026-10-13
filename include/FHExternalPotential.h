@@ -31,7 +31,7 @@ public:
 
 
     bool                        getExternalPotential(double time, arma::cx_dmat& potential);
-    arma::cx_dmat*              getExternalPotentialPointer() ;
+    const arma::cx_dmat&        getExternalPotentialReference() const;
     arma::cx_double             getExternalPotential(uint iSite, uint jSite) const;
     arma::cx_double             getExternalPotential(double t, uint iSite, uint jSite);
     arma::cx_dmat               getExternalPotential(double t) const;

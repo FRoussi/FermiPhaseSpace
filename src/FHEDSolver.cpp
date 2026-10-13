@@ -1,20 +1,19 @@
 #include "../include/FHEDSolver.h"
 
-FHEDSolver::FHEDSolver(FHSystem *fhS) : FHSolver(fhS)
+FHEDSolver::FHEDSolver(FHSystem *fhS) : 
+    FHSolver(fhS),
+    currentSimulationTime(0),
+    storeNiju(storeOperators::SOnone),
+    storeNijd(storeOperators::SOnone),
+    oPDensityMatUpToDate(false)
 {
-
-
-    currentSimulationTime = 0;
-    storeNiju = storeOperators::SOnone;
-    storeNijd = storeOperators::SOnone;
-
-    oPDensityMatUpToDate = false;
 
 }
 
 
 
-
+/// @brief Compute the ground state of the non-interacting Hamiltonian (H_t) and return it as a vector of site positions 
+/// @return a vector of complex numbers representing the ground state wave function in the site basis
 arma::cx_dvec FHEDSolver::getTBGroundState()
 {
     arma::dmat eigVec;
@@ -24,6 +23,8 @@ arma::cx_dvec FHEDSolver::getTBGroundState()
     return arma::cx_dvec(psi_tbgs, arma::dvec(psi_tbgs.size(), arma::fill::zeros));
 }
 
+/// @brief Compute the ground state of the mean-field Hamiltonian (H_mf) and return it as a vector of site positions 
+/// @return a vector of complex numbers representing the ground state wave function in the site basis
 arma::cx_dvec FHEDSolver::getMFGroundState()
 {
 
@@ -311,6 +312,9 @@ void FHEDSolver::buildHamiltonian_J()
 }
 */
 
+///@brief Compute the system's Hamiltonian external potential part
+///@param time Current simulation time
+///@return void
 void FHEDSolver::buildHamiltonian_ExternalPotential(double time)
 {
    H_externalPotential = arma::sp_dmat(basisSize, basisSize);
@@ -347,7 +351,9 @@ void FHEDSolver::buildHamiltonian()
     //Hdense = arma::cx_dmat(H);
 }
 
-
+///@brief Update the system's Hamiltonian with the current time-dependent external potential
+///@param time Current simulation time
+///@return void
 void FHEDSolver::updateHamiltonian(double time)
 {
     buildHamiltonian_ExternalPotential(time);
@@ -355,7 +361,10 @@ void FHEDSolver::updateHamiltonian(double time)
     H = H_U + H_t  + H_externalPotential;
 }
 
-
+///@brief Compute the operator A from its diagonal representation
+///@param bSize Size of the basis
+///@param diag Diagonal representation of the operator
+///@return The operator A as a sparse matrix
 arma::sp_dmat FHEDSolver::buildOperatorFromDiagonal(uint bSize, arma::dvec diag)
 {
     uint bbSize = std::max(bSize, (uint)diag.size());

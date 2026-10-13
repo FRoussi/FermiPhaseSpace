@@ -92,8 +92,8 @@ public:
     unsigned int                        getUpSpinParticleNumber() const;
     unsigned int                        getDownSpinParticleNumber() const;
 
-    FHCoulombInteractionType            getCoulombInteractionType() ;
-    FHTunnelingInteractionType          getTunnelingInteractionType() ;
+    FHCoulombInteractionType            getCoulombInteractionType() const;
+    FHTunnelingInteractionType          getTunnelingInteractionType() const;
     FHExternalPotentialType             getExternalPotentialType() const;
     //FHCoulombInteractionType            getSameSpinInteractionType();
    // tJExchangeCouplingType              getExchangeCouplingEnergyType();
@@ -107,11 +107,11 @@ public:
     arma::cx_dmat                       getExternalPotential(double time);
     void                                updateExternalPotential(double time);
 
-    const arma::cx_dmat*                getUMatrixPointer();
-    const arma::cx_dmat*                getVMatrixPointer();
+    const arma::cx_dmat&                getUMatrix() const;
+    const arma::cx_dmat&                getVMatrix() const;
     //const arma::cx_dmat*                getJMatrixPointer();
-    const arma::cx_dmat*                gettMatrixPointer();
-    const arma::cx_dmat*                getExtPotPointer();
+    const arma::cx_dmat&                gettMatrix() const;
+    const arma::cx_dmat&                getExtPot() const;
     const arma::cx_dmat*                get_tbgs_Nu_Pointer();
     const arma::cx_dmat*                get_tbgs_Nd_Pointer();
     const arma::cx_dmat*                get_tbgs_V_Pointer();
@@ -127,9 +127,9 @@ public:
     std::vector<bool>                   getInitialCondition_upSpin();
     std::vector<bool>                   getInitialCondition_downSpin();
 
-    std::string                         getName();
-    std::string                         getFolder();
-    std::string                         getFPSVersion();
+    std::string                         getName() const;
+    std::string                         getFolder() const;
+    std::string                         getFPSVersion() const;
 
 
 

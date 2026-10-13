@@ -9,12 +9,12 @@ class FHExternalPotentialPulse : public FHExternalPotential
 public:
 
     FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar);
-    FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat* tunMat);
+    FHExternalPotentialPulse(FHLattice* lat, double intensityA0, double centert0, double widthtd, double frequencyw0, arma::dvec polar, const arma::cx_dmat& tunMat);
 
 
     arma::cx_dmat getExternalPotential(double t);
 
-    void setTunnelingMatrix(const arma::cx_dmat* tunMat);
+    void setTunnelingMatrix(const arma::cx_dmat& tunMat);
 
     void updatePotential(double t);
 

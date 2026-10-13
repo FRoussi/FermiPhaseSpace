@@ -1,7 +1,13 @@
 #include "../include/FHLattice.h"
 
+#include <algorithm>
+#include <cstring>
 
+using std::vector;
+using std::array;
 
+// Grid construction helpers, defined at the bottom of this file.
+// They are implementation details of FHLattice, hence not exposed in the header.
 
 FHLattice::FHLattice(bool talk)
 {
@@ -46,15 +52,15 @@ FHLattice::FHLattice(int x, bool talk)
     }
 
     int nPart = std::floor(x/2);
-    vector<uint> initCond_up =  vector<uint>(nPart,0);
-    vector<uint> initCond_down =  vector<uint>(nPart,0);
+    std::vector<uint> initCond_up = std::vector<uint>(nPart, 0);
+    std::vector<uint> initCond_down = std::vector<uint>(nPart, 0);
     for(int itPart = 0; itPart <nPart; itPart++)
     {
         initCond_up[itPart] = itPart * 2;
         initCond_down[itPart] = itPart * 2 + 1;
     }
 
-    vector<vector<uint>> initCond = vector<vector<uint>>(2);
+    std::vector<std::vector<uint> > initCond = std::vector<std::vector<uint> >(2);
     initCond[0] = initCond_up;
     initCond[1] = initCond_down;
 
@@ -138,7 +144,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     latticeType = FHLatticeType::none;
 
     std::string latticeTypeString = rootSystem.get("latticeType", "none").asString();
-    std::map< std::string, FHLatticeType>::iterator lti = latticeTypeNamesReverse.find(latticeTypeString);
+    auto lti = latticeTypeNamesReverse.find(latticeTypeString);
 
     if (lti != latticeTypeNamesReverse.end())
     {
@@ -197,7 +203,7 @@ FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters)
     init_latticeNameMap();
     latticeType = FHLatticeType::none;
 
-    std::map<std::string, FHLatticeType>::iterator itLatType = latticeTypeNamesReverse.find(latticeTypeString);
+    auto itLatType = latticeTypeNamesReverse.find(latticeTypeString);
     if (itLatType != latticeTypeNamesReverse.end())
     {
         latticeType = itLatType->second;
@@ -208,16 +214,18 @@ FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters)
 
 switch (latticeType)
 {
-    case none:
+    case FHLatticeType::none:
         break;
-    case cubic:
+    case FHLatticeType::cubic:
     {
 
-        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
-        double a = parameters[3];
-        pos = makeBCGrid(n[0], n[1], n[2], a);
-        latticeMatrix = findBCGridBox(n[0], n[1], n[2], a);
-        intParameters = {n[0], n[1], n[2]};
+        const int nx = static_cast<int>(parameters[0]);
+        const int ny = static_cast<int>(parameters[1]);
+        const int nz = static_cast<int>(parameters[2]);
+        const double a = parameters[3];
+        pos = makeBCGrid(nx, ny, nz, a);
+        latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        intParameters = {nx, ny, nz};
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "CubicGrid";
@@ -225,13 +233,15 @@ switch (latticeType)
         neighbourDistance = a;
         break;
     }
-    case bulkCenteredCubic:
+    case FHLatticeType::bulkCenteredCubic:
     {
-        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
-        double a = parameters[3];
-        pos = makeBCCGrid(n[0], n[1], n[2], a);
-        latticeMatrix = findBCGridBox(n[0], n[1], n[2], a);
-        intParameters = {n[0], n[1], n[2]};
+        const int nx = static_cast<int>(parameters[0]);
+        const int ny = static_cast<int>(parameters[1]);
+        const int nz = static_cast<int>(parameters[2]);
+        const double a = parameters[3];
+        pos = makeBCCGrid(nx, ny, nz, a);
+        latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        intParameters = {nx, ny, nz};
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "BCCGrid";
@@ -239,13 +249,15 @@ switch (latticeType)
         neighbourDistance = a/std::sqrt(3);
         break;
     }
-    case faceCenteredCubic:
+    case FHLatticeType::faceCenteredCubic:
     {
-        int n[3] = { static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
-        double a = parameters[3];
-        pos = makeFCCGrid(n[0], n[1], n[2], a);
-        latticeMatrix = findBCGridBox(n[0], n[1], n[2], a);
-        intParameters = {n[0], n[1], n[2]};
+        const int nx = static_cast<int>(parameters[0]);
+        const int ny = static_cast<int>(parameters[1]);
+        const int nz = static_cast<int>(parameters[2]);
+        const double a = parameters[3];
+        pos = makeFCCGrid(nx, ny, nz, a);
+        latticeMatrix = findBCGridBox(nx, ny, nz, a);
+        intParameters = {nx, ny, nz};
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "FCCGrid";
@@ -253,10 +265,10 @@ switch (latticeType)
         neighbourDistance = a/std::sqrt(2);
         break;
     }
-    case honeyCombs:
+    case FHLatticeType::honeyCombs:
     {
         int nx = static_cast<int>(parameters[0]);
-        double a = (parameters[1]);
+        double a = parameters[1];
         pos = makeHoneyCombs(nx,a);
         latticeMatrix = findHoneyCombGridBox(nx, a);
         intParameters = {nx};
@@ -267,13 +279,15 @@ switch (latticeType)
         neighbourDistance = a;
         break;
     }
-    case triangular:
+    case FHLatticeType::triangular:
     {
-        int n[3] = {static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2])};
-        double a = (parameters[3]);
-        pos = makeTetragones(n[0], n[1], n[2], a);
-        latticeMatrix = findTetragonesGridBox(n[0], n[1], n[2], a);
-        intParameters = {n[0], n[1], n[2]};
+        const int nx = static_cast<int>(parameters[0]);
+        const int ny = static_cast<int>(parameters[1]);
+        const int nz = static_cast<int>(parameters[2]);
+        const double a = parameters[3];
+        pos = makeTetragones(nx, ny, nz, a);
+        latticeMatrix = findTetragonesGridBox(nx, ny, nz, a);
+        intParameters = {nx, ny, nz};
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "Tetragones";
@@ -281,13 +295,14 @@ switch (latticeType)
         neighbourDistance = a;
         break;
     }
-    case graphene:
+    case FHLatticeType::graphene:
     {
-        int n[2] = {static_cast<int>(parameters[0]), static_cast<int>(parameters[1])};
-        double a = (parameters[2]);
-        pos = makeGraphene(n[0], n[1], a);
-        latticeMatrix = findGrapheneGridBox(n[0], n[1], a);
-        intParameters = {n[0], n[1]};
+        const int nx = static_cast<int>(parameters[0]);
+        const int ny = static_cast<int>(parameters[1]);
+        const double a = parameters[2];
+        pos = makeGraphene(nx, ny, a);
+        latticeMatrix = findGrapheneGridBox(nx, ny, a);
+        intParameters = {nx, ny};
         floatParameters = {a};
         computeInverseLatticeMatrix();
         latticeName = "Graphene";
@@ -295,7 +310,7 @@ switch (latticeType)
         neighbourDistance = a;
         break;
     }
-    case moireHC:
+    case FHLatticeType::moireHC:
     {
         int nCombs = static_cast<int>(parameters[0]);
         double a = parameters[1];
@@ -311,15 +326,16 @@ switch (latticeType)
         neighbourDistance = a;
         break;
     }
-    case moire:
+    case FHLatticeType::moire:
     {
-        int n[2] = {static_cast<int>(parameters[0]), static_cast<int>(parameters[1])};
-        double a = parameters[2];
-        double b = parameters[3];
-        double theta = parameters[4];
-        pos = makeMoireGraphene(n[0], n[1],  a, b, theta);
-        latticeMatrix = findGrapheneGridBox(n[0], n[1], a);
-        intParameters = {n[0], n[1]};
+        const int nx = static_cast<int>(parameters[0]);
+        const int ny = static_cast<int>(parameters[1]);
+        const double a = parameters[2];
+        const double b = parameters[3];
+        const double theta = parameters[4];
+        pos = makeMoireGraphene(nx, ny, a, b, theta);
+        latticeMatrix = findGrapheneGridBox(nx, ny, a);
+        intParameters = {nx, ny};
         floatParameters = {a, b, theta};
         computeInverseLatticeMatrix();
         latticeName = "Moire";
@@ -352,21 +368,21 @@ FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters)
 
 switch (latType)
 {
-case none:
+case FHLatticeType::none:
     break;
-    case cubic:
+    case FHLatticeType::cubic:
         pos = makeBCGrid(static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2]), parameters[3]);
         latticeName = "CubicGrid";
     break;
-    case bulkCenteredCubic:
+    case FHLatticeType::bulkCenteredCubic:
         pos = makeBCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
         latticeName = "BCCGrid";
     break;
-    case faceCenteredCubic:
+    case FHLatticeType::faceCenteredCubic:
         pos = makeFCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
         latticeName = "FCCGrid";
     break;
-    case graphene:
+    case FHLatticeType::graphene:
         pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
         latticeName = "HoneyCombs";
     break;
@@ -379,18 +395,13 @@ case none:
 
     computeMatrices();
 
-
-    std::cout<< "nrows = "<< sitePositions.n_rows << std::endl;
-
 }
 
 
 FHLattice::FHLattice(FHLattice* lat)
 {
-    uint nSites = lat->getnSites();
-    uint nDim = lat->getnDimension();
     init_latticeNameMap();
-    sitePositions = arma::dmat( lat->getSitePositions()->memptr(), nSites, nDim);
+    sitePositions = *(lat->getSitePositions());
 
     siteTypes = lat->getSiteTypes();
     siteTypeNames = lat->getSiteTypeNames();
@@ -438,7 +449,7 @@ arma::drowvec                               FHLattice::getSitePosition(uint iSit
     return sitePositions.row(iSite);
 }
 
-const arma::dmat*                         FHLattice::getSitePositions() const 
+const arma::dmat*                         FHLattice::getSitePositions() const
 {
     return &sitePositions;
 }
@@ -560,7 +571,7 @@ double                                      FHLattice::computeDistance(uint iSit
 }
 
 
-double                                      FHLattice::evaluateNearestNeighbor()
+double                                      FHLattice::evaluateNearestNeighbor() const
 {
     double minNeib = 0;
     if (distanceMatrix.n_cols > 1)
@@ -696,11 +707,8 @@ void                                FHLattice::readPositions(std::string xyzFile
                 coordinates.push_back(d);
             }                      
             coordinates.resize(3);
-            
-            array<double,3> coordinatesArr;
-            std::memcpy(&coordinatesArr, &coordinates,  3 );
-   
-            positions3.push_back(coordinatesArr);
+
+            positions3.push_back({coordinates[0], coordinates[1], coordinates[2]});
         }
 
         posFile.close();
@@ -757,11 +765,11 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
     }
 }
 
-Json::Value         FHLattice::writeFHLatticeJson()
+Json::Value         FHLattice::writeFHLatticeJson() const
 {
         Json::Value rootLattice;
 
-        rootLattice["latticeType"] = latticeTypeNames[latticeType];
+        rootLattice["latticeType"] = latticeTypeNames.at(latticeType);
 
 
         rootLattice["positionsFile"] = latticeName + ".xyz";
@@ -861,35 +869,14 @@ void FHLattice::init_latticeNameMap()
 
     latticeTypeNamesReverse = std::map<std::string, FHLatticeType>();
 
-    for (std::map<FHLatticeType, std::string>::iterator it = latticeTypeNames.begin(); it != latticeTypeNames.end(); it ++)
+    for (const auto& entry : latticeTypeNames)
     {
-        latticeTypeNamesReverse.emplace(it->second, it->first);
+        latticeTypeNamesReverse.emplace(entry.second, entry.first);
     }
-
-
-
-    /*
-    latticeNamesMap = MapDoubleEntry<FHLatticeType>();
-    latticeNamesMap.append("none", FHLatticeType::none);
-    latticeNamesMap.append("grid", FHLatticeType::cubic);
-    latticeNamesMap.append("bcc", FHLatticeType::bulkCenteredCubic);
-    latticeNamesMap.append("fcc", FHLatticeType::faceCenteredCubic);
-    latticeNamesMap.append("triangular", FHLatticeType::triangular);
-    latticeNamesMap.append("honeyCombs", FHLatticeType::honeyCombs);
-    latticeNamesMap.append("graphene", FHLatticeType::graphene);
-    latticeNamesMap.append("moireHC", FHLatticeType::moireHC);
-    latticeNamesMap.append("moire", FHLatticeType::moire);
-    latticeNamesMap.append("kagome", FHLatticeType::kagome);
-    */
-
- }
+}
  
 
 
-FHLattice::~FHLattice()
-{
-
-}
 
 
 
@@ -1329,15 +1316,14 @@ vector<array<double,3>> makeMoireGraphene(int nx, int ny, double a, double b, do
         arma::dmat graphBox = findGrapheneGridBox(nx, ny, a);
         arma::dcolvec midBox = (graphBox.col(0) + graphBox.col(1))/2.;
         
-        for ( vector<array<double,3>>::iterator itPos = posLayer.begin(); itPos != posLayer.end(); itPos++)
+        for (auto& point : posLayer)
         {
-            arma::dcolvec aPos = arma::dcolvec((*itPos).data(),3);     //      { (*itPos)[0],  (*itPos)[1],  (*itPos)[2]} ;
+            arma::dcolvec aPos(point.data(), 3);
             aPos -= midBox;
             aPos = rotationLayer * aPos;
             aPos(2) = iLayer * b;
 
-            std::memcpy((&itPos), aPos.memptr(), 3 );
-
+            std::memcpy(point.data(), aPos.memptr(), 3 * sizeof(double));
         }
 
         pos.insert(pos.end(), posLayer.begin(), posLayer.end());
@@ -1347,66 +1333,22 @@ vector<array<double,3>> makeMoireGraphene(int nx, int ny, double a, double b, do
     return pos;
 }
 
-/// @brief Convert a vector of vector of double into the corresponding arma::dmat. The vector'vector and the matrix are seen in row-major order (reading/writing order).
-/// @param vecVec A vector of vector of double 
+/// @brief Convert a vector of 3d-positions into the corresponding arma::dmat (one row per position).
+/// @param vecPos the vector of positions
 /// @return The arma::dmat version of the vector
-arma::dmat armaMatfromVectorsPosition(vector<array<double,3>>& vecPos)
+arma::dmat armaMatfromVectorsPosition(const vector<array<double,3>>& vecPos)
 {
-    arma::dmat mattrix = arma::dmat();
-    if (vecPos.size() > 0)
+    arma::dmat positions(vecPos.size(), 3, arma::fill::zeros);
+    for (uint iRow = 0; iRow < vecPos.size(); iRow++)
     {
-        mattrix = arma::dmat(vecPos.size(), 3, arma::fill::zeros);
-        for (uint iRow = 0; iRow < vecPos.size(); iRow ++)
+        for (uint iCol = 0; iCol < 3; iCol++)
         {
-            for (uint iCol = 0; iCol < 3; iCol ++)
-            {
-                mattrix.col(iRow) = arma::dvec(vecPos[iRow].data(),3);
-                mattrix(iRow, iCol) = vecPos[iRow][iCol];
-            }
+            positions(iRow, iCol) = vecPos[iRow][iCol];
         }
-        
     }
 
-    return mattrix;
+    return positions;
 }
-
-/*
-/// @brief Check if a vector contains an element.
-/// @param w the element to look for
-/// @param v the vector of possibilities
-/// @return true if w is in v
-template <typename T>       bool isIn(T w, vector<T>& v)
-{
-
-        bool isInB = false;
-        uint index = 0;
-        while ( (!isInB) && (index < v.size()) )
-        {
-            if (v[index] == w)  isInB = true;
-            index ++;
-        }
-
-        return isInB;
-}
-
-/// @brief Check if a vector contains an element.
-/// @param w the element to look for
-/// @param v the vector of possibilities
-/// @param firstIndex index of the first found element
-/// @return true if w is in v
-template <typename T>       bool isIn(T w, vector<T>& v, uint& firstIndex)
-{
-    bool isInB = false;
-    uint index = 0;
-    while ( (!isInB) && (index < v.size()) )
-    {
-        if (v[index] == w)  isInB = true;
-        index ++;
-    }
-    firstIndex = index-1;
-    return isInB;
-}
-    */
 
 /// @brief The suite of integer doubles S defined by  S(t+1) = getNextIndex(S(t))
 /// and starting by (0,0) paves the positive plan in an ordely fashion. The

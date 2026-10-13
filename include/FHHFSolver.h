@@ -61,11 +61,11 @@ private:
     unsigned int            nPartU;                 //<- Number of up-spin particles
     unsigned int            nPartD;                 //<- Number of down-spin particles
 
-    const arma::cx_dmat*    U;                     // Link to Energy matrices
-    const arma::cx_dmat*    tM;
-    //const arma::cx_dmat*    J;
-    const arma::cx_dmat*    V;
-    const arma::cx_dmat*    extPot;
+    const arma::cx_dmat&    U;                     // Link to Energy matrices
+    const arma::cx_dmat&    tM;
+    //const arma::cx_dmat&    J;
+    const arma::cx_dmat&    V;
+    const arma::cx_dmat&    extPot;
 
     arma::cx_dmat           Nu0;                  //<- Initial density matrices 
     arma::cx_dmat           Nd0;

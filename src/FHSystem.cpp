@@ -382,8 +382,8 @@ std::vector<bool>                           FHSystem::getInitialCondition_downSp
 unsigned int                                FHSystem::getUpSpinParticleNumber()                     const {    return upSpinParticleNumber;}
 unsigned int                                FHSystem::getDownSpinParticleNumber()                   const {    return downSpinParticleNumber;}
 
-FHCoulombInteractionType                    FHSystem::getCoulombInteractionType()                    {    return coulombInteraction.getCoulombInteractionType();}
-FHTunnelingInteractionType                  FHSystem::getTunnelingInteractionType()                  {    return tunnelingInteraction.getTunnelingInteractionType();}
+FHCoulombInteractionType                    FHSystem::getCoulombInteractionType()   const                  {    return coulombInteraction.getCoulombInteractionType();}
+FHTunnelingInteractionType                  FHSystem::getTunnelingInteractionType()      const            {    return tunnelingInteraction.getTunnelingInteractionType();}
 FHExternalPotentialType                     FHSystem::getExternalPotentialType()                    const {    return externalPotential.getExternalPotentialType();}
 //FHSystem::FHSameSpinInteractionType         FHSystem::getSameSpinInteractionType()                  const {    return VInteractionType;}
 //FHSystem::tJExchangeCouplingType            FHSystem::getExchangeCouplingEnergyType()               const {    return tJExCType;}
@@ -397,11 +397,11 @@ std::complex<double>                        FHSystem::getExternalPotential(int i
 arma::cx_dmat                               FHSystem::getExternalPotential(double time)              {    return externalPotential.getExternalPotential(time);}
 void                                        FHSystem::updateExternalPotential(double time)          {    externalPotential.updatePotential(time);}
 
-const arma::cx_dmat*                        FHSystem::getUMatrixPointer()                           {   return coulombInteraction.getCoulombUInteractionPointer();}
-const arma::cx_dmat*                        FHSystem::getVMatrixPointer()                           {   return coulombInteraction.getCoulombVInteractionPointer();}
-//const arma::cx_dmat*                        FHSystem::getJMatrixPointer()                           {   return &JMatrix;}
-const arma::cx_dmat*                        FHSystem::gettMatrixPointer()                           {   return tunnelingInteraction.getTunnelingInteractionPointer();}
-const arma::cx_dmat*                        FHSystem::getExtPotPointer()                            {   return externalPotential.getExternalPotentialPointer();}
+const arma::cx_dmat&                        FHSystem::getUMatrix()  const                         {   return coulombInteraction.getCoulombUInteractionReference();}
+const arma::cx_dmat&                        FHSystem::getVMatrix()  const                         {   return coulombInteraction.getCoulombVInteractionReference();}
+//const arma::cx_dmat&                        FHSystem::getJMatrixPointer()                           {   return &JMatrix;}
+const arma::cx_dmat&                        FHSystem::gettMatrix()  const                         {   return tunnelingInteraction.getTunnelingInteractionReference();}
+const arma::cx_dmat&                        FHSystem::getExtPot()   const                         {   return externalPotential.getExternalPotentialReference();}
 const arma::cx_dmat*                        FHSystem::get_tbgs_Nu_Pointer()                         {   return &tbgs_Nu;}
 const arma::cx_dmat*                        FHSystem::get_tbgs_Nd_Pointer()                         {   return &tbgs_Nd;}
 const arma::cx_dmat*                        FHSystem::get_tbgs_V_Pointer()                          {   return &tbgs_V;}
@@ -413,9 +413,9 @@ const arma::cx_dmat*                        FHSystem::get_mfgs_Vd_Pointer()     
 const arma::dvec*                           FHSystem::get_mfgs_Eu_Pointer()                         {   return &mfgs_Eu;}
 const arma::dvec*                           FHSystem::get_mfgs_Ed_Pointer()                         {   return &mfgs_Ed;}
 
-std::string                                 FHSystem::getName()                                     { return systemName;}
-std::string                                 FHSystem::getFolder()                                   { return systemFolder;}
-std::string                                 FHSystem::getFPSVersion()                               { return std::to_string(FPS_VERSION_MAJOR) + "." + std::to_string(FPS_VERSION_MINOR) + "." + std::to_string(FPS_VERSION_PATCH);}
+std::string                                 FHSystem::getName() const                                    { return systemName;}
+std::string                                 FHSystem::getFolder() const                                   { return systemFolder;}
+std::string                                 FHSystem::getFPSVersion() const                               { return std::to_string(FPS_VERSION_MAJOR) + "." + std::to_string(FPS_VERSION_MINOR) + "." + std::to_string(FPS_VERSION_PATCH);}
 
 
 
@@ -837,7 +837,7 @@ void                    FHSystem::makePotential_pulse()
     arma::dvec polar = arma::dvec(getnDimension(), arma::fill::zeros);
     polar(0) = 1/std::sqrt(2);
     polar(1) = 1/std::sqrt(2);
-    externalPotential = FHExternalPotentialPulse(&lattice, intensityA0, centert0, widthtd, frequencyw0, polar, tunnelingInteraction.getTunnelingInteractionPointer());
+    externalPotential = FHExternalPotentialPulse(&lattice, intensityA0, centert0, widthtd, frequencyw0, polar, tunnelingInteraction.getTunnelingInteractionReference());
 }
 
 
@@ -923,15 +923,15 @@ void                    FHSystem::initiateNullInteraction()
 
 void                                FHSystem::computeTBGroundState(bool withExternalPotential)
 {
-arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
+const arma::cx_dmat& tMatrix = tunnelingInteraction.getTunnelingInteractionReference();
 
     if (withExternalPotential)
     {
-        arma::eig_sym(tbgs_E, tbgs_V, *tMatrix + *externalPotential.getExternalPotentialPointer());
+        arma::eig_sym(tbgs_E, tbgs_V, tMatrix + externalPotential.getExternalPotentialReference());
     }
     else
     {
-        arma::eig_sym(tbgs_E, tbgs_V, *tMatrix);
+        arma::eig_sym(tbgs_E, tbgs_V, tMatrix);
     }
 
 //std::cout << "     --- Comp TB 1, npu=" << upSpinParticleNumber << std::endl;
@@ -956,8 +956,8 @@ arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
 void                                FHSystem::computeMFGroundState(bool withExternalPotential)
 {
 
-arma::cx_dmat* tMatrix = tunnelingInteraction.getTunnelingInteractionPointer();
-arma::cx_dmat* UMatrix = coulombInteraction.getCoulombUInteractionPointer();
+const arma::cx_dmat& tMatrix = tunnelingInteraction.getTunnelingInteractionReference();
+const arma::cx_dmat& UMatrix = coulombInteraction.getCoulombUInteractionReference();
 
 uint nSitesLattice = lattice.getnSites();
 
@@ -986,19 +986,19 @@ uint nSitesLattice = lattice.getnSites();
 
         for (int i = 0; i < nSitesLattice; i++)
         {
-            mfuHuU.at(i,i) = arma::dot(UMatrix->row(i), diagNd);
-            mfuHuD.at(i,i) = arma::dot(UMatrix->row(i), diagNu);
+            mfuHuU.at(i,i) = arma::dot(UMatrix.row(i), diagNd);
+            mfuHuD.at(i,i) = arma::dot(UMatrix.row(i), diagNu);
         } 
 
         if (withExternalPotential)
         {
-            arma::eig_sym(mfgs_Eu, mfgs_Vu, *tMatrix + mfuHuU);
-            arma::eig_sym(mfgs_Ed, mfgs_Vd, *tMatrix + mfuHuD);
+            arma::eig_sym(mfgs_Eu, mfgs_Vu, tMatrix + mfuHuU);
+            arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
         }
         else
         {
-            arma::eig_sym(mfgs_Eu, mfgs_Vu, *tMatrix + mfuHuU);
-            arma::eig_sym(mfgs_Ed, mfgs_Vd, *tMatrix + mfuHuD);
+            arma::eig_sym(mfgs_Eu, mfgs_Vu, tMatrix + mfuHuU);
+            arma::eig_sym(mfgs_Ed, mfgs_Vd, tMatrix + mfuHuD);
         }
  
         mfgs_Nu = mfgs_Vu * Mku * mfgs_Vu.t();

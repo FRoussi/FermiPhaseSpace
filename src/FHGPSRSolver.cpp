@@ -2,23 +2,19 @@
 
 
 
-FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : FHSolver(fhS)
+FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : 
+    FHSolver(fhS),
+    nTraj(1),
+    driftIntegratorOrder(2),
+    driftIntegrator(GPSRDriftIntegrator::RungeKutta2),
+    diffusionIntegrator(GPSRDiffusionIntegrator::analytical),
+    U(fhS->getUMatrix()),
+    tM(fhS->gettMatrix()),
+    V(fhS->getVMatrix()),
+    extPot(fhS->getExtPot())   
 {
 
-    nTraj = 1;
-    driftIntegrator = GPSRDriftIntegrator::RungeKutta2;
-    diffusionIntegrator =  GPSRDiffusionIntegrator::analytical;
-
-    U = fhSystem->getUMatrixPointer();
-    tM = fhSystem->gettMatrixPointer();
-   // J = fhSystem->getJMatrixPointer();
-    V = fhSystem->getVMatrixPointer();
-    extPot = fhSystem->getExtPotPointer();
-
-    sqrtU =  arma::sqrt(*U);
-
-
-
+    sqrtU =  arma::sqrt(U);
 
 }
 
@@ -118,8 +114,8 @@ void FHGPSRSolver::initiateSolver()
 /// @return void
 void FHGPSRSolver::derivative(double currentSimulationTime, const arma::cx_dmat& rhou, const arma::cx_dmat& rhod, arma::cx_dmat& drhou_dt, arma::cx_dmat& drhod_dt)
 {
-    arma::cx_dmat DeltaUp = *tM + arma::diagmat(*U * rhod.diag());
-    arma::cx_dmat DeltaDo = *tM + arma::diagmat(*U * rhou.diag());
+    arma::cx_dmat DeltaUp = tM + arma::diagmat(U * rhod.diag());
+    arma::cx_dmat DeltaDo = tM + arma::diagmat(U * rhou.diag());
 
     if (!fhSystem->isExternalPotentialNull())
     {
@@ -131,8 +127,8 @@ void FHGPSRSolver::derivative(double currentSimulationTime, const arma::cx_dmat&
         }
         else
         {
-            DeltaUp += *extPot;
-            DeltaDo += *extPot;
+            DeltaUp += extPot;
+            DeltaDo += extPot;
         }
     }
 
@@ -264,7 +260,7 @@ void FHGPSRSolver::step_Diffusion_svd(const arma::cx_dmat& rhou, const arma::cx_
     }
     else if (fhSystem->getCoulombInteractionType() == FHCoulombInteractionType::CEgiven)
     {
-        arma::cx_dvec Udiag = arma::diagmat(*U);
+        arma::cx_dvec Udiag = arma::diagmat(U);
         arma::cx_dmat D =diffusionMatrix(rhou, rhod, Udiag);
         double D_norm = arma::norm(D,1);
         if (D_norm > 1.e-7) 
@@ -816,12 +812,12 @@ void FHGPSRSolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                En_loc.at(0,t) +=  arma::accu((rhou + rhod) % (*tM));                                                                               //<- Tunneling Energy
-                En_loc.at(1,t) +=  (arma::dot(rhou.diag(), *U * rhod.diag()) + arma::dot(rhod.diag(), *U * rhou.diag())) / arma::cx_double(2,0);    //<- Opposite Spin Interaction Energy
+                En_loc.at(0,t) +=  arma::accu((rhou + rhod) % (tM));                                                                               //<- Tunneling Energy
+                En_loc.at(1,t) +=  (arma::dot(rhou.diag(), U * rhod.diag()) + arma::dot(rhod.diag(), U * rhou.diag())) / arma::cx_double(2,0);    //<- Opposite Spin Interaction Energy
 
                 if (!fhSystem->isExternalPotentialNull())
                 {
-                    En_loc.at(3,t) += arma::accu((rhou + rhod) % (*extPot));                                                                        //<- Potential Energy
+                    En_loc.at(3,t) += arma::accu((rhou + rhod) % (extPot));                                                                        //<- Potential Energy
                 }
             }
 

@@ -84,14 +84,14 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, std::vector<double> C
 
 
 
-arma::cx_dmat*          FHCoulombInteraction::getCoulombUInteractionPointer()
+const arma::cx_dmat&          FHCoulombInteraction::getCoulombUInteractionReference() const
 {
-    return &U;
+    return U;
 }
 
-arma::cx_dmat*          FHCoulombInteraction::getCoulombVInteractionPointer()
+const arma::cx_dmat&          FHCoulombInteraction::getCoulombVInteractionReference() const
 {
-    return &V;
+    return V;
 }
 
 

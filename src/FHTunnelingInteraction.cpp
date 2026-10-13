@@ -183,12 +183,12 @@ FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, std::vector<doubl
 
 
 
-arma::cx_dmat*          FHTunnelingInteraction::getTunnelingInteractionPointer()
+const arma::cx_dmat&          FHTunnelingInteraction::getTunnelingInteractionReference() const
 {
-    return &tunnelingInteraction;
+    return tunnelingInteraction;
 }
 
-arma::cx_double         FHTunnelingInteraction::getTunnelingInteraction(uint iSite, uint jSite)
+arma::cx_double         FHTunnelingInteraction::getTunnelingInteraction(uint iSite, uint jSite) const
 {
     if (tunnelingInteractionType == FHTunnelingInteractionType::TEnull)
     {
@@ -204,7 +204,7 @@ arma::cx_double         FHTunnelingInteraction::getTunnelingInteraction(uint iSi
 
 
 
-std::vector<double>         FHTunnelingInteraction::getParameters(uint set)
+std::vector<double>         FHTunnelingInteraction::getParameters(uint set) const
 {
     if (set == 1)
     {
@@ -221,7 +221,7 @@ std::vector<double>         FHTunnelingInteraction::getParameters(uint set)
 
 }
 
-FHTunnelingInteractionType FHTunnelingInteraction::getTunnelingInteractionType()
+FHTunnelingInteractionType FHTunnelingInteraction::getTunnelingInteractionType() const
 {
     return tunnelingInteractionType;
 }
