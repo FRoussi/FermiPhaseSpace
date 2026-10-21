@@ -3,9 +3,6 @@
 
 FHfTWASolver::FHfTWASolver(FHSystem* fhS) : 
     FHSolver(fhS),
-    nTraj(1),
-    integratorOrder(2),
-    integrator(fTWAIntegrator::RungeKutta2),
     U(fhS->getUMatrix()),
     tM(fhS->gettMatrix()),
     V(fhS->getVMatrix()),
@@ -14,7 +11,6 @@ FHfTWASolver::FHfTWASolver(FHSystem* fhS) :
     unsigned int nSites = fhSystem->getnSites();
     arma::dmat zeroMat = arma::dmat(nSites, nSites, arma::fill::zeros);
 
-    halfDiag = 0.5 * arma::cx_dmat(nSites, nSites, arma::fill::eye);
     halfVec = 0.5 * arma::cx_dvec(nSites, arma::fill::ones);
 
 }
@@ -357,10 +353,10 @@ void FHfTWASolver::runSimulation( )
         wnM_up.reset();
 
 
-        rhou = arma::diagmat(initialDiagU) - halfDiag + wnu;
+        rhou = arma::diagmat(initialDiagU - halfVec) + wnu;
         rhou = rotMatrixU * rhou * rotMatrixU.t();
         
-        rhod = arma::diagmat(initialDiagD) - halfDiag + wnd;
+        rhod = arma::diagmat(initialDiagD - halfVec) + wnd;
         rhod = rotMatrixD * rhod * rotMatrixD.t();
 
 
@@ -400,8 +396,10 @@ void FHfTWASolver::runSimulation( )
             }
             if (saveEnergies)
             {
-                Nu_loc =  rhou + halfDiag;
-                Nd_loc =  rhod + halfDiag;
+                Nu_loc =  rhou;
+                Nu_loc.diag() += halfVec;
+                Nd_loc =  rhod;
+                Nd_loc.diag() += halfVec;
                 En_loc.at(0,t) += arma::accu((Nu_loc + Nd_loc) % (tM));                                                                                //<- Tunneling Energy
                 En_loc.at(1,t) += (arma::dot(Nu_loc.diag(), U * Nd_loc.diag()) + arma::dot(Nd_loc.diag(), U * Nu_loc.diag())) / arma::cx_double(2,0); //<- Opposite Spin Interaction Energy 
                 En_loc.at(2,t) += (arma::dot(Nu_loc.diag(), V * Nu_loc.diag()) + arma::dot(Nd_loc.diag(), V * Nd_loc.diag())) / arma::cx_double(2,0); //<- Same Spin Interaction Energy
@@ -496,8 +494,10 @@ void FHfTWASolver::runSimulation( )
         Nd = arma::cx_dcube(nSites, nSites, nTimePoints, arma::fill::zeros);
         for (unsigned int t = 0; t < nTimePoints; t++)
         {
-            Nu.slice(t) = rhou_t.slice(t) / nTraj_arma + halfDiag;
-            Nd.slice(t) = rhod_t.slice(t) / nTraj_arma + halfDiag;
+            Nu.slice(t) = rhou_t.slice(t) / nTraj_arma;
+            Nu.slice(t).diag() += halfVec;
+            Nd.slice(t) = rhod_t.slice(t) / nTraj_arma;
+            Nd.slice(t).diag() += halfVec;
         }
 
     }

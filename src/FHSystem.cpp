@@ -1,10 +1,10 @@
 #include "../include/FHSystem.h"
 
 
-FHSystem::FHSystem(bool talk)
+FHSystem::FHSystem(bool talk) :
+    talkative(talk)
 {
 
-    talkative = talk;
     lattice = FHLattice(talk);
 
     nSites = lattice.getnSites();
@@ -16,8 +16,6 @@ FHSystem::FHSystem(bool talk)
     initCond[0] = initCond_up;
     initCond[1] = initCond_down;
 
-    TBGroundStateComputed = false;
-    MFGroundStateComputed = false;
 
     setInitialConditionsDiagonal(initCond);
     initiateNullInteraction();
@@ -29,9 +27,9 @@ FHSystem::FHSystem(bool talk)
 }
 
 
-FHSystem::FHSystem(int x, bool talk)
+FHSystem::FHSystem(int x, bool talk) :
+    talkative(talk)
 {
-    talkative = talk;
 
     lattice = FHLattice(x, talk);
     nSites = lattice.getnSites();
@@ -58,8 +56,6 @@ FHSystem::FHSystem(int x, bool talk)
     setPositions(pos);
     setInitialConditionsDiagonal(initCond);
 
-    TBGroundStateComputed = false;
-    MFGroundStateComputed = false;
 
     initiateNullInteraction();
 
@@ -72,10 +68,10 @@ FHSystem::FHSystem(int x, bool talk)
 }
 
 
-FHSystem::FHSystem(int x, int y, int z, bool talk)
+FHSystem::FHSystem(int x, int y, int z, bool talk) :
+    talkative(talk)
 {
 
-    talkative = talk;
 
     lattice = FHLattice(x,y,z,talk);
     nSites = lattice.getnSites();
@@ -113,9 +109,6 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
     externalPotential = FHExternalPotential(&lattice);
     setInitialConditionsDiagonal(initCond);
 
-    TBGroundStateComputed = false;
-    MFGroundStateComputed = false;
-
     initiateNullInteraction();
   //  UInteractionType        = FHOppositeSpinInteractionType::UonSiteConstant;
   //  tunnelingType           = FHTunnelingType::nearestNeighboursConstant;
@@ -127,19 +120,15 @@ FHSystem::FHSystem(int x, int y, int z, bool talk)
 
 
 
-FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
+FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk) :
+    talkative(talk)
 {
-
-    talkative = talk;
     systemType = FHSystemType::SysVanilla;
 
     Json::Value rootLattice = rootSystem.get("lattice","" );
 
     lattice = FHLattice(rootLattice, folderName, talk);
     nSites = lattice.getnSites();
-
-    TBGroundStateComputed = false;
-    MFGroundStateComputed = false;
 
     initiateNullInteraction();
 
@@ -337,15 +326,13 @@ FHSystem::FHSystem(Json::Value rootSystem, std::string folderName, bool talk)
 }
 
 
-FHSystem::FHSystem(FHLattice lat)
+FHSystem::FHSystem(FHLattice lat) :
+    talkative(true)
 {
-    talkative = true;
+
 
     lattice = lat;
     nSites = lattice.getnSites();
-
-    TBGroundStateComputed = false;
-    MFGroundStateComputed = false;
     
     initiateNullInteraction();
 }

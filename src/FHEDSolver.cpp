@@ -1,11 +1,7 @@
 #include "../include/FHEDSolver.h"
 
 FHEDSolver::FHEDSolver(FHSystem *fhS) : 
-    FHSolver(fhS),
-    currentSimulationTime(0),
-    storeNiju(storeOperators::SOnone),
-    storeNijd(storeOperators::SOnone),
-    oPDensityMatUpToDate(false)
+    FHSolver(fhS)
 {
 
 }

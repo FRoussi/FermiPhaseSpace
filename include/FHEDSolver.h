@@ -67,7 +67,7 @@ public:
 
     void initiateSolver();
 
-    double currentSimulationTime;
+    double currentSimulationTime{0};
 
     void buildHamiltonian();
 
@@ -112,7 +112,7 @@ private:
     // Current one-particle density matrix :
     arma::cx_dmat Nut;
     arma::cx_dmat Ndt;
-    bool oPDensityMatUpToDate;
+    bool oPDensityMatUpToDate{false};
 
 
     //arma::cx_dmat Hdense;
@@ -128,8 +128,8 @@ private:
     //arma::dmat momentaVec;
     //arma::dvec momentaNRJ;
 
-    storeOperators storeNiju;
-    storeOperators storeNijd;
+    storeOperators storeNiju{storeOperators::SOnone};
+    storeOperators storeNijd{storeOperators::SOnone};
 
     uint getBasisIndex(std::bitset<MAX_BITS>& posPU, std::bitset<MAX_BITS>& posPD );          //<- Get the basis index of the basis vector corresponding to particle positions 'posPU' and 'posPD'
 

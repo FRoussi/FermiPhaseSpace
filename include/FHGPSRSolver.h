@@ -32,6 +32,39 @@ public:
         numerical_rsvd
     };
 
+
+private :
+
+// GPSR parameters :
+    unsigned int                    nTraj{1};
+    int                             driftIntegratorOrder{2};
+    GPSRDriftIntegrator             driftIntegrator{GPSRDriftIntegrator::RungeKutta2};
+    GPSRDiffusionIntegrator         diffusionIntegrator{GPSRDiffusionIntegrator::analytical};
+
+// Initial conditions :
+    std::vector<bool>               posPartU;
+    std::vector<bool>               posPartD;
+    arma::dvec                      diagNu0;
+    arma::dvec                      diagNd0;
+
+// Initial rho matrices :
+    arma::cx_dmat                   rhou0;
+    arma::cx_dmat                   rhod0;
+
+// References of Energy matrices
+    const arma::cx_dmat&            U;                     
+    const arma::cx_dmat&            tM;
+    const arma::cx_dmat&            V;
+    const arma::cx_dmat&            extPot;
+
+// Usefull things :
+    arma::cx_dmat                   sqrtU;
+
+    void derivative(double currentSimulationTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
+
+
+public :
+
     FHGPSRSolver(FHSystem* fhs);
 
 
@@ -62,42 +95,5 @@ public:
     const std::complex<double> sqrt_mjj = std::sqrt(-jj);
 
     ~FHGPSRSolver();
-
-private:
-
-
-
-// GPSR parameters :
-    unsigned int                    nTraj;
-
-    int                             driftIntegratorOrder;
-    GPSRDriftIntegrator             driftIntegrator;
-    GPSRDiffusionIntegrator         diffusionIntegrator;
-
-
-// Initial conditions :
-    std::vector<bool>               posPartU;
-    std::vector<bool>               posPartD;
-
-    arma::dvec                      diagNu0;
-    arma::dvec                      diagNd0;
-
-// Initial rho matrices :
-    arma::cx_dmat                   rhou0;
-    arma::cx_dmat                   rhod0;
-
-// Link to Energy matrices
-    const arma::cx_dmat&            U;                     
-    const arma::cx_dmat&            tM;
-    //const arma::cx_dmat*            J;
-    const arma::cx_dmat&            V;
-    const arma::cx_dmat&            extPot;
-
-// Usefull things :
-    arma::cx_dmat                   sqrtU;
-
-    void derivative(double currentSimulationTime, const arma::cx_dmat& nut, const arma::cx_dmat& ndt, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);
-
-
 
 };

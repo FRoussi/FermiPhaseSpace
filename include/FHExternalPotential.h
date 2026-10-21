@@ -51,14 +51,14 @@ protected:
 
 
 
-    double                      currentPotentialTime;
+    double                      currentPotentialTime{0};
 
     FHLattice*                  fhLattice;
 
 
     arma::cx_dmat               externalPotential;
 
-    FHExternalPotentialType     potentialType;    
+    FHExternalPotentialType     potentialType{FHExternalPotentialType::EPnull};    
     
 
 };

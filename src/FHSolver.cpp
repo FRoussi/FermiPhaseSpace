@@ -2,27 +2,10 @@
 
 
 
-FHSolver::FHSolver(FHSystem *fhS)
+FHSolver::FHSolver(FHSystem *fhS) :
+    fhSystem(fhS),
+    jsonFile(Json::Value())
 {
-    fhSystem = fhS;
-
- 
-    talkative = false;
-    jsonFile = Json::Value();
-
-    writeResultsTxt = false;
-    writeResultsJson = false;
-    writeResultsHDF5 = false;
-
-    saveWholeDMatrix = false;
-    saveDiagDMatrix = true;
-    saveDiag2DMatrix = true;
-    saveNiuNid = false;
-    saveTBStates = false;
-    saveMFStates = false;
-    saveEnergies = true;
-
-    nEnergies = 4;
 
 }
 

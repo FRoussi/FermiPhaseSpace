@@ -50,11 +50,11 @@ private:
     arma::cx_dmat                   U;      //<- Opposite spin Interaction
     arma::cx_dmat                   V;      //<- Same spin Interaction
 
-    FHCoulombInteractionType        CoulombInteractionType;    
+    FHCoulombInteractionType        CoulombInteractionType{FHCoulombInteractionType::CEnull};    
     
 
-    std::vector<double>             parameterSet1;   //<- Energies
-    std::vector<double>             parameterSet2;  //<- Distances
+    std::vector<double>             parameterSet1{std::vector<double>()};   //<- Energies
+    std::vector<double>             parameterSet2{std::vector<double>()};  //<- Distances
 
 
     void                            addCoulomb(double distance, double Interaction);

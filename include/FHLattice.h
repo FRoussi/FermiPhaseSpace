@@ -53,6 +53,42 @@ arma::dmat armaMatfromVectorsPosition(const vector<array<double,3>>& vecPos);
 /// the lattice symmetry vectors (see getLatticeSitePosition).
 class FHLattice
 {
+
+private:
+    // Sites
+    arma::dmat                          m_SitePositions;
+    arma::uvec                          m_SiteTypes;
+    std::vector<std::string>            m_SiteTypeNames;
+    std::vector<std::string>            m_SiteNames;
+
+    // Lattice symmetry
+    bool                                m_IsPeriodic {false};
+    arma::dmat                          m_LatticeMatrix  { arma::dmat(3, 3, arma::fill::zeros)};
+    arma::dmat                          m_InverseLatticeMatrix {arma::dmat(3, 3, arma::fill::zeros)};
+    arma::drowvec                       m_LatticeZeroVector { arma::drowvec(3, arma::fill::zeros)};
+
+    // Type and parameters
+    FHLatticeType                       m_LatticeType {FHLatticeType::none};
+    std::vector<int>                    m_IntParameters {};
+    std::vector<double>                 m_FloatParameters {};
+
+    // Connectivity
+    double                              m_NeighbourDistance {1.0};
+    double                              m_SamePointDistance {0.0001};
+    arma::dmat                          m_DistanceMatrix;
+    std::vector<std::vector<bool>>      m_NeighbourMatrix;
+    std::vector<std::vector<bool>>      m_SameSiteMatrix;
+
+    // Lattice type names
+    std::map<FHLatticeType, std::string> m_LatticeTypeNames;
+    std::map<std::string, FHLatticeType> m_LatticeTypeNamesReverse;
+
+    std::string                         m_LatticeName;
+    bool                                m_Talkative{true};
+
+    void                                init_latticeNameMap();
+
+
 public:
     FHLattice(bool talk = true);
     FHLattice(int x, bool talk = true);
@@ -60,7 +96,7 @@ public:
     FHLattice(Json::Value rootSystem, std::string folderName, bool talk = true);
     FHLattice(std::string latticeTypeString, std::vector<double> parameters);
     FHLattice(FHLatticeType latType, std::vector<double> parameters);
-    FHLattice(FHLattice* fhLattice);
+    FHLattice(const FHLattice& fhLattice);
 
     ~FHLattice() = default;
 
@@ -69,7 +105,7 @@ public:
     uint                                getnSites() const;
     uint                                getnDimension() const;
     arma::drowvec                       getSitePosition(uint iSite) const;
-    const arma::dmat*                   getSitePositions() const;
+    const arma::dmat&                   getSitePositions() const;
     double                              getCoordinate(uint dim, uint iSite) const;
     arma::drowvec                       getLatticeSitePosition(uint iSite) const;
     double                              getLatticeCoordinate(uint dim, uint iSite) const;
@@ -85,8 +121,8 @@ public:
     std::vector<std::string>            getSiteTypeNames() const;
     // system symmetry
     bool                                isPeriodic() const;
-    arma::dmat                          getLatticeMatrix() const;
-    arma::drowvec                       getLatticeZeroVector() const;
+    const arma::dmat&                   getLatticeMatrix() const;
+    const arma::drowvec&                getLatticeZeroVector() const;
 
     // distances and connectivity
     double                              getNeighbourDistance() const;
@@ -96,8 +132,8 @@ public:
     bool                                areNeighbour(uint iSite, uint jSite) const;
     bool                                areSameSite(uint iSite, uint jSite) const;
     double                              evaluateNearestNeighbor() const;
-    const arma::dmat*                   getDistanceMatrix() const;
-    const std::vector<std::vector<bool>>* getNeighbourMatrix() const;
+    const arma::dmat&                   getDistanceMatrix() const;
+    const std::vector<std::vector<bool>>& getNeighbourMatrix() const;
 
     // SETTERS
     void                                setPositions(const arma::dmat& positions, std::string siteName = "C");
@@ -119,37 +155,5 @@ public:
     // Json
     Json::Value                         writeFHLatticeJson() const;
 
-private:
-    // Sites
-    arma::dmat                          sitePositions;
-    arma::uvec                          siteTypes;
-    std::vector<std::string>            siteTypeNames;
-    std::vector<std::string>            siteNames;
 
-    // Lattice symmetry
-    bool                                isPeriodicBool = false;
-    arma::dmat                          latticeMatrix  = arma::dmat(3, 3, arma::fill::zeros);
-    arma::dmat                          inverseLatticeMatrix = arma::dmat(3, 3, arma::fill::zeros);
-    arma::drowvec                       latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-
-    // Type and parameters
-    FHLatticeType                       latticeType = FHLatticeType::none;
-    std::vector<int>                    intParameters;
-    std::vector<double>                 floatParameters;
-
-    // Connectivity
-    double                              neighbourDistance = 1;
-    double                              samePointDistance = 0.0001;
-    arma::dmat                          distanceMatrix;
-    std::vector<std::vector<bool>>      neighbourMatrix;
-    std::vector<std::vector<bool>>      sameSiteMatrix;
-
-    // Lattice type names
-    std::map<FHLatticeType, std::string> latticeTypeNames;
-    std::map<std::string, FHLatticeType> latticeTypeNamesReverse;
-
-    std::string                         latticeName;
-    bool                                talkative = true;
-
-    void                                init_latticeNameMap();
 };

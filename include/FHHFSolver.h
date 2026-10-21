@@ -50,10 +50,10 @@ private:
         
 
 // Time parameter
-    double                  currentSimulationTime;
+    double                  currentSimulationTime{0};
 
-    int                     integratorOrder;
-    HFIntegrator            integrator;            //<-Integrator 
+    int                     integratorOrder{2};
+    HFIntegrator            integrator{HFIntegrator::RungeKutta2};            //<-Integrator 
 
 
     std::vector<bool>       posPartU;              // Initial conditions vector

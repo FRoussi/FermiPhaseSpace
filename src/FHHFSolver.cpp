@@ -3,20 +3,12 @@
 
 FHHFSolver::FHHFSolver(FHSystem* fhS) : 
     FHSolver(fhS),
-    currentSimulationTime(0),
-    integratorOrder(2),
-    integrator(HFIntegrator::RungeKutta2),
     U(fhS->getUMatrix()),
     tM(fhS->gettMatrix()),
     V(fhS->getVMatrix()),
     extPot(fhS->getExtPot())
 {
-
-
-
 }
-
-
 
 
 void                        FHHFSolver::setIntegratorOrder(int order)

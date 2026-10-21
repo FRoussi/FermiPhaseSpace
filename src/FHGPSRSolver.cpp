@@ -4,10 +4,6 @@
 
 FHGPSRSolver::FHGPSRSolver(FHSystem* fhS) : 
     FHSolver(fhS),
-    nTraj(1),
-    driftIntegratorOrder(2),
-    driftIntegrator(GPSRDriftIntegrator::RungeKutta2),
-    diffusionIntegrator(GPSRDiffusionIntegrator::analytical),
     U(fhS->getUMatrix()),
     tM(fhS->gettMatrix()),
     V(fhS->getVMatrix()),

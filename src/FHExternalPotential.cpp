@@ -3,8 +3,6 @@
 
 FHExternalPotential::FHExternalPotential()
 {
-    currentPotentialTime = 0;
-    potentialType = FHExternalPotentialType::EPnull;
 }
 
 FHExternalPotential::FHExternalPotential(FHLattice* lat)
@@ -16,9 +14,6 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat)
     externalPotential = arma::cx_dmat();
 
     fhLattice = lat;
-
-    currentPotentialTime = 0;
-    potentialType = FHExternalPotentialType::EPnull;
 }
 
 
@@ -35,8 +30,6 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat, arma::dvec Pot)
 
     externalPotential = arma::diagmat(diagPotC);
 
-
-    currentPotentialTime = 0;
     potentialType = FHExternalPotentialType::EPconstant;
 }
 
@@ -53,8 +46,6 @@ FHExternalPotential::FHExternalPotential(FHLattice* lat, uint iSite, double pot)
         externalPotential.at(iSite, iSite) = pot;
     }
 
-
-    currentPotentialTime = 0;
     potentialType = FHExternalPotentialType::EPconstant;
 }
 

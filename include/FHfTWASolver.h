@@ -49,11 +49,11 @@ protected:
 
 
 // fTWA parameters :    
-    unsigned int                nTraj;
+    unsigned int                nTraj{1};
 
     // Integrator   
-    int                         integratorOrder;
-    fTWAIntegrator              integrator;
+    int                         integratorOrder{2};
+    fTWAIntegrator              integrator{fTWAIntegrator::RungeKutta2};
 
 
 
@@ -86,7 +86,6 @@ protected:
    // arma::dmat                  V_1p;               //<- rotation matrix for the momentum space
     //arma::dmat                  V_1p_1;             //<- Its transpose
 
-    arma::cx_dmat               halfDiag;           //<- Diagonal matrix of 0.5
     arma::cx_dvec               halfVec;            //<- Vector of 0.5
 
     void derivative(double currentTime, const arma::cx_dmat& nu, const arma::cx_dmat& nd, arma::cx_dmat& dnut_dt, arma::cx_dmat& dndt_dt);

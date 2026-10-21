@@ -47,8 +47,60 @@ public:
     };
 
 
+private:
+    
+    FHSystemType                    systemType{FHSystemType::SysVanilla};
+    FHLattice                       lattice;
+
+// coreHole
+    FHCoreHole                      coreHole;
+
+// sites
+    uint                            nSites{0};
+
+// PARTICLES
+    unsigned int                    upSpinParticleNumber{0};
+    unsigned int                    downSpinParticleNumber{0};
+
+// ENERGY
+    FHCoulombInteraction            coulombInteraction;
+    FHTunnelingInteraction          tunnelingInteraction;
+    FHExternalPotential             externalPotential;
+
+// INITIAL CONDITIONS
+    FHInitialConditionType          initialCondition;
+    std::vector<bool>               initConditions_upSpin;
+    std::vector<bool>               initConditions_downSpin;
+
+// Rotated representations
+    // Momentum space :
+    bool TBGroundStateComputed{false};
+    arma::cx_dmat          tbgs_Nu;
+    arma::cx_dmat          tbgs_Nd;
+    arma::cx_dmat          tbgs_V;
+    arma::dvec             tbgs_E;
+
+    // MF ground state :
+    bool MFGroundStateComputed{false};
+    arma::cx_dmat           mfgs_Nu;
+    arma::cx_dmat           mfgs_Nd;
+    arma::cx_dmat           mfgs_Vu;
+    arma::cx_dmat           mfgs_Vd;
+    arma::dvec              mfgs_Eu;
+    arma::dvec              mfgs_Ed;
+    uint                    iterationsForMFState;
+    double                  residueForMFState;
+
+// SYSTEM
+    std::string                     systemName;
+    std::string                     systemFolder;
+    Json::Value                     originalJsonSystem;
+
+    bool talkative{false};
 
 
+
+public:
 // CONSTRUCTORS
 
     FHSystem(bool talk = true);
@@ -202,77 +254,7 @@ public:
 
     ~FHSystem();
 
-private:
-    
 
-    FHSystemType                    systemType;
-
-    FHLattice                       lattice;
-
-
-    // coreHole
-    FHCoreHole coreHole;
-
-    // sites
-    uint                            nSites;
-
-// PARTICLES
-    unsigned int                    upSpinParticleNumber;
-    unsigned int                    downSpinParticleNumber;
-
-
-// ENERGY
-   // FHOppositeSpinInteractionType   UInteractionType;
-   // FHSameSpinInteractionType       VInteractionType;
-    //tJExchangeCouplingType          tJExCType;
-   // FHTunnelingType                 tunnelingType;
-   // ExternalPotentialType           externalPotentialType;
-
-
-    FHCoulombInteraction            coulombInteraction;
-    FHTunnelingInteraction          tunnelingInteraction;
-
-    // arma::cx_dmat                   UMatrix;
-    // arma::cx_dmat                   VMatrix;
-    // arma::cx_dmat                   JMatrix;
-    // arma::cx_dmat                   tMatrix;
-    FHExternalPotential             externalPotential;
-
-// INITIAL CONDITIONS
-    FHInitialConditionType          initialCondition;
-    std::vector<bool>               initConditions_upSpin;
-    std::vector<bool>               initConditions_downSpin;
-
-// Rotated representations
-    // Momentum space :
-    bool TBGroundStateComputed;
-    arma::cx_dmat          tbgs_Nu;
-    arma::cx_dmat          tbgs_Nd;
-    arma::cx_dmat          tbgs_V;
-    arma::dvec             tbgs_E;
-
-    // MF ground state :
-    bool MFGroundStateComputed;
-    arma::cx_dmat           mfgs_Nu;
-    arma::cx_dmat           mfgs_Nd;
-    arma::cx_dmat           mfgs_Vu;
-    arma::cx_dmat           mfgs_Vd;
-    arma::dvec              mfgs_Eu;
-    arma::dvec              mfgs_Ed;
-    uint                    iterationsForMFState;
-    double                  residueForMFState;
-
-// SYSTEM
-    std::string                     systemName;
-    std::string                     systemFolder;
-    Json::Value                     originalJsonSystem;
-
-
-
-
-
-
-    bool talkative;
 
 
 //    bool isIn(std::string w, std::vector<std::string> v);

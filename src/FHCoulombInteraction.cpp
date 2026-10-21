@@ -3,18 +3,15 @@
 
 FHCoulombInteraction::FHCoulombInteraction()
 {
-    CoulombInteractionType = FHCoulombInteractionType::CEnull;
 }
 
 FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat)
 {
-    CoulombInteractionType = FHCoulombInteractionType::CEnull;
     fhLattice = lat;
 }
 
 FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, Json::Value coulJson)
 {
-    CoulombInteractionType = FHCoulombInteractionType::CEnull;
     fhLattice = lat;
     std::string coulType = coulJson.get("type", "null").asString();
     if (coulType == "onSite")
@@ -23,8 +20,6 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, Json::Value coulJson)
 
         double onSiteE = coulJson.get("onSiteInteraction", 1.).asDouble();
 
-        parameterSet1 = std::vector<double>();
-        parameterSet2 = std::vector<double>();
 
         parameterSet1.push_back(onSiteE);
         parameterSet2.push_back(0);
@@ -43,8 +38,6 @@ FHCoulombInteraction::FHCoulombInteraction(FHLattice* lat, double onSiteInteract
     CoulombInteractionType = FHCoulombInteractionType::CEonSite;
     fhLattice = lat;
 
-    parameterSet1 = std::vector<double>();
-    parameterSet2 = std::vector<double>();
 
     parameterSet1.push_back(onSiteInteraction);
     parameterSet2.push_back(0);

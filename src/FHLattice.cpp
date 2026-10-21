@@ -9,40 +9,30 @@ using std::array;
 // Grid construction helpers, defined at the bottom of this file.
 // They are implementation details of FHLattice, hence not exposed in the header.
 
-FHLattice::FHLattice(bool talk)
+FHLattice::FHLattice(bool talk) :
+    m_Talkative(talk),
+    m_LatticeType(FHLatticeType::cubic),
+    m_IntParameters({1, 1, 1}),
+    m_FloatParameters({1.0})
 {
 
-    talkative = talk;
-
-    latticeType = FHLatticeType::cubic;
-
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::eye);
-    latticeZeroVector = arma::drowvec(3, arma::fill::eye);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     init_latticeNameMap();
 
     arma::dmat pos = arma::dmat(2,  3, arma::fill::zeros);
     pos(1,0) = 1;
 
-
     setPositions(pos);
-    intParameters = {1,1,1};
-    floatParameters = {1.};
 
 }
 
 
-FHLattice::FHLattice(int x, bool talk)
+FHLattice::FHLattice(int x, bool talk) :
+    m_Talkative(talk),
+    m_LatticeType(FHLatticeType::cubic),
+    m_IntParameters({x, 1, 1}),
+    m_FloatParameters({1.0})
 {
-    talkative = talk;
 
-   latticeType = FHLatticeType::cubic;
-
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     init_latticeNameMap();
 
     arma::dmat pos = arma::dmat(1,  x, arma::fill::zeros);
@@ -66,25 +56,20 @@ FHLattice::FHLattice(int x, bool talk)
 
 
     setPositions(pos);
-    intParameters = {x,1,1};
-    floatParameters = {1.};
-    latticeMatrix = findBCGridBox(x, 1, 1, 1);
+
+    m_LatticeMatrix = findBCGridBox(x, 1, 1, 1);
     computeInverseLatticeMatrix();
 
 }
 
 
-FHLattice::FHLattice(int x, int y, int z, bool talk)
+FHLattice::FHLattice(int x, int y, int z, bool talk) :
+    m_Talkative(talk),
+    m_LatticeType(FHLatticeType::cubic),
+    m_IntParameters({x, y, z}),
+    m_FloatParameters({1.0})
 {
 
-    talkative = talk;
-
-   latticeType = FHLatticeType::cubic;
-
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     init_latticeNameMap();
 
     arma::dmat pos = arma::dmat(3,  x * y * z, arma::fill::zeros);
@@ -104,29 +89,21 @@ FHLattice::FHLattice(int x, int y, int z, bool talk)
     }
 
 
-
     setPositions(pos);
      
-    intParameters = {x,y,z};
-    floatParameters = {1.};
-
-    latticeMatrix = findBCGridBox(x, y, z, 1);
+    m_LatticeMatrix = findBCGridBox(x, y, z, 1);
     computeInverseLatticeMatrix();
 
 }
 
 
 
-FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
+FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk) :
+    m_Talkative(talk),
+    m_LatticeType(FHLatticeType::none),
+    m_FloatParameters({1.0})
 {
 
-
-    talkative = talk;
-
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     init_latticeNameMap();
 
 // Positions
@@ -141,18 +118,16 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     readPositions(positionFile);
 
 
-    latticeType = FHLatticeType::none;
-
     std::string latticeTypeString = rootSystem.get("latticeType", "none").asString();
-    auto lti = latticeTypeNamesReverse.find(latticeTypeString);
+    auto lti = m_LatticeTypeNamesReverse.find(latticeTypeString);
 
-    if (lti != latticeTypeNamesReverse.end())
+    if (lti != m_LatticeTypeNamesReverse.end())
     {
-        latticeType = lti->second;
+        m_LatticeType = lti->second;
     }
 
 // Periodicity
-    isPeriodicBool = rootSystem.get("periodic", false).asBool();
+    m_IsPeriodic = rootSystem.get("periodic", false).asBool();
 
 
     Json::Value latMat = rootSystem["latticeMatrix"];
@@ -163,7 +138,7 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
             Json::Value latRow = latMat[i]; 
             for (uint j = 0; j<3; j++)
             {
-                latticeMatrix(i,j) = latRow[j].asDouble();
+                m_LatticeMatrix(i,j) = latRow[j].asDouble();
             }
         }
         computeInverseLatticeMatrix();
@@ -175,12 +150,12 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
     {
         for (uint j = 0; j<3; j++)
         {
-            latticeZeroVector(j) = latRow[j].asDouble();
+            m_LatticeZeroVector(j) = latRow[j].asDouble();
         }
     }
 
 
-    if (isPeriodic())
+    if (m_IsPeriodic)
     {
         computeMatrices();
     }
@@ -191,28 +166,24 @@ FHLattice::FHLattice(Json::Value rootSystem, std::string folderName, bool talk)
 
 }
 
-FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters)
+FHLattice::FHLattice(std::string latticeTypeString, vector<double> parameters) 
 {
     
     vector<array<double,3>> pos = makeBCGrid(2,1,1,1);
 
-    isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     init_latticeNameMap();
-    latticeType = FHLatticeType::none;
+    m_LatticeType = FHLatticeType::none;
 
-    auto itLatType = latticeTypeNamesReverse.find(latticeTypeString);
-    if (itLatType != latticeTypeNamesReverse.end())
+    auto itLatType = m_LatticeTypeNamesReverse.find(latticeTypeString);
+    if (itLatType != m_LatticeTypeNamesReverse.end())
     {
-        latticeType = itLatType->second;
+        m_LatticeType = itLatType->second;
     }
 
 
 
 
-switch (latticeType)
+switch (m_LatticeType)
 {
     case FHLatticeType::none:
         break;
@@ -224,13 +195,13 @@ switch (latticeType)
         const int nz = static_cast<int>(parameters[2]);
         const double a = parameters[3];
         pos = makeBCGrid(nx, ny, nz, a);
-        latticeMatrix = findBCGridBox(nx, ny, nz, a);
-        intParameters = {nx, ny, nz};
-        floatParameters = {a};
+        m_LatticeMatrix = findBCGridBox(nx, ny, nz, a);
+        m_IntParameters = {nx, ny, nz};
+        m_FloatParameters = {a};
         computeInverseLatticeMatrix();
-        latticeName = "CubicGrid";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a;
+        m_LatticeName = "CubicGrid";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a;
         break;
     }
     case FHLatticeType::bulkCenteredCubic:
@@ -240,13 +211,13 @@ switch (latticeType)
         const int nz = static_cast<int>(parameters[2]);
         const double a = parameters[3];
         pos = makeBCCGrid(nx, ny, nz, a);
-        latticeMatrix = findBCGridBox(nx, ny, nz, a);
-        intParameters = {nx, ny, nz};
-        floatParameters = {a};
+        m_LatticeMatrix = findBCGridBox(nx, ny, nz, a);
+        m_IntParameters = {nx, ny, nz};
+        m_FloatParameters = {a};
         computeInverseLatticeMatrix();
-        latticeName = "BCCGrid";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a/std::sqrt(3);
+        m_LatticeName = "BCCGrid";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a/std::sqrt(3);
         break;
     }
     case FHLatticeType::faceCenteredCubic:
@@ -256,13 +227,13 @@ switch (latticeType)
         const int nz = static_cast<int>(parameters[2]);
         const double a = parameters[3];
         pos = makeFCCGrid(nx, ny, nz, a);
-        latticeMatrix = findBCGridBox(nx, ny, nz, a);
-        intParameters = {nx, ny, nz};
-        floatParameters = {a};
+        m_LatticeMatrix = findBCGridBox(nx, ny, nz, a);
+        m_IntParameters = {nx, ny, nz};
+        m_FloatParameters = {a};
         computeInverseLatticeMatrix();
-        latticeName = "FCCGrid";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a/std::sqrt(2);
+        m_LatticeName = "FCCGrid";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a/std::sqrt(2);
         break;
     }
     case FHLatticeType::honeyCombs:
@@ -270,13 +241,13 @@ switch (latticeType)
         int nx = static_cast<int>(parameters[0]);
         double a = parameters[1];
         pos = makeHoneyCombs(nx,a);
-        latticeMatrix = findHoneyCombGridBox(nx, a);
-        intParameters = {nx};
-        floatParameters = {a};
+        m_LatticeMatrix = findHoneyCombGridBox(nx, a);
+        m_IntParameters = {nx};
+        m_FloatParameters = {a};
         computeInverseLatticeMatrix();
-        latticeName = "HoneyCombs";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a;
+        m_LatticeName = "HoneyCombs";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a;
         break;
     }
     case FHLatticeType::triangular:
@@ -286,13 +257,13 @@ switch (latticeType)
         const int nz = static_cast<int>(parameters[2]);
         const double a = parameters[3];
         pos = makeTetragones(nx, ny, nz, a);
-        latticeMatrix = findTetragonesGridBox(nx, ny, nz, a);
-        intParameters = {nx, ny, nz};
-        floatParameters = {a};
+        m_LatticeMatrix = findTetragonesGridBox(nx, ny, nz, a);
+        m_IntParameters = {nx, ny, nz};
+        m_FloatParameters = {a};
         computeInverseLatticeMatrix();
-        latticeName = "Tetragones";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a;
+        m_LatticeName = "Tetragones";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a;
         break;
     }
     case FHLatticeType::graphene:
@@ -301,13 +272,13 @@ switch (latticeType)
         const int ny = static_cast<int>(parameters[1]);
         const double a = parameters[2];
         pos = makeGraphene(nx, ny, a);
-        latticeMatrix = findGrapheneGridBox(nx, ny, a);
-        intParameters = {nx, ny};
-        floatParameters = {a};
+        m_LatticeMatrix = findGrapheneGridBox(nx, ny, a);
+        m_IntParameters = {nx, ny};
+        m_FloatParameters = {a};
         computeInverseLatticeMatrix();
-        latticeName = "Graphene";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a;
+        m_LatticeName = "Graphene";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a;
         break;
     }
     case FHLatticeType::moireHC:
@@ -317,13 +288,13 @@ switch (latticeType)
         double b = parameters[2];
         double theta = parameters[3];
         pos = makeMoireHoneyCombs(nCombs,  a, b, theta);
-        latticeMatrix = findHoneyCombGridBox(nCombs, a);
-        intParameters = {nCombs};
-        floatParameters = {a, b, theta};
+        m_LatticeMatrix = findHoneyCombGridBox(nCombs, a);
+        m_IntParameters = {nCombs};
+        m_FloatParameters = {a, b, theta};
         computeInverseLatticeMatrix();
-        latticeName = "MoireHC";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a;
+        m_LatticeName = "MoireHC";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a;
         break;
     }
     case FHLatticeType::moire:
@@ -334,13 +305,13 @@ switch (latticeType)
         const double b = parameters[3];
         const double theta = parameters[4];
         pos = makeMoireGraphene(nx, ny, a, b, theta);
-        latticeMatrix = findGrapheneGridBox(nx, ny, a);
-        intParameters = {nx, ny};
-        floatParameters = {a, b, theta};
+        m_LatticeMatrix = findGrapheneGridBox(nx, ny, a);
+        m_IntParameters = {nx, ny};
+        m_FloatParameters = {a, b, theta};
         computeInverseLatticeMatrix();
-        latticeName = "Moire";
-        samePointDistance = 1.0E-6 * a;
-        neighbourDistance = a;
+        m_LatticeName = "Moire";
+        m_SamePointDistance = 1.0E-6 * a;
+        m_NeighbourDistance = a;
         break;
     }
     default:
@@ -353,18 +324,13 @@ switch (latticeType)
     computeMatrices();
 }
 
-FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters)
+
+FHLattice::FHLattice(FHLatticeType latType, vector<double> parameters) :
+    m_LatticeType(latType)
 {
 
- vector<array<double,3>> pos = makeBCGrid(2,1,1,1);
-
-     isPeriodicBool = false;
-    latticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-    latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    vector<array<double,3>> pos = makeBCGrid(2,1,1,1);
     init_latticeNameMap();
-
-    latticeType = latType;
 
 switch (latType)
 {
@@ -372,19 +338,19 @@ case FHLatticeType::none:
     break;
     case FHLatticeType::cubic:
         pos = makeBCGrid(static_cast<int>(parameters[0]), static_cast<int>(parameters[1]), static_cast<int>(parameters[2]), parameters[3]);
-        latticeName = "CubicGrid";
+        m_LatticeName = "CubicGrid";
     break;
     case FHLatticeType::bulkCenteredCubic:
         pos = makeBCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
-        latticeName = "BCCGrid";
+        m_LatticeName = "BCCGrid";
     break;
     case FHLatticeType::faceCenteredCubic:
         pos = makeFCCGrid(static_cast<int>(parameters[0]),parameters[1], parameters[2], 1.);
-        latticeName = "FCCGrid";
+        m_LatticeName = "FCCGrid";
     break;
     case FHLatticeType::graphene:
         pos = makeHoneyCombs(static_cast<int>(parameters[0]),parameters[1]);
-        latticeName = "HoneyCombs";
+        m_LatticeName = "HoneyCombs";
     break;
 
     default:
@@ -398,30 +364,32 @@ case FHLatticeType::none:
 }
 
 
-FHLattice::FHLattice(FHLattice* lat)
+FHLattice::FHLattice(const FHLattice& fhLattice) :
+    m_Talkative(fhLattice.m_Talkative),
+    m_LatticeType(fhLattice.m_LatticeType),
+    m_IntParameters(fhLattice.m_IntParameters),
+    m_FloatParameters(fhLattice.m_FloatParameters),
+    m_NeighbourDistance(fhLattice.m_NeighbourDistance),
+    m_SamePointDistance(fhLattice.m_SamePointDistance),
+    m_IsPeriodic(fhLattice.m_IsPeriodic),
+    m_LatticeMatrix(fhLattice.m_LatticeMatrix),
+    m_LatticeZeroVector(fhLattice.m_LatticeZeroVector),
+    m_LatticeName(fhLattice.m_LatticeName)
 {
     init_latticeNameMap();
-    sitePositions = *(lat->getSitePositions());
+    m_SitePositions = arma::dmat(fhLattice.getSitePositions());
 
-    siteTypes = lat->getSiteTypes();
-    siteTypeNames = lat->getSiteTypeNames();
-    siteNames = lat->getSiteNames();
+    m_SiteTypes = fhLattice.getSiteTypes();
+    m_SiteTypeNames = fhLattice.getSiteTypeNames();
+    m_SiteNames = fhLattice.getSiteNames();
 
-    isPeriodicBool = lat->isPeriodic();
-    latticeMatrix = lat->getLatticeMatrix();
-    latticeZeroVector = lat->getLatticeZeroVector();
-
-    if (arma::det(latticeMatrix) != 0)
+    if (arma::det(m_LatticeMatrix) != 0)
     {
-        inverseLatticeMatrix = arma::inv(latticeMatrix);
+        computeInverseLatticeMatrix();
     }
 
-    latticeType = lat->getLatticeType();
+    m_LatticeType = fhLattice.getLatticeType();
 
-    neighbourDistance = lat->getNeighbourDistance();
-    samePointDistance = lat->getSamePointDistance();
-
-    computeInverseLatticeMatrix();
     computeMatrices();
 
 }
@@ -431,14 +399,14 @@ FHLattice::FHLattice(FHLattice* lat)
 /// @return number of sites
 uint                                FHLattice::getnSites() const
 {
-    return sitePositions.n_rows;
+    return m_SitePositions.n_rows;
 }
 
 /// @brief getter - number of dimension (we always work in dim 3 though)
 /// @return number of dimensions (if not 3, weird)
 uint                                FHLattice::getnDimension() const
 {
-    return sitePositions.n_cols;
+    return m_SitePositions.n_cols;
 }
 
 /// @brief getter - position row vector of site 'iSite'
@@ -446,12 +414,12 @@ uint                                FHLattice::getnDimension() const
 /// @return row vector of coordinates
 arma::drowvec                               FHLattice::getSitePosition(uint iSite) const 
 {
-    return sitePositions.row(iSite);
+    return m_SitePositions.row(iSite);
 }
 
-const arma::dmat*                         FHLattice::getSitePositions() const
+const arma::dmat&                         FHLattice::getSitePositions() const
 {
-    return &sitePositions;
+    return m_SitePositions;
 }
 
 /// @brief getter - coordinate of a site
@@ -460,9 +428,9 @@ const arma::dmat*                         FHLattice::getSitePositions() const
 /// @return coordinate of site 'iSite'in dimension 'dim'
 double                                      FHLattice::getCoordinate(uint dim, uint iSite) const 
 { 
-    if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
+    if ((dim < m_SitePositions.n_cols) && (iSite < m_SitePositions.n_rows))
     {
-        return sitePositions(iSite, dim);
+        return m_SitePositions(iSite, dim);
     } 
     else
     {
@@ -478,14 +446,14 @@ arma::drowvec                       FHLattice::getLatticeSitePosition(uint iSite
     //std::cout << sitePositions.row(iSite) << std::endl;
     //std::cout << inverseLatticeMatrix << std::endl;
    // std::cout << latticeZeroVector << std::endl;
-    arma::drowvec pos = sitePositions.row(iSite) - latticeZeroVector;
+    arma::drowvec pos = m_SitePositions.row(iSite) - m_LatticeZeroVector;
    // std::cout << inverseLatticeMatrix * pos.t() << std::endl;
-    return (inverseLatticeMatrix * pos.t()).t();
+    return (m_InverseLatticeMatrix * pos.t()).t();
 }
 
 double                              FHLattice::getLatticeCoordinate(uint dim, uint iSite) const
 {
-    if ((dim < sitePositions.n_cols) && (iSite < sitePositions.n_rows))
+    if ((dim < m_SitePositions.n_cols) && (iSite < m_SitePositions.n_rows))
     {
         arma::drowvec v = getLatticeSitePosition(iSite);
         return v[dim];
@@ -498,56 +466,56 @@ double                              FHLattice::getLatticeCoordinate(uint dim, ui
 
 FHLatticeType                       FHLattice::getLatticeType() const
 {
-    return latticeType;
+    return m_LatticeType;
 }
 
 bool                                        FHLattice::sitesHaveNames() const
 {
-    return (siteTypes.n_rows == sitePositions.n_rows);
+    return (m_SiteTypes.n_rows == m_SitePositions.n_rows);
 }
 
 uint                                FHLattice::getSiteNameNumber() const
 {
-    return (uint)siteNames.size();
+    return (uint)m_SiteNames.size();
 }
 
 std::string                                 FHLattice::getSiteName(uint iSite) const
 {
     //return siteTypeNames[siteTypes[site]];
-    return siteNames[iSite];
+    return m_SiteNames[iSite];
 }
 
 vector<std::string>            FHLattice::getSiteNames() const
 {
-    return siteNames;
+    return m_SiteNames;
 }
 
 arma::uvec                          FHLattice::getSiteTypes() const
 {
-    return siteTypes;
+    return m_SiteTypes;
 }
 
 uint                                FHLattice::getSiteType(uint iSite) const
 {
-    return siteTypes[iSite];
+    return m_SiteTypes[iSite];
 }
 
-vector<std::string>                         FHLattice::getSiteTypeNames() const {    return siteTypeNames;}
-bool                                        FHLattice::isPeriodic() const     {    return isPeriodicBool;}
-arma::dmat                                  FHLattice::getLatticeMatrix() const {    return latticeMatrix;}
-arma::drowvec                               FHLattice::getLatticeZeroVector() const   {    return latticeZeroVector;}
+vector<std::string>                         FHLattice::getSiteTypeNames() const {    return m_SiteTypeNames;}
+bool                                        FHLattice::isPeriodic() const     {    return m_IsPeriodic;}
+const arma::dmat&                           FHLattice::getLatticeMatrix() const {    return m_LatticeMatrix;}
+const arma::drowvec&                        FHLattice::getLatticeZeroVector() const   {    return m_LatticeZeroVector;}
 double                                      FHLattice::getNeighbourDistance() const
 {
-    return neighbourDistance;
+    return m_NeighbourDistance;
 }
 double                                   FHLattice::getSamePointDistance() const
 {
-    return samePointDistance;
+    return m_SamePointDistance;
 }
 
 double                                      FHLattice::computeDistance(uint iSite, uint jSite) const 
 {
-    arma::drowvec dVec = sitePositions.row(iSite) - sitePositions.row(jSite); 
+    arma::drowvec dVec = m_SitePositions.row(iSite) - m_SitePositions.row(jSite); 
     double d = arma::norm(dVec);
     //std::cout << isPeriodic() << std::endl;
     if (isPeriodic())
@@ -558,7 +526,7 @@ double                                      FHLattice::computeDistance(uint iSit
             {
                 for (int xSym = -1; xSym < 2; xSym++)                     //<- symmetries in x
                 {
-                    arma::drowvec dVecSym = dVec + xSym * latticeMatrix.col(0).t() + ySym * latticeMatrix.col(1).t() + zSym * latticeMatrix.col(2).t(); //<- new vector with one of the symmetric lattice
+                    arma::drowvec dVecSym = dVec + xSym * m_LatticeMatrix.col(0).t() + ySym * m_LatticeMatrix.col(1).t() + zSym * m_LatticeMatrix.col(2).t(); //<- new vector with one of the symmetric lattice
                     d = std::min(d, arma::norm(dVecSym));                   //<- we take the minimum of them all
                     //std::cout << xSym << "  " << ySym << "  " << zSym << "  " << arma::norm(dVecSym) << "   " << d << std::endl;
                 }
@@ -574,16 +542,16 @@ double                                      FHLattice::computeDistance(uint iSit
 double                                      FHLattice::evaluateNearestNeighbor() const
 {
     double minNeib = 0;
-    if (distanceMatrix.n_cols > 1)
+    if (m_DistanceMatrix.n_cols > 1)
     {
         minNeib = 1000;
-        for (uint iSite = 0; iSite < distanceMatrix.n_rows; iSite++)
+        for (uint iSite = 0; iSite < m_DistanceMatrix.n_rows; iSite++)
         {
-            for (uint jSite = iSite+1; jSite < distanceMatrix.n_cols; jSite++)
+            for (uint jSite = iSite+1; jSite < m_DistanceMatrix.n_cols; jSite++)
             {
-                if (distanceMatrix.at(iSite, jSite) >  samePointDistance)
+                if (m_DistanceMatrix.at(iSite, jSite) >  m_SamePointDistance)
                 {
-                    minNeib = std::min(minNeib, distanceMatrix.at(iSite, jSite));
+                    minNeib = std::min(minNeib, m_DistanceMatrix.at(iSite, jSite));
                 }
             }
         }
@@ -592,41 +560,41 @@ double                                      FHLattice::evaluateNearestNeighbor()
 }
 
 
-double                                      FHLattice::getDistance(uint i, uint j)    const   {   return distanceMatrix(i,j);}
-bool                                        FHLattice::areNeighbour(uint i, uint j)   const   {   return neighbourMatrix[i][j];}
-bool                                        FHLattice::areSameSite(uint i, uint j)      const   {   return sameSiteMatrix[i][j];}
-std::string                                 FHLattice::getLatticeName()                 const   {   return latticeName;}
+double                                      FHLattice::getDistance(uint i, uint j)    const   {   return m_DistanceMatrix(i,j);}
+bool                                        FHLattice::areNeighbour(uint i, uint j)   const   {   return m_NeighbourMatrix[i][j];}
+bool                                        FHLattice::areSameSite(uint i, uint j)      const   {   return m_SameSiteMatrix[i][j];}
+std::string                                 FHLattice::getLatticeName()                 const   {   return m_LatticeName;}
 
-const arma::dmat*                           FHLattice::getDistanceMatrix()              const   {   return &distanceMatrix;}
-const vector<vector<bool>>*                 FHLattice::getNeighbourMatrix()             const   {   return &neighbourMatrix;}
+const arma::dmat&                           FHLattice::getDistanceMatrix()              const   {   return m_DistanceMatrix;}
+const std::vector<std::vector<bool>>&       FHLattice::getNeighbourMatrix()             const   {   return m_NeighbourMatrix;}
 
 
 // SETTERS
 
 void                    FHLattice::setPositions(const arma::dmat& positions, std::string sitesName)
 {
-    sitePositions = positions;
-    siteNames = vector<std::string>(sitePositions.n_rows, sitesName);
+    m_SitePositions = positions;
+    m_SiteNames = vector<std::string>(m_SitePositions.n_rows, sitesName);
     computeMatrices();
 }
 
 void                    FHLattice::setPositions(const arma::dmat& positions, vector<std::string> sN)
 {
-    sitePositions = positions;
-    siteNames = sN;
+    m_SitePositions = positions;
+    m_SiteNames = sN;
     computeMatrices();
 }
 
 
 bool                    FHLattice::setSiteTypes(arma::uvec sTypes)
 {
-    siteTypes = sTypes;
+    m_SiteTypes = sTypes;
     return sitesHaveNames();
 }
 
 void                    FHLattice::setSiteTypeNames(vector<std::string> typeNames)
 {
-    siteTypeNames = typeNames;
+    m_SiteTypeNames = typeNames;
 }
 
 
@@ -638,33 +606,33 @@ void                    FHLattice::setSymmetry(arma::dmat symVectors)
     }
     else
     {
-        isPeriodicBool = true;
-        latticeMatrix = symVectors;
-        inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
-        bool isInv = arma::inv(inverseLatticeMatrix, latticeMatrix);
+        m_IsPeriodic = true;
+        m_LatticeMatrix = symVectors;
+        m_InverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+        bool isInv = arma::inv(m_InverseLatticeMatrix, m_LatticeMatrix);
         if (!isInv)
         {
             std::cout << "Caution : the lattice matrix is singular." << std::endl;
         }
     }
 
-    if (latticeZeroVector.n_rows !=3)
+    if (m_LatticeZeroVector.n_rows !=3)
     {
-        latticeZeroVector = arma::drowvec(3, arma::fill::zeros);
+        m_LatticeZeroVector = arma::drowvec(3, arma::fill::zeros);
     }
 
 }
 
-void                                FHLattice::setLatticeZero(arma::drowvec latticeZ){    latticeZeroVector = latticeZ;}
-void                                FHLattice::setNeighbourDistance(double neigbD){    neighbourDistance = neigbD;}
-void                                FHLattice::setSamePointDistance(double samePointD){    samePointDistance = samePointD;}
-void                                FHLattice::setLatticeName(std::string newName){ latticeName = newName;}
+void                                FHLattice::setLatticeZero(arma::drowvec latticeZ){    m_LatticeZeroVector = latticeZ;}
+void                                FHLattice::setNeighbourDistance(double neigbD){    m_NeighbourDistance = neigbD;}
+void                                FHLattice::setSamePointDistance(double samePointD){    m_SamePointDistance = samePointD;}
+void                                FHLattice::setLatticeName(std::string newName){ m_LatticeName = newName;}
 
 void                                FHLattice::computeInverseLatticeMatrix()
 {
-    inverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
+    m_InverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
     double rcond = 0;
-    bool success = arma::inv(inverseLatticeMatrix, rcond, latticeMatrix);
+    bool success = arma::inv(m_InverseLatticeMatrix, rcond, m_LatticeMatrix);
     if (!success)
     {
         std::cout << "! Problem ! Lattice matrice not inversible." << std::endl;
@@ -678,7 +646,7 @@ void                                FHLattice::readPositions(std::string xyzFile
     uint nSites = 0;
     vector<array<double,3>> positions3;
 
-    siteNames = vector<std::string>();
+    m_SiteNames = vector<std::string>();
     std::string line;
     std::string coord;
      
@@ -698,7 +666,7 @@ void                                FHLattice::readPositions(std::string xyzFile
             std::stringstream ss(line);
             // Get the site name
             ss >> coord;
-            siteNames.push_back(coord);
+            m_SiteNames.push_back(coord);
             // Get its coordinates :
             vector<double> coordinates;
             while (ss >> coord)//(std::getline (ss, coord, '\t')) 
@@ -721,7 +689,7 @@ void                                FHLattice::readPositions(std::string xyzFile
 
     if (nSites == positions3.size())
     {
-        if (talkative)
+        if (m_Talkative)
         {
             std::cout << "   -- Position file read, sites :   " << nSites << std::endl;
         }
@@ -744,7 +712,7 @@ void                                FHLattice::readPositions(std::string xyzFile
 void                 FHLattice::writePositions(std::string xyzFile, std::string folderName)
 {
         // Writing of everything on the file :
-    latticeName = xyzFile;
+    m_LatticeName = xyzFile;
     std::string fileAdress =  xyzFile + ".xyz";
    // std::cout << "Writing positions in: "<< fileAdress << std::endl;
     if (folderName != "")
@@ -756,10 +724,10 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
     if (streamPosition.is_open())
     {   
         
-        streamPosition << sitePositions.n_rows << std::endl;
-        for (uint iSite = 0; iSite < sitePositions.n_rows ; iSite ++)
+        streamPosition << m_SitePositions.n_rows << std::endl;
+        for (uint iSite = 0; iSite < m_SitePositions.n_rows ; iSite ++)
         {
-            streamPosition << std::endl << siteNames[iSite] << "\t" << sitePositions(iSite, 0) << "\t" << sitePositions(iSite, 1) << "\t" << sitePositions(iSite, 2) ;
+            streamPosition << std::endl << m_SiteNames[iSite] << "\t" << m_SitePositions(iSite, 0) << "\t" << m_SitePositions(iSite, 1) << "\t" << m_SitePositions(iSite, 2) ;
         }
         streamPosition.close();
     }
@@ -769,22 +737,22 @@ Json::Value         FHLattice::writeFHLatticeJson() const
 {
         Json::Value rootLattice;
 
-        rootLattice["latticeType"] = latticeTypeNames.at(latticeType);
+        rootLattice["latticeType"] = m_LatticeTypeNames.at(m_LatticeType);
 
 
-        rootLattice["positionsFile"] = latticeName + ".xyz";
+        rootLattice["positionsFile"] = m_LatticeName + ".xyz";
 
         // Periodicity
-        rootLattice["periodic"] = isPeriodicBool;
+        rootLattice["periodic"] = m_IsPeriodic;
         Json::Value vecJson(Json::arrayValue);
         Json::Value matJson(Json::arrayValue);
-        for (uint i = 0; i<3; i++)  vecJson[i] = latticeZeroVector(i);
+        for (uint i = 0; i<3; i++)  vecJson[i] = m_LatticeZeroVector(i);
         for (uint i = 0; i<3; i++)
         {
             Json::Value vJson(Json::arrayValue);
             for (uint j = 0; j<3; j++)
             {
-                vJson.append(latticeMatrix.at(i,j));
+                vJson.append(m_LatticeMatrix.at(i,j));
             }
             matJson.append(vJson);
         }  
@@ -806,11 +774,11 @@ void                    FHLattice::computeMatrices()
 
 //std::cout << "compute matrices, smpD =" << samePointDistance << ", nD =" << neighbourDistance << std::endl;
 
-    uint nSites = sitePositions.n_rows;
+    uint nSites = m_SitePositions.n_rows;
 
-    distanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
-    neighbourMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
-    sameSiteMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
+    m_DistanceMatrix =  arma::dmat(nSites,  nSites, arma::fill::zeros);
+    m_NeighbourMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
+    m_SameSiteMatrix = vector<vector<bool>>(nSites,  vector<bool>(nSites, false));
 
 
     // distance Matrix :
@@ -818,7 +786,7 @@ void                    FHLattice::computeMatrices()
     {
         for (uint j=0; j<nSites; j++)
         {
-            distanceMatrix(i, j) = computeDistance(i,j);
+            m_DistanceMatrix(i, j) = computeDistance(i,j);
         }
     }
     // same site matrix :
@@ -826,9 +794,9 @@ void                    FHLattice::computeMatrices()
     {
         for (uint j=0; j<nSites; j++)
         {
-            if (std::norm(distanceMatrix(i, j))< samePointDistance)
+            if (std::norm(m_DistanceMatrix(i, j))< m_SamePointDistance)
             {
-                sameSiteMatrix[i][j] = true;
+                m_SameSiteMatrix[i][j] = true;
             }
         }
     }
@@ -837,10 +805,10 @@ void                    FHLattice::computeMatrices()
     {
         for (uint j=0; j<nSites; j++)
         {
-            //std::cout << "i" << i << ", j=" << j << " , d=" << distanceMatrix(i, j) << "|d-n|=" << std::norm(distanceMatrix(i, j) - neighbourDistance) <<  std::endl;
-            if (std::norm(distanceMatrix(i, j) - neighbourDistance) < samePointDistance)
+            //std::cout << "i" << i << ", j=" << j << " , d=" << m_DistanceMatrix(i, j) << "|d-n|=" << std::norm(m_DistanceMatrix(i, j) - m_NeighbourDistance) <<  std::endl;
+            if (std::norm(m_DistanceMatrix(i, j) - m_NeighbourDistance) < m_SamePointDistance)
             {
-                neighbourMatrix[i][j] = true;
+                m_NeighbourMatrix[i][j] = true;
             }
         }
     }
@@ -855,23 +823,23 @@ void                    FHLattice::computeMatrices()
 
 void FHLattice::init_latticeNameMap()
 {
-    latticeTypeNames = std::map<FHLatticeType, std::string>();
-    latticeTypeNames[FHLatticeType::none] = "none";
-    latticeTypeNames[FHLatticeType::cubic] = "grid";
-    latticeTypeNames[FHLatticeType::bulkCenteredCubic] = "bcc";
-    latticeTypeNames[FHLatticeType::faceCenteredCubic] = "fcc";
-    latticeTypeNames[FHLatticeType::triangular] = "triangular";
-    latticeTypeNames[FHLatticeType::honeyCombs] = "honeyCombs";
-    latticeTypeNames[FHLatticeType::graphene] = "graphene";
-    latticeTypeNames[FHLatticeType::moireHC] = "moireHC";
-    latticeTypeNames[FHLatticeType::moire] = "moire";
-    latticeTypeNames[FHLatticeType::kagome] = "kagome";
+    m_LatticeTypeNames = std::map<FHLatticeType, std::string>();
+    m_LatticeTypeNames[FHLatticeType::none] = "none";
+    m_LatticeTypeNames[FHLatticeType::cubic] = "grid";
+    m_LatticeTypeNames[FHLatticeType::bulkCenteredCubic] = "bcc";
+    m_LatticeTypeNames[FHLatticeType::faceCenteredCubic] = "fcc";
+    m_LatticeTypeNames[FHLatticeType::triangular] = "triangular";
+    m_LatticeTypeNames[FHLatticeType::honeyCombs] = "honeyCombs";
+    m_LatticeTypeNames[FHLatticeType::graphene] = "graphene";
+    m_LatticeTypeNames[FHLatticeType::moireHC] = "moireHC";
+    m_LatticeTypeNames[FHLatticeType::moire] = "moire";
+    m_LatticeTypeNames[FHLatticeType::kagome] = "kagome";
 
-    latticeTypeNamesReverse = std::map<std::string, FHLatticeType>();
+    m_LatticeTypeNamesReverse = std::map<std::string, FHLatticeType>();
 
-    for (const auto& entry : latticeTypeNames)
+    for (const auto& entry : m_LatticeTypeNames)
     {
-        latticeTypeNamesReverse.emplace(entry.second, entry.first);
+        m_LatticeTypeNamesReverse.emplace(entry.second, entry.first);
     }
 }
  

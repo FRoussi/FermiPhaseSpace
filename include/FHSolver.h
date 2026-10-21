@@ -54,23 +54,23 @@ public:
 protected:
 // Fermi Hubbard System  :
     FHSystem*               fhSystem;                     //<- Pointer to the Fermi-Hubbard model
-    Json::Value             jsonFile;           
+    Json::Value             jsonFile{Json::objectValue};                 //<- Json file containing the parameters of the simulation
 
 // results in :
-    bool                    writeResultsTxt;
-    bool                    writeResultsJson;
-    bool                    writeResultsHDF5;
+    bool                    writeResultsTxt{false};
+    bool                    writeResultsJson{false};
+    bool                    writeResultsHDF5{false};
 
 
-    bool                    saveWholeDMatrix;
-    bool                    saveDiagDMatrix;
-    bool                    saveDiag2DMatrix;
-    bool                    saveNiuNid;
-    bool                    saveTBStates;
-    bool                    saveMFStates;
-    bool                    saveEnergies;
+    bool                    saveWholeDMatrix{false};
+    bool                    saveDiagDMatrix{true};
+    bool                    saveDiag2DMatrix{true};
+    bool                    saveNiuNid{false};
+    bool                    saveTBStates{false};
+    bool                    saveMFStates{false};
+    bool                    saveEnergies{true};
 
-    uint                    nEnergies;   
+    uint                    nEnergies{4};   
 
     std::string             workName;                     //<- A name for the work, for the results file
     std::string             folderName;                   //<- A name for the work folder, for the results file
@@ -80,13 +80,13 @@ protected:
     //bool                    computeMFStates;
 
 // Work parameters
-    bool                    talkative;
+    bool                    talkative{false};
 
 // Time parameters
-    double                  tMax;                         //<- Maximum time extend of the simulation 
-    double                  dt;                           //<- Time step of calculated observables        
-    unsigned int            nStepsPerTimePoint;           //<- Number of simulated time steps between the calculation of observable
-    unsigned int            nTimePoints;                  //<- Number of time steps (=tMax/dt)
+    double                  tMax{1.};                         //<- Maximum time extend of the simulation 
+    double                  dt{0.01};                           //<- Time step of calculated observables        
+    unsigned int            nStepsPerTimePoint{1};           //<- Number of simulated time steps between the calculation of observable
+    unsigned int            nTimePoints{100};                  //<- Number of time steps (=tMax/dt)
               
     
     std::vector<double> timeLine;
