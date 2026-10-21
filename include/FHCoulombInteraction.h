@@ -29,9 +29,9 @@ public:
     FHCoulombInteraction(FHLattice* lat, double onSiteInteraction);
     FHCoulombInteraction(FHLattice* lat, std::vector<double> coulombDistances, std::vector<double> coulombEnergies);
 
-    const arma::cx_dmat&                  getCoulombUInteractionReference() const;
+    const arma::cx_dmat&            getCoulombUInteractionReference() const;
     arma::cx_double                 getCoulombUInteraction(uint iSite, uint jSite) const;
-    const arma::cx_dmat&                  getCoulombVInteractionReference() const;
+    const arma::cx_dmat&            getCoulombVInteractionReference() const;
     arma::cx_double                 getCoulombVInteraction(uint iSite, uint jSite) const;
     FHCoulombInteractionType        getCoulombInteractionType() const;
 

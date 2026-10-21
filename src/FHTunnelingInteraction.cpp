@@ -3,37 +3,31 @@
 
 FHTunnelingInteraction::FHTunnelingInteraction()
 {
-    tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
     init_tunnelingMaps();
 }
 
-FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat)
+FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat) :
+    fhLattice(lat)
 {
-    tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
-    fhLattice = lat;
     init_tunnelingMaps();
 }
 
 
-FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJson)
+FHTunnelingInteraction::FHTunnelingInteraction(FHLattice* lat, Json::Value tunnJson) :
+    fhLattice(lat)
 {
-    tunnelingInteractionType = FHTunnelingInteractionType::TEnull;
-    tunnelingInteractionRelation = FHTunnelingInteractionRelation::TERall;
+
     init_tunnelingMaps();
     fhLattice = lat;
 
     // get the tunneling type :
     std::string tunnType = tunnJson.get("type", "null").asString();
-    std::map< std::string, FHTunnelingInteractionType>::iterator lti = tunnelingInteractionTypeNamesReverse.find(tunnType);
-    if (lti != tunnelingInteractionTypeNamesReverse.end())
+    if (tunnelingInteractionTypeNames.containsValue(tunnType))
     {
-        tunnelingInteractionType = lti->second;
+        tunnelingInteractionType = tunnelingInteractionTypeNames.getKey(tunnType);
     }
 
-    parameterSet1 = std::vector<double>();
-    parameterSet2 = std::vector<double>();
+
     uint nSites = fhLattice->getnSites();
     tunnelingInteraction = arma::cx_dmat(nSites, nSites, arma::fill::zeros);
 
@@ -233,19 +227,19 @@ Json::Value         FHTunnelingInteraction::writeTunnelingInteractionJson()
     {
         case(FHTunnelingInteractionType::TEnull):
         {
-            jpot["type"] = "null";
+            jpot["type"] = tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnull];
             break;
         }
         case(FHTunnelingInteractionType::TEnearestNeigbors):
         {
-            jpot["type"] = "nearestNeighbors";
+            jpot["type"] = tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnearestNeigbors];
             jpot["neighborDistance"] = parameterSet2[0];
             jpot["neighborInteraction"] = parameterSet1[0];
             break;
         }
         case(FHTunnelingInteractionType::TEdistanceInteraction0):
         {
-            jpot["type"] = "distanceInteraction";
+            jpot["type"] = tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction0];
 
             Json::Value dVecJ = Json::Value(Json::arrayValue);
             for (uint i = 0; i<parameterSet2.size(); i++)
@@ -439,39 +433,19 @@ double                      FHTunnelingInteraction::getTunnelingEnergyOrder2(dou
 
 void                                    FHTunnelingInteraction::init_tunnelingMaps()
 {
-    tunnelingInteractionTypeNames = std::map<FHTunnelingInteractionType, std::string>();
-    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnull] = "null";
-    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEgiven] = "given";
-    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEnearestNeigbors] = "nearestNeighbors";
-    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction0] = "distanceInteraction";
-    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction1] = "distanceInteraction1";
-    tunnelingInteractionTypeNames[FHTunnelingInteractionType::TEdistanceInteraction2] = "distanceInteraction2";
+    tunnelingInteractionTypeNames = MapDoubleEntry<FHTunnelingInteractionType, std::string>();
+    tunnelingInteractionTypeNames.insert(FHTunnelingInteractionType::TEnull, "null");
+    tunnelingInteractionTypeNames.insert(FHTunnelingInteractionType::TEgiven, "given");
+    tunnelingInteractionTypeNames.insert(FHTunnelingInteractionType::TEnearestNeigbors, "nearestNeighbors");
+    tunnelingInteractionTypeNames.insert(FHTunnelingInteractionType::TEdistanceInteraction0, "distanceInteraction");
+    tunnelingInteractionTypeNames.insert(FHTunnelingInteractionType::TEdistanceInteraction1, "distanceInteraction1");
+    tunnelingInteractionTypeNames.insert(FHTunnelingInteractionType::TEdistanceInteraction2, "distanceInteraction2");
 
 
-    tunnelingInteractionTypeNamesReverse = std::map<std::string, FHTunnelingInteractionType>();
-
-    for (std::map<FHTunnelingInteractionType, std::string>::iterator it = tunnelingInteractionTypeNames.begin(); it != tunnelingInteractionTypeNames.end(); it ++)
-    {
-        tunnelingInteractionTypeNamesReverse.emplace(it->second, it->first);
-    }
-
-
-
-    tunnelingInteractionRelationNames = std::map<FHTunnelingInteractionRelation, std::string>();
-    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERall] = "all";
-    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERsameSpecies] = "sameSpecies";
-    tunnelingInteractionRelationNames[FHTunnelingInteractionRelation::TERAB] = "AB";
- 
-
-
-    tunnelingInteractionRelationNamesReverse = std::map<std::string, FHTunnelingInteractionRelation>();
-
-    for (std::map<FHTunnelingInteractionRelation, std::string>::iterator it = tunnelingInteractionRelationNames.begin(); it != tunnelingInteractionRelationNames.end(); it ++)
-    {
-        tunnelingInteractionRelationNamesReverse.emplace(it->second, it->first);
-    }
-
-
+    tunnelingInteractionRelationNames = MapDoubleEntry<FHTunnelingInteractionRelation, std::string>();
+    tunnelingInteractionRelationNames.insert(FHTunnelingInteractionRelation::TERall, "all");
+    tunnelingInteractionRelationNames.insert(FHTunnelingInteractionRelation::TERsameSpecies, "sameSpecies");
+    tunnelingInteractionRelationNames.insert(FHTunnelingInteractionRelation::TERAB, "AB");
 }
 
 FHTunnelingInteraction::~FHTunnelingInteraction()

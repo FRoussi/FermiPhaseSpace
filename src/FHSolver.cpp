@@ -3,8 +3,7 @@
 
 
 FHSolver::FHSolver(FHSystem *fhS) :
-    fhSystem(fhS),
-    jsonFile(Json::Value())
+    fhSystem(fhS)
 {
 
 }

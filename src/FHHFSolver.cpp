@@ -10,7 +10,8 @@ FHHFSolver::FHHFSolver(FHSystem* fhS) :
 {
 }
 
-
+/// @brief Set the order of the integrator
+/// @param order integer, the order of the integrator, 1, 2 or 4
 void                        FHHFSolver::setIntegratorOrder(int order)
 {
     switch (order)
@@ -44,6 +45,8 @@ void                        FHHFSolver::setIntegratorOrder(int order)
 
 }
 
+/// @brief Set the parameters of the solver
+/// @param param Json::Value, the parameters of the solver, including dt, t_max, stepsParTimePoints, int_order
 void                        FHHFSolver::setMethodParameters(Json::Value param)
 {
     double param_dt = param.get("dt", 0.01).asDouble();

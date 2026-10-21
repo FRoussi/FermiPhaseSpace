@@ -628,6 +628,7 @@ void                                FHLattice::setNeighbourDistance(double neigb
 void                                FHLattice::setSamePointDistance(double samePointD){    m_SamePointDistance = samePointD;}
 void                                FHLattice::setLatticeName(std::string newName){ m_LatticeName = newName;}
 
+//// @brief Computes the inverse of the lattice matrix, if it exists.
 void                                FHLattice::computeInverseLatticeMatrix()
 {
     m_InverseLatticeMatrix = arma::dmat(3,3,arma::fill::zeros);
@@ -640,6 +641,8 @@ void                                FHLattice::computeInverseLatticeMatrix()
 
 }
 
+/// @brief Reads the positions of the lattice sites from a .xyz file.
+/// @param xyzFile The path to the file containing the site positions.
 void                                FHLattice::readPositions(std::string xyzFile)
 {
 
@@ -733,6 +736,8 @@ void                 FHLattice::writePositions(std::string xyzFile, std::string 
     }
 }
 
+/// @brief Writes the lattice information to a JSON object.
+/// @return Json::Value The JSON object containing the lattice information.
 Json::Value         FHLattice::writeFHLatticeJson() const
 {
         Json::Value rootLattice;
@@ -820,7 +825,7 @@ void                    FHLattice::computeMatrices()
 }
 
 
-
+/// @brief Initializes the mapping between lattice types and their string representations.
 void FHLattice::init_latticeNameMap()
 {
     m_LatticeTypeNames = std::map<FHLatticeType, std::string>();

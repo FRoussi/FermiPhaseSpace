@@ -9,7 +9,7 @@
 #include "json/json.h"
 #include "FHLattice.h"
 #include "FHCoreHole.h"
-//#include "FHSystem.h"
+#include "MapDoubleEntry.h"
 
 
 enum FHTunnelingInteractionType{
@@ -61,16 +61,13 @@ private:
 
     arma::cx_dmat               tunnelingInteraction;
 
-    FHTunnelingInteractionType       tunnelingInteractionType;    
+    FHTunnelingInteractionType       tunnelingInteractionType{FHTunnelingInteractionType::TEnull};    
 
 
+    std::vector<double>         parameterSet1{std::vector<double>()};      //<- Energies
+    std::vector<double>         parameterSet2{std::vector<double>()};      //<- Distances
 
-
-
-    std::vector<double>         parameterSet1;      //<- Energies
-    std::vector<double>         parameterSet2;      //<- Distances
-
-    FHTunnelingInteractionRelation  tunnelingInteractionRelation;
+    FHTunnelingInteractionRelation  tunnelingInteractionRelation{FHTunnelingInteractionRelation::TERall};
     std::string speciesA;
     std::string speciesB;
 
@@ -82,10 +79,8 @@ private:
     double                      getTunnelingEnergyOrder2(double distance);
 
 
-    std::map<FHTunnelingInteractionType, std::string>           tunnelingInteractionTypeNames;
-    std::map<std::string, FHTunnelingInteractionType>           tunnelingInteractionTypeNamesReverse;
-    std::map<FHTunnelingInteractionRelation, std::string>       tunnelingInteractionRelationNames;
-    std::map<std::string, FHTunnelingInteractionRelation>       tunnelingInteractionRelationNamesReverse;
+    MapDoubleEntry<FHTunnelingInteractionType, std::string>                   tunnelingInteractionTypeNames;
+    MapDoubleEntry<FHTunnelingInteractionRelation, std::string>               tunnelingInteractionRelationNames;
 
 
     void                                    init_tunnelingMaps();
